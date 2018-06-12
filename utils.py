@@ -35,3 +35,15 @@ def next_sent_dependency(fin):
         dep_tup = line.split(' ')
         dep_list.append(dep_tup)
     return dep_list
+
+
+def load_pos_tags(filename):
+    f = open(filename, encoding='utf-8')
+    sent_pos_tags_list = list()
+    while True:
+        sent_pos_tags = next_sent_pos(f)
+        if not sent_pos_tags:
+            break
+        sent_pos_tags_list.append(sent_pos_tags)
+    f.close()
+    return sent_pos_tags_list
