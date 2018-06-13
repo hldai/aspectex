@@ -37,6 +37,18 @@ def next_sent_dependency(fin):
     return dep_list
 
 
+def load_dep_tags_list(filename):
+    f = open(filename, encoding='utf-8')
+    sent_dep_tags_list = list()
+    while True:
+        dep_tags = next_sent_dependency(f)
+        if not dep_tags:
+            break
+        sent_dep_tags_list.append(dep_tags)
+    f.close()
+    return sent_dep_tags_list
+
+
 def load_pos_tags(filename):
     f = open(filename, encoding='utf-8')
     sent_pos_tags_list = list()

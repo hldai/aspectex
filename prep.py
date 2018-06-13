@@ -8,14 +8,14 @@ N_HEADER_LINES = 11
 TAG_STRS = ['u', 'p', 's', 'cs', 'cc']
 
 
-def __process_huliu04_file(filename):
+def __process_huliu04_file(filename, review_id_beg):
     filepath = os.path.join(config.DATA_DIR_HL04, filename)
     reviews, sents, sents_text = list(), list(), list()
     f = open(filepath)
     for _ in zip(range(N_HEADER_LINES), f):
         pass
 
-    cur_rev_id = 0
+    cur_rev_id = review_id_beg
     for line in f:
         line = line.strip()
         if line.startswith('[t]'):
@@ -55,7 +55,7 @@ def __process_hl04():
     filenames = utils.read_lines(config.DATA_FILE_LIST_FILE_HL04)
     reviews, sents, sents_text = list(), list(), list()
     for filename in filenames:
-        tmp_revs, tmp_sents = __process_huliu04_file(filename)
+        tmp_revs, tmp_sents = __process_huliu04_file(filename, len(reviews))
         reviews += tmp_revs
         sents += tmp_sents
 
