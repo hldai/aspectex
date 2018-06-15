@@ -232,40 +232,6 @@ def __proc_sent_based_on_opinion(sent_words, dep_tags, pos_tags, opinions, aspec
     return aspect_word_idxs
 
 
-def __proc_sent_based_on_aspect(sent, dep_tags, pos_tags, opinions, aspects):
-    # dep_list = utils.next_sent_dependency(f_dep)
-    sent_words = sent['text'].split(' ')
-    assert len(sent_words) == len(dep_tags)
-    results = set()
-
-    for gov, dep, reln in dep_tags:
-        w_gov, w_gov_idx = __parse_indexed_word(gov)
-        w_dep, w_dep_idx = __parse_indexed_word(dep)
-
-        if reln == 'conj':
-            if w_gov in aspects and pos_tags[w_dep_idx] in SET_NN and w_dep not in aspects:
-                aspects.add(w_dep)
-                aspect_phrase = __get_phrase(w_dep_idx, pos_tags, sent_words)
-                results.add((aspect_phrase, w_dep))
-            if w_dep in aspects and pos_tags[w_gov_idx] in SET_NN and w_gov not in aspects:
-                aspects.add(w_gov)
-                aspect_phrase = __get_phrase(w_gov_idx, pos_tags, sent_words)
-                results.add((aspect_phrase, w_dep))
-
-        if reln in SET_MR:
-            # if w_gov == 'looks':
-            #     print(gov, dep, reln)
-            if w_gov in aspects and __is_word(w_dep) and pos_tags[w_dep_idx] in SET_JJ:
-                opinions.add(w_dep)
-                # results.add((w_gov, w_dep))
-                aspect_phrase = __get_phrase(w_gov_idx, pos_tags, sent_words)
-                if pos_tags[w_gov_idx] == 'NNS':
-                    if aspect_phrase.endswith('s'):
-                        aspect_phrase = aspect_phrase[:-1]
-                results.add((aspect_phrase, w_dep))
-    return results
-
-
 def __proc_sent_based_on_aspect_new(sent, dep_tags, pos_tags, opinions, aspects):
     # dep_list = utils.next_sent_dependency(f_dep)
     sent_words = sent['text'].split(' ')
@@ -481,103 +447,6 @@ def __dp_new(sents, dep_tags_list, pos_tags_list, seed_opinions):
     return hit_cnt, aspects_sys_cnt, true_ao_pairs_cnt
 
 
-def __dp(sents, dep_tags_list, pos_tags_list, seed_opinions):
-    aspect_set_true = __get_true_aspect_word_set(sents)
-
-    opinions = set(seed_opinions)
-    aspects = set()
-    ao_pairs = list()
-    n_hit, true_ao_pairs_cnt = 0, 0
-    prev_opinion_size, prev_aspect_size = 0, 0
-    while len(opinions) > prev_opinion_size or len(aspects) > prev_aspect_size:
-        n_hit, n_sys = 0, 0
-        prev_opinion_size, prev_aspect_size = len(opinions), len(aspects)
-        ao_pairs_dict, ao_idx_pairs_dict = dict(), dict()
-        aspect_word_idxs_dict = dict()
-        for i, sent in enumerate(sents):
-            sent_words = sent['text'].split(' ')
-            aspect_word_idxs = __proc_sent_based_on_opinion(
-                sent_words, dep_tags_list[i], pos_tags_list[i], opinions, aspects)
-            aspect_word_idxs_dict[i] = aspect_word_idxs
-
-            # if sent['text'].startswith('this camera also has a'):
-            #     print('foooooooo', ao_pairs_tmp)
-            #     print(dep_tags_list[i])
-            #     print(pos_tags_list[i])
-            # ao_pairs_dict[i] = [(a, o) for a, o in ao_pairs_tmp]
-            # ao_idx_pairs_dict[i] = [(a_idx, o_idx) for a_idx, o_idx in ao_idx_pairs_tmp]
-        # update aspects & opinions
-
-        ao_pairs_dict_pruned, ao_idx_pairs_dict_pruned = __prune_aspects(
-            ao_pairs_dict, ao_idx_pairs_dict, sents, pos_tags_list)
-        # print(ao_pairs_dict[664])
-        # print(ao_pairs_dict_pruned[664])
-
-        for sent_idx, ao_idx_pairs in ao_idx_pairs_dict_pruned.items():
-            sent_words = sents[sent_idx]['text'].split(' ')
-            for ao_idx_pair in ao_idx_pairs:
-                aspects.add(sent_words[ao_idx_pair[0]])
-
-        ao_pairs = list()
-        for i, sent in enumerate(sents):
-            opinion_tups_sent = __proc_sent_based_on_aspect(
-                sent, dep_tags_list[i], pos_tags_list[i], opinions, aspects)
-            for aspect, opinion in opinion_tups_sent:
-                ao_pairs.append((aspect, opinion, i))
-            # if 'better than' in sent['text']:
-            #     print(sent)
-            #     print(opinion_tups_sent)
-            #     print()
-
-        aspect_cnt = Counter([x[0] for x in ao_pairs])
-        # ao_pairs_pruned = list()
-        # for a, o, sent_idx in ao_pairs:
-        #     if ' ' in a and
-        ao_pairs = [x for x in ao_pairs if ' ' not in x[0] or aspect_cnt[x[0]] > 1]
-        # ao_pairs = [x for x in ao_pairs if aspect_cnt[x[0]] > 1]
-        sent_ao_pairs_dict = dict()
-        for x in ao_pairs:
-            aspect, opinion, sent_idx = x
-            sent_ao_pairs = sent_ao_pairs_dict.get(sent_idx, list())
-            if not sent_ao_pairs:
-                sent_ao_pairs_dict[sent_idx] = sent_ao_pairs
-            sent_ao_pairs.append((aspect, opinion))
-
-        aspect_words_sys = {x[0] for x in ao_pairs}
-        __get_word_extraction_perf(aspect_set_true, aspect_words_sys)
-
-        # evaluation
-        true_ao_pairs_cnt = 0
-        for i, sent in enumerate(sents):
-            opinions_true = sent.get('aspects', None)
-            sent_ao_pairs = sent_ao_pairs_dict.get(i, None)
-
-            if opinions_true is not None:
-                true_ao_pairs_cnt += len(opinions_true)
-
-            hit = False
-            if opinions_true is not None and sent_ao_pairs is not None:
-                targets_true = {x['target'] for x in opinions_true}
-                for target, opinion in sent_ao_pairs:
-                    if target in targets_true:
-                        n_hit += 1
-                        hit = True
-            # if sent_ao_pairs is not None and not hit:
-            # if opinions_true is not None and not hit:
-            #     print(i, sent['text'])
-            #     print(sent.get('aspects', None))
-            #     print(sent_ao_pairs)
-            #     print(dep_tags_list[i])
-            #     print(pos_tags_list[i])
-            #     print()
-        prec = n_hit / len(ao_pairs)
-        recall = n_hit / true_ao_pairs_cnt
-        # print('tuples', prec, recall, 2 * prec * recall / (prec + recall))
-        # break
-    print()
-    return n_hit, len(ao_pairs), true_ao_pairs_cnt
-
-
 def __read_seed_opinions():
     def __read_file(filename):
         words = list()
@@ -628,8 +497,6 @@ def __dp_hl04():
     prec = cnt_hit / cnt_sys
     recall = cnt_hit / cnt_true
     print(prec, recall, 2 * prec * recall / (prec + recall), cnt_hit, cnt_sys, cnt_true)
-
-    # __dp(sents, dep_tags_list, pos_tags_list, seed_opinions)
 
     # for i, sent in enumerate(sents):
     #     sent_opinions = sent_opinions_dict.get(i, None)
