@@ -1,14 +1,26 @@
 import json
+from singularizer import Singularizer
 from collections import Counter
 import utils
 import config
 
 
-SET_MR = {'amod', 'prep', 'nsubj', 'csubj', 'xsubj', 'dobj', 'iobj', 'conj'}
+SET_MR = {'amod', 'prep', 'csubj', 'xsubj', 'dobj', 'iobj', 'conj', 'nsubj'}
+SET_RMR = {'nsubj', 'csubj', 'xsubj', 'dobj', 'iobj', 'prep', 'conj'}
 SET_JJ = {'JJ', 'JJR', 'JJS'}
-SET_NN = {'NN', 'NNS'}
+SET_NN = {'NN', 'NNS', 'NNP'}
 
 ILLEGAL_WORDS = {'[', ']', '(', ')'}
+
+impossible_set = {'optical setting', 'key', 'flip switch', 'manual mode', 'vibrate setting', '4mp resolution',
+                  'dual-layer dvd', 'external display', 'progressive scan', 'infrared', 'progressive scan player',
+                  'key lock', 'white balance', 'video output', 'hot shoe flash', 'ad-1220', 'creative product',
+                  'on/off button', '4mp camera', 'technical support', 'bang-for-the-buck', 'sturdy', 'usb 2.0',
+                  'manual', 'sound quality', 'different file', 'remote control', 'digital camera', 'rewind',
+                  'front cover', '8mb', 'rechargable battery', 'remote', 'photo quality', 'hard drive',
+                  'on-line support', 'sound', 'navigational system', 'raw format', 'audio', 'digital zoom',
+                  'creative', '8mb card', 'online service', 'optical zoom', 'universal remote control', 'lip-sync',
+                  'continuous shot mode'}
 
 
 def __is_word(w):
@@ -25,13 +37,13 @@ def __parse_indexed_word(w):
     return s, idx
 
 
-def __get_phrase(w_idx, pos_list, sent_words):
+def __get_phrase(w_idx, pos_list, sent_words, opinion_words):
     wind = 2
     widx_list = [w_idx]
     for i in range(w_idx - 1, w_idx - wind - 1, -1):
         if i < 0:
             break
-        if pos_list[i] == 'NN' and sent_words[i] not in ILLEGAL_WORDS:
+        if pos_list[i] in SET_NN and sent_words[i] not in ILLEGAL_WORDS:
             widx_list.insert(0, i)
         else:
             break
@@ -39,26 +51,31 @@ def __get_phrase(w_idx, pos_list, sent_words):
     for i in range(w_idx + 1, w_idx + wind + 1):
         if i >= len(pos_list):
             break
-        if pos_list[i] == 'NN' and sent_words[i] not in ILLEGAL_WORDS:
+        if pos_list[i] in SET_NN and sent_words[i] not in ILLEGAL_WORDS:
             widx_list.append(i)
         else:
             break
 
-    if len(widx_list) == 1 and w_idx - 1 > -1 and pos_list[w_idx - 1] == 'JJ' and sent_words[w_idx - 1] in {
-        'white', 'optical', 'digital', 'accessing', 'exposure', 'learning', 'technical', 'zooming',
-        'remote', 'online', 'external', 'manual'
-    }:
-        widx_list.insert(0, w_idx - 1)
+    # if len(widx_list) == 1 and w_idx - 1 > -1 and pos_list[w_idx - 1] == 'JJ' and sent_words[w_idx - 1] in {
+    #     'white', 'optical', 'digital', 'accessing', 'exposure', 'learning', 'technical', 'zooming',
+    #     'remote', 'online', 'external', 'manual'
+    # }:
+    #     widx_list.insert(0, w_idx - 1)
+
+    # if len(widx_list) == 1 and w_idx - 1 > -1 and pos_list[w_idx - 1] in SET_JJ and sent_words[w_idx - 1] not in opinion_words:
+    #     widx_list.insert(0, w_idx - 1)
+    #     print(' '.join([sent_words[i] for i in widx_list]))
 
     phrase = ' '.join([sent_words[i] for i in widx_list])
     # if pos_list[widx_list[-1]] == 'NNS' and phrase.endswith('es'):
     #     print(phrase)
     if pos_list[widx_list[-1]] == 'NNS':
         # pp = phrase
-        if phrase.endswith('ies') and not phrase.endswith('movies'):
-            phrase = phrase[:-3] + 'y'
-        elif phrase.endswith('s'):
-            phrase = phrase[:-1]
+        # if phrase.endswith('ies') and not phrase.endswith('movies'):
+        #     phrase = phrase[:-3] + 'y'
+        # elif phrase.endswith('s'):
+        #     phrase = phrase[:-1]
+        phrase = Singularizer.singularize(phrase)
         # print(phrase, pp)
         # if phrase.endswith('s'):
         #     print(phrase)
@@ -76,6 +93,12 @@ def __find_r11(dep_tags, pos_tags, opinions):
         if reln in SET_MR:
             if w_dep in opinions and __is_word(w_gov) and pos_tags[w_gov_idx] in SET_NN:
                 ao_idx_pairs.add((w_gov_idx, w_dep_idx))
+        if reln in SET_RMR:
+            if w_gov in opinions and __is_word(w_dep) and pos_tags[w_dep_idx] in SET_NN:
+                ao_idx_pairs.add((w_dep_idx, w_gov_idx))
+
+        # if reln == 'csubj' and w_dep in opinions or w_gov in opinions:
+        #     print(gov, dep, ao_idx_pairs)
     return ao_idx_pairs
 
 
@@ -247,25 +270,25 @@ def __proc_sent_based_on_aspect_new(sent, dep_tags, pos_tags, opinions, aspects)
     return aspect_word_idxs
 
 
-def __get_sent_aspects_from_aspect_word_idxs(aspect_word_idxs_dict, sents, pos_tags_list):
+def __get_sent_aspects_from_aspect_word_idxs(aspect_word_idxs_dict, sents, pos_tags_list, opinion_words):
     aspects_dict = dict()
     for i, sent in enumerate(sents):
         sent_words = sent['text'].split(' ')
         aspect_word_idxs = aspect_word_idxs_dict[i]
         aspects_dict[i] = cur_aspects = set()
         for widx in aspect_word_idxs:
-            aspect_phrase = __get_phrase(widx, pos_tags_list[i], sent_words)
+            aspect_phrase = __get_phrase(widx, pos_tags_list[i], sent_words, opinion_words)
             cur_aspects.add(aspect_phrase)
     return aspects_dict
 
 
-def __prune_aspects_new(aspect_word_idxs_dict, sents, pos_tags_list):
+def __prune_aspects_new(aspect_word_idxs_dict, sents, pos_tags_list, opinion_words):
     aspects = list()
     for i, sent in enumerate(sents):
         sent_words = sent['text'].split(' ')
         aspect_word_idxs = aspect_word_idxs_dict[i]
         for widx in aspect_word_idxs:
-            aspect_phrase = __get_phrase(widx, pos_tags_list[i], sent_words)
+            aspect_phrase = __get_phrase(widx, pos_tags_list[i], sent_words, opinion_words)
             aspects.append(aspect_phrase)
     aspect_cnts = Counter(aspects)
 
@@ -363,6 +386,31 @@ def __get_n_true_ao_pairs(sents):
     return true_ao_pairs_cnt
 
 
+def __error_analysis(aspect_words_sys, aspects_dict_sys, sents, dep_tags_list, pos_tags_list):
+    aspect_sent_dict = dict()
+    for i, sent in enumerate(sents):
+        aspect_objs = sent.get('aspects', None)
+        if aspect_objs is None:
+            continue
+        for ao in aspect_objs:
+            cur_aspect = ao['target']
+            sents_tmp = aspect_sent_dict.get(ao['target'], list())
+            if not sents_tmp:
+                aspect_sent_dict[cur_aspect] = sents_tmp
+            sents_tmp.append(i)
+
+    for aspect, aspect_sents in aspect_sent_dict.items():
+        if aspect not in aspect_words_sys:
+            print(aspect)
+            for sent_idx in aspect_sents:
+                print(sent_idx, sents[sent_idx]['text'])
+                sent_apects_sys = aspects_dict_sys.get(sent_idx, None)
+                print(sent_apects_sys)
+                print(dep_tags_list[sent_idx])
+                print(pos_tags_list[sent_idx])
+            print()
+
+
 def __dp_new(sents, dep_tags_list, pos_tags_list, seed_opinions):
     aspect_set_true = __get_true_aspect_word_set(sents)
 
@@ -370,6 +418,8 @@ def __dp_new(sents, dep_tags_list, pos_tags_list, seed_opinions):
     aspects = set()
     hit_cnt, true_ao_pairs_cnt, aspects_sys_cnt = 0, __get_n_true_ao_pairs(sents), 0
     prev_opinion_size, prev_aspect_size = 0, 0
+    aspect_words_sys = set()
+    aspects_dict = None
     while len(opinions) > prev_opinion_size or len(aspects) > prev_aspect_size:
         # print(len(opinions))
         prev_opinion_size, prev_aspect_size = len(opinions), len(aspects)
@@ -386,7 +436,7 @@ def __dp_new(sents, dep_tags_list, pos_tags_list, seed_opinions):
             #     print(pos_tags_list[i])
         # update aspects & opinions
 
-        aspect_word_idxs_dict_pruned1 = __prune_aspects_new(aspect_word_idxs_dict, sents, pos_tags_list)
+        aspect_word_idxs_dict_pruned1 = __prune_aspects_new(aspect_word_idxs_dict, sents, pos_tags_list, seed_opinions)
         # print(ao_pairs_dict[664])
         # print(ao_pairs_dict_pruned[664])
 
@@ -400,18 +450,14 @@ def __dp_new(sents, dep_tags_list, pos_tags_list, seed_opinions):
             aspect_word_idxs = __proc_sent_based_on_aspect_new(
                 sent, dep_tags_list[i], pos_tags_list[i], opinions, aspects)
             aspect_word_idxs_dict2[i] = aspect_word_idxs
-            # if 'better than' in sent['text']:
-            #     print(sent)
-            #     print(opinion_tups_sent)
-            #     print()
 
         aspect_word_idxs_dict_pruned2 = __prune_aspects_new(
-            aspect_word_idxs_dict, sents, pos_tags_list)
+            aspect_word_idxs_dict, sents, pos_tags_list, seed_opinions)
 
         aspect_word_idxs_dict = __merge_aspect_word_idxs_dicts(
             aspect_word_idxs_dict_pruned1, aspect_word_idxs_dict_pruned2)
         aspects_dict = __get_sent_aspects_from_aspect_word_idxs(
-            aspect_word_idxs_dict, sents, pos_tags_list)
+            aspect_word_idxs_dict, sents, pos_tags_list, seed_opinions)
 
         aspects_sys_cnt = 0
         aspect_words_sys = set()
@@ -421,13 +467,13 @@ def __dp_new(sents, dep_tags_list, pos_tags_list, seed_opinions):
                 aspect_words_sys.add(a)
         __get_word_extraction_perf(aspect_set_true, aspect_words_sys)
 
-        print(aspect_set_true)
-        print(aspect_words_sys)
-        for w in aspect_set_true:
-            if w not in aspect_words_sys:
-                print(w, end=', ')
-        print()
-        print()
+        # print(aspect_set_true)
+        # print(aspect_words_sys)
+        # for w in aspect_set_true:
+        #     if w not in aspect_words_sys:
+        #         print(w, end=', ')
+        # print()
+        # print()
 
         hit_cnt = 0
         for i, sent in enumerate(sents):
@@ -439,11 +485,14 @@ def __dp_new(sents, dep_tags_list, pos_tags_list, seed_opinions):
                     if target in targets_true:
                         hit_cnt += 1
 
+        print(aspects_dict[3202])
+
         prec = hit_cnt / aspects_sys_cnt
         recall = hit_cnt / true_ao_pairs_cnt
         f1 = 0 if prec + recall == 0 else 2 * prec * recall / (prec + recall)
         # print('tuples', prec, recall, f1)
     print()
+    __error_analysis(aspect_words_sys, aspects_dict, sents, dep_tags_list, pos_tags_list)
     return hit_cnt, aspects_sys_cnt, true_ao_pairs_cnt
 
 
@@ -457,7 +506,7 @@ def __read_seed_opinions():
                 words.append(line.strip())
         return words
 
-    pos_words = __read_file('d:/data/aspect/huliu04/negative-words.txt')
+    pos_words = __read_file('d:/data/aspect/huliu04/positive-words.txt')
     neg_words = __read_file('d:/data/aspect/huliu04/negative-words.txt')
     return set(pos_words + neg_words)
 
