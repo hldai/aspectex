@@ -1,5 +1,8 @@
 from os.path import join
 
+RAW_WORD_VEC_FILE = 'd:/data/res/GoogleNews-vectors-negative300.bin'
+GOOGLE_NEWS_WORD_VEC_FILE = 'd:/data/res/GoogleNews-vectors-negative300.txt'
+
 DATA_DIR = 'd:/data/aspect/'
 DATA_DIR_HL04 = 'd:/data/aspect/huliu04'
 
