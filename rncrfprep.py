@@ -2,7 +2,7 @@ import numpy as np
 import subprocess
 import pickle
 from obj.deptree import DepTree
-import utils
+from utils import utils
 import config
 
 

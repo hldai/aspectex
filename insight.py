@@ -103,4 +103,31 @@ def __count_adj_phrases():
                     print()
 
 
-__count_adj_phrases()
+def __semeval_rule_insight():
+    train_file = 'd:/data/aspect/semeval14/Laptops_Train.json'
+    test_file = 'd:/data/aspect/semeval14/Laptops_Test_Gold.json'
+    sents_train = utils.load_json_objs(train_file)
+    sents_test = utils.load_json_objs(test_file)
+
+    def __count_terms(sents):
+        cnt_dict = dict()
+        for sent in sents:
+            aspect_terms = sent.get('terms', None)
+            if aspect_terms is not None:
+                for term in aspect_terms:
+                    s = term['term']
+                    cnt = cnt_dict.get(s, 0)
+                    cnt_dict[s] = cnt + 1
+        return cnt_dict
+
+    term_cnts_train = __count_terms(sents_train)
+    term_cnts_test = __count_terms(sents_test)
+    term_cnt_tups = [(t, cnt) for t, cnt in term_cnts_test.items()]
+    term_cnt_tups.sort(key=lambda x: -x[1])
+    for t, cnt in term_cnt_tups:
+        if t not in term_cnts_train:
+            print(t, cnt)
+
+
+# __count_adj_phrases()
+__semeval_rule_insight()

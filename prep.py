@@ -75,4 +75,35 @@ def __process_hl04():
     fout.close()
 
 
-__process_hl04()
+def __sem_eval_to_json(src_file, dst_file):
+    f = open(src_file, encoding='utf-8')
+    text_all = f.read()
+    sents = list()
+    sent_pattern = '<sentence id="(.*?)">\s*<text>(.*?)</text>\s*(.*?)</sentence>'
+    miter = re.finditer(sent_pattern, text_all, re.DOTALL)
+    for m in miter:
+        sent = {'id': m.group(1), 'text': m.group(2)}
+        aspect_terms = list()
+        aspect_term_pattern = '<aspectTerm\s*term="(.*)"\s*polarity="(.*)"\s*from="(\d*)"\s*to="(\d*)"/>'
+        miter_terms = re.finditer(aspect_term_pattern, m.group(3))
+        for m_terms in miter_terms:
+            # print(m_terms.group(1), m_terms.group(2), m_terms.group(3))
+            aspect_terms.append(
+                {'term': m_terms.group(1), 'polarity': m_terms.group(2), 'from': int(m_terms.group(3)),
+                 'to': int(m_terms.group(4))})
+        if aspect_terms:
+            sent['terms'] = aspect_terms
+        sents.append(sent)
+    f.close()
+
+    utils.save_json_objs(sents, dst_file)
+
+
+test_file_xml = 'd:/data/aspect/semeval14/Laptops_Test_Gold.xml'
+test_file_json = 'd:/data/aspect/semeval14/Laptops_Test_Gold.json'
+train_file_xml = 'd:/data/aspect/semeval14/Laptops_Train.xml'
+train_file_json = 'd:/data/aspect/semeval14/Laptops_Train.json'
+
+# __process_hl04()
+# __sem_eval_to_json(test_file_xml, test_file_json)
+# __sem_eval_to_json(train_file_xml, train_file_json)
