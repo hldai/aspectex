@@ -1,5 +1,7 @@
 lib/*
 res/*
+python-crfsuite/
+*.model
 
 # Byte-compiled / optimized / DLL files
 __pycache__/

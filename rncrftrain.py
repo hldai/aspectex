@@ -6,6 +6,7 @@ import rnn.crfpropagation as prop
 # from classify.learn_classifiers import validate
 import pickle
 import time
+import config
 from utils import utils
 from utils.modelutils import filter_incorrect_dep_trees
 
@@ -15,48 +16,29 @@ import pycrfsuite
 from collections import OrderedDict
 
 
-def evaluate(epoch, inst_ind, data, rel_dict, Wv, b, We, vocab, rel_list, d, c, mixed=False):
+def __get_vocab_from_dep_trees(dep_trees):
+    vocab_test = set()
+    trees_test = filter_incorrect_dep_trees(dep_trees)
+    for ind, tree in enumerate(trees_test):
+        nodes = tree.get_word_nodes()
+        for index, node in enumerate(nodes):
+            vocab_test.add(node.word.lower())
+    return vocab_test
+
+
+def evaluate(epoch, inst_ind, trees_test, rel_dict, Wv, b, We, vocab, rel_list, d, c, mixed=False):
     # output labels
     tagger = pycrfsuite.Tagger()
     tagger.open(str(epoch) + str(inst_ind) + 'crf.model')
 
-    # word2vec
-    dic_file = open('util/data_semEval/w2v_sample.txt', 'r')
-    dic = dic_file.readlines()
-
-    dictionary = {}
-
-    for line in dic:
-        word_vector = line.split(",")
-        word = ','.join(word_vector[:len(word_vector) - d - 1])
-
-        vector_list = []
-        for element in word_vector[len(word_vector) - d - 1:len(word_vector) - 1]:
-            vector_list.append(float(element))
-
-        vector = np.asarray(vector_list)
-        dictionary[word] = vector
-
-    test_trees = data
-
-    bad_trees = []
-    for ind, tree in enumerate(test_trees):
-        if tree.get(0).is_word == 0:
-            # print tree.get_words()
-            bad_trees.append(ind)
-            continue
-
-    # print 'removed', len(bad_trees)
-    for ind in bad_trees[::-1]:
-        test_trees = np.delete(test_trees, ind)
+    vocab_test = __get_vocab_from_dep_trees(trees_test)
+    word_vecs_dict = utils.load_word_vec_file(config.GNEWS_LIGHT_WORD_VEC_FILE, vocab_test)
 
     true = []
     predict = []
-
     count = 0
-
-    for ind, tree in enumerate(test_trees):
-        nodes = tree.get_nodes()
+    for ind, tree in enumerate(trees_test):
+        nodes = tree.get_word_nodes()
         sent = []
         h_input = np.zeros((len(tree.nodes) - 1, d))
         y_label = np.zeros((len(tree.nodes) - 1,), dtype=int)
@@ -64,11 +46,11 @@ def evaluate(epoch, inst_ind, data, rel_dict, Wv, b, We, vocab, rel_list, d, c, 
         for index, node in enumerate(nodes):
             if node.word.lower() in vocab:
                 node.vec = We[:, node.ind].reshape((d, 1))
-            elif node.word.lower() in dictionary.keys():
+            elif node.word.lower() in word_vecs_dict.keys():
                 if mixed:
-                    node.vec = (dictionary[node.word.lower()].append(2 * np.random.rand(50) - 1)).reshape((d, 1))
+                    node.vec = (word_vecs_dict[node.word.lower()].append(2 * np.random.rand(50) - 1)).reshape((d, 1))
                 else:
-                    node.vec = dictionary[node.word.lower()].reshape(d, 1)
+                    node.vec = word_vecs_dict[node.word.lower()].reshape(d, 1)
             else:
                 node.vec = np.random.rand(d, 1)
                 count += 1
@@ -79,14 +61,14 @@ def evaluate(epoch, inst_ind, data, rel_dict, Wv, b, We, vocab, rel_list, d, c, 
 
             if index != 0:
 
-                if tree.get(index).is_word == 0:
+                if tree.get_node(index).is_word == 0:
                     y_label[index - 1] = 0
                     sent.append(None)
 
                     for i in range(d):
                         h_input[index - 1][i] = 0
                 else:
-                    y_label[index - 1] = node.trueLabel
+                    y_label[index - 1] = node.true_label
                     sent.append(node.word)
 
                     for i in range(d):
@@ -243,16 +225,13 @@ from memory_profiler import profile
 # boolean determines whether to save the crf model
 def par_objective(epoch, data, rel_dict, Wv, b, L, Wcrf, dim, n_classes, len_voc,
                   rel_list, lambdas, trainer, num, eta, dec, boolean):
-    # initialize gradients
-    grads = utils.init_crfrnn_grads(rel_list, dim, n_classes, len_voc)
-
     error_sum = np.zeros(1)
     num_nodes = 0
     tree_size = 0
 
     # compute for one instance
     tree = data
-    nodes = tree.get_nodes()
+    nodes = tree.get_word_nodes()
 
     for node in nodes:
         node.vec = L[:, node.ind].reshape((dim, 1))
@@ -270,7 +249,7 @@ def par_objective(epoch, data, rel_dict, Wv, b, L, Wcrf, dim, n_classes, len_voc
         if ind != 0:
 
             # if current token is punctuation
-            if tree.get(ind).is_word == 0:
+            if tree.get_node(ind).is_word == 0:
                 y_label[ind - 1] = 0
                 sent.append(None)
 
@@ -278,7 +257,7 @@ def par_objective(epoch, data, rel_dict, Wv, b, L, Wcrf, dim, n_classes, len_voc
                     h_input[ind - 1][i] = 0
             # if current token is a word
             else:
-                y_label[ind - 1] = node.trueLabel
+                y_label[ind - 1] = node.true_label
                 sent.append(node.word)
 
                 for i in range(dim):
@@ -312,23 +291,25 @@ def par_objective(epoch, data, rel_dict, Wv, b, L, Wcrf, dim, n_classes, len_voc
 
     for ind, node in enumerate(tree.nodes):
         if ind != 0:
-            if tree.get(ind).is_word != 0:
+            if tree.get_node(ind).is_word != 0:
                 node.grad_h = grad_h[ind - 1][1: dim + 1].reshape(dim, 1)
                 # check if the sentence only contains one word
                 if len(tree.nodes) > 2:
                     if ind == 1:
-                        if tree.get(ind + 1).is_word != 0:
+                        if tree.get_node(ind + 1).is_word != 0:
                             node.grad_h += grad_h[ind][2 * dim + 2: 3 * dim + 2].reshape(dim, 1)
 
                     elif ind < len(sent) - 1:
-                        if tree.get(ind + 1).is_word != 0:
+                        if tree.get_node(ind + 1).is_word != 0:
                             node.grad_h += grad_h[ind][2 * dim + 2: 3 * dim + 2].reshape(dim, 1)
-                        if tree.get(ind - 1).is_word != 0:
+                        if tree.get_node(ind - 1).is_word != 0:
                             node.grad_h += grad_h[ind - 2][dim + 2: 2 * dim + 2].reshape(dim, 1)
                     else:
-                        if tree.get(ind - 1).is_word != 0:
+                        if tree.get_node(ind - 1).is_word != 0:
                             node.grad_h += grad_h[ind - 2][dim + 2: 2 * dim + 2].reshape(dim, 1)
 
+    # initialize gradients
+    grads = utils.init_crfrnn_grads(rel_list, dim, n_classes, len_voc)
     prop.backprop([rel_dict, Wv, b], tree, dim, n_classes, len_voc, grads)
     lambda_W, lambda_L = lambdas
 
@@ -356,7 +337,7 @@ def par_objective(epoch, data, rel_dict, Wv, b, L, Wcrf, dim, n_classes, len_voc
 # create new function for initializating trainer for CRF (feature map)
 def trainer_initialization(m_trainer, trees, params, d, c, len_voc, rel_list):
     param_list = utils.unroll_params_noWcrf(params, d, c, len_voc, rel_list)
-    (rel_dict, Wv, b, L) = param_list
+    rel_dict, Wv, b, L = param_list
 
     for tree in trees:
         nodes = tree.get_word_nodes()
@@ -440,7 +421,7 @@ def __training_epoch(t, Wv, We, Wcrf, b):
 
         lstring = 'epoch: ' + str(epoch) + ' inst_ind: ' + str(inst_ind) \
                   + ' error, ' + str(err) + ' time = ' + str(time.time() - now) + ' sec'
-        print(lstring)
+        # print(lstring)
 
         epoch_error += err
 
@@ -544,6 +525,7 @@ if __name__ == '__main__':
         'max_iterations': 1  # stop earlier
     })
 
+    # print(Wcrf)
     trainer = trainer_initialization(trainer, trees_train, r_noWcrf, word_vec_dim, n_classes, len(vocab), rel_list)
     trainer.train(model='', weight=Wcrf, delta=delta_features, inst=0, eta=0, decay=0, loss=crf_loss, check=0)
 
@@ -556,5 +538,3 @@ if __name__ == '__main__':
         min_error = float('inf')
         for epoch in range(0, n_epoch):
             __training_epoch(t, Wv, We, Wcrf, b)
-
-    # paramfile.close()

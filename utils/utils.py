@@ -2,6 +2,20 @@ import json
 import numpy as np
 
 
+def load_word_vec_file(filename, vocab):
+    word_vecs = dict()
+    f = open(filename, encoding='utf-8')
+    for line in f:
+        vals = line.strip().split(' ')
+        word = vals[0]
+        if word not in vocab:
+            continue
+
+        word_vecs[word] = np.asarray([float(v) for v in vals[1:]], np.float32)
+    f.close()
+    return word_vecs
+
+
 def read_lines(filename):
     with open(filename, encoding='utf-8') as f:
         lines = [line.strip() for line in f]
@@ -107,7 +121,7 @@ def init_crfrnn_grads(rel_list, d, c, len_voc):
     for rel in rel_list:
         rel_grads[rel] = np.zeros((d, d))
 
-    return rel_grads, np.zeros((d, d)), np.zeros((d, 1)), np.zeros((d, len_voc))
+    return [rel_grads, np.zeros((d, d)), np.zeros((d, 1)), np.zeros((d, len_voc))]
 
 
 def roll_params_noWcrf(params, rel_list):

@@ -2,7 +2,7 @@ import os
 import re
 import json
 import config
-import utils
+from utils import utils
 
 N_HEADER_LINES = 11
 TAG_STRS = ['u', 'p', 's', 'cs', 'cc']

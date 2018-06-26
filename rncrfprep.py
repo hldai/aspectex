@@ -201,6 +201,38 @@ def __proc_word_vecs():
         pickle.dump(word_vec_matrix, fout, pickle.HIGHEST_PROTOCOL)
 
 
+def __word_legal(w):
+    if not w.islower():
+        return False
+    for ch in w:
+        if ch in {'_', '#', '/', '.', '@'}:
+            return False
+    return True
+
+
+def __filter_word_vecs():
+    wcnt = 0
+    f = open(config.GOOGLE_NEWS_WORD_VEC_FILE, encoding='utf-8')
+    fout = open(config.GNEWS_LIGHT_WORD_VEC_FILE, 'w', encoding='utf-8')
+    for i, line in enumerate(f):
+        if i % 100000 == 0:
+            print(i, wcnt)
+        # if i > 100000:
+        #     break
+
+        vals = line.split(' ')
+        word = vals[0]
+        if not __word_legal(word):
+            # print(word)
+            continue
+        fout.write(line)
+
+        wcnt += 1
+    f.close()
+    fout.close()
+    print(wcnt)
+
+
 stanford_nlp_lib_file = 'd:/lib/stanford-corenlp-full-2017-06-09/stanford-corenlp-3.8.0.jar'
 stanford_nlp_en_parse_file = 'd:/lib/stanford-models/englishPCFG.ser.gz'
 
@@ -219,4 +251,5 @@ word_vecs_file = 'd:/data/aspect/rncrf/word_vecs.pkl'
 
 # __get_pretrained_word_vecs()
 
-__proc_word_vecs()
+# __filter_word_vecs()
+# __proc_word_vecs()

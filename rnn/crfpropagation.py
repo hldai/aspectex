@@ -97,8 +97,8 @@ def backprop(params, tree, d, c, len_voc, grads, mixed = False):
     (rel_dict, Wv, b) = params
 
     # start with root's immediate kid (for same reason as forward prop)
-    ind, rel = tree.get(0).kids[0]
-    root = tree.get(ind)
+    ind, rel = tree.get_node(0).kids[0]
+    root = tree.get_node(ind)
 
     # operate on tuples of the form (node, parent delta)
     to_do = [(root, zeros((d, 1)))]
@@ -117,7 +117,7 @@ def backprop(params, tree, d, c, len_voc, grads, mixed = False):
         # internal node
         if len(node.kids) > 0:
             for ind, rel in node.kids:
-                curr_kid = tree.get(ind)
+                curr_kid = tree.get_node(ind)
                 #W_rel
                 grads[0][rel] += node.delta_full.dot(curr_kid.p.T)
                 to_do.append( (curr_kid, rel_dict[rel].T.dot(node.delta_full) ) )
