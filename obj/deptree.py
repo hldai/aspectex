@@ -1,6 +1,7 @@
 class DepNode:
     def __init__(self, word):
         self.label_error = 0
+        self.word = None
         if word is not None:
             self.word = word
             self.kids = list()
@@ -11,6 +12,12 @@ class DepNode:
             self.ind = -1
         else:
             self.is_word = 0
+
+    def all_kids_finished(self, tree):
+        for ind, rel in self.kids:
+            if tree.get_node(ind).finished == 0:
+                return False
+        return True
 
 
 class DepTree:
@@ -45,3 +52,6 @@ class DepTree:
             sum_err += node.label_error
 
         return sum_err
+
+    def disp(self):
+        print(' '.join([n.word for n in self.nodes if n.is_word]))

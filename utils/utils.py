@@ -96,19 +96,19 @@ def unroll_params(arr, d, c, len_voc, rel_list):
     ind = 0
 
     for r in rel_list:
-        rel_dict[r] = arr[ind: ind + mat_size].reshape( (d, d) )
+        rel_dict[r] = arr[ind: ind + mat_size].reshape((d, d))
         ind += mat_size
 
-    Wv = arr[ind : ind + mat_size].reshape( (d, d) )
+    Wv = arr[ind : ind + mat_size].reshape((d, d))
     ind += mat_size
 
-    Wc = arr[ind : ind + mat_class_size].reshape( (c, d) )
+    Wc = arr[ind : ind + mat_class_size].reshape((c, d))
     ind += mat_class_size
 
-    b = arr[ind : ind + d].reshape( (d, 1) )
+    b = arr[ind : ind + d].reshape((d, 1))
     ind += d
 
-    b_c = arr[ind : ind + c].reshape( (c, 1) )
+    b_c = arr[ind : ind + c].reshape((c, 1))
     ind += c
 
     We = arr[ind : ind + len_voc * d].reshape( (d, len_voc))
@@ -136,13 +136,13 @@ def unroll_params_noWcrf(arr, d, c, len_voc, rel_list):
     ind = 0
 
     for r in rel_list:
-        rel_dict[r] = arr[ind: ind + mat_size].reshape( (d, d) )
+        rel_dict[r] = arr[ind: ind + mat_size].reshape((d, d))
         ind += mat_size
 
-    Wv = arr[ind : ind + mat_size].reshape( (d, d) )
+    Wv = arr[ind : ind + mat_size].reshape((d, d))
     ind += mat_size
 
-    b = arr[ind : ind + d].reshape( (d, 1) )
+    b = arr[ind : ind + d].reshape((d, 1))
     ind += d
 
     We = arr[ind : ind + len_voc * d].reshape( (d, len_voc))

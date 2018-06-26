@@ -26,10 +26,11 @@ def __get_vocab_from_dep_trees(dep_trees):
     return vocab_test
 
 
-def evaluate(epoch, inst_ind, trees_test, rel_dict, Wv, b, We, vocab, rel_list, d, c, mixed=False):
+def evaluate(inst_ind, trees_test, rel_dict, Wv, b, We, vocab, rel_list, d, c, mixed=False):
     # output labels
     tagger = pycrfsuite.Tagger()
-    tagger.open(str(epoch) + str(inst_ind) + 'crf.model')
+    # tagger.open(str(epoch) + str(inst_ind) + 'crf.model')
+    tagger.open('crfmodel.bin')
 
     vocab_test = __get_vocab_from_dep_trees(trees_test)
     word_vecs_dict = utils.load_word_vec_file(config.GNEWS_LIGHT_WORD_VEC_FILE, vocab_test)
@@ -57,22 +58,22 @@ def evaluate(epoch, inst_ind, trees_test, rel_dict, Wv, b, We, vocab, rel_list, 
 
         prop.forward_prop([rel_dict, Wv, b, We], tree, d, c, labels=False)
 
-        for index, node in enumerate(tree.nodes):
+        for idx, node in enumerate(tree.nodes):
+            if idx == 0:
+                continue
 
-            if index != 0:
+            if tree.get_node(idx).is_word == 0:
+                y_label[idx - 1] = 0
+                sent.append(None)
 
-                if tree.get_node(index).is_word == 0:
-                    y_label[index - 1] = 0
-                    sent.append(None)
+                for i in range(d):
+                    h_input[idx - 1][i] = 0
+            else:
+                y_label[idx - 1] = node.true_label
+                sent.append(node.word)
 
-                    for i in range(d):
-                        h_input[index - 1][i] = 0
-                else:
-                    y_label[index - 1] = node.true_label
-                    sent.append(node.word)
-
-                    for i in range(d):
-                        h_input[index - 1][i] = node.p[i]
+                for i in range(d):
+                    h_input[idx - 1][i] = node.p[i]
 
         crf_sent_features = sent2features(d, sent, h_input)
         for item in y_label:
@@ -80,6 +81,9 @@ def evaluate(epoch, inst_ind, trees_test, rel_dict, Wv, b, We, vocab, rel_list, 
 
         # predict
         prediction = tagger.tag(crf_sent_features)
+        tree.disp()
+        print(prediction)
+        exit()
         for label in prediction:
             predict.append(label)
 
@@ -224,7 +228,7 @@ from memory_profiler import profile
 # compute gradients and updates
 # boolean determines whether to save the crf model
 def par_objective(epoch, data, rel_dict, Wv, b, L, Wcrf, dim, n_classes, len_voc,
-                  rel_list, lambdas, trainer, num, eta, dec, boolean):
+                  rel_list, lambdas, trainer, num, eta, dec, save_model):
     error_sum = np.zeros(1)
     num_nodes = 0
     tree_size = 0
@@ -274,8 +278,10 @@ def par_objective(epoch, data, rel_dict, Wv, b, L, Wcrf, dim, n_classes, len_voc
     delta_features = np.zeros(d_size)
 
     # check if we need to store the model
-    if boolean == True:
-        trainer.train(model=str(epoch) + str(num) + 'crf.model', weight=Wcrf, delta=delta_features, inst=num, eta=eta,
+    if save_model:
+        # trainer.train(model=str(epoch) + str(num) + 'crf.model', weight=Wcrf, delta=delta_features, inst=num, eta=eta,
+        #               decay=dec, loss=error_sum, check=1)
+        trainer.train('crfmodel.bin', weight=Wcrf, delta=delta_features, inst=num, eta=eta,
                       decay=dec, loss=error_sum, check=1)
     else:
         trainer.train(model='', weight=Wcrf, delta=delta_features, inst=num, eta=eta, decay=dec, loss=error_sum,
@@ -386,26 +392,26 @@ def __training_epoch(t, Wv, We, Wcrf, b):
 
         t += 1.
         eta = 1 / (lamb * (t_0 + t))
-        decay = decay * (1.0 - eta * lamb)
+        decay *= (1.0 - eta * lamb)
 
         # check if it is the end and need to store the model
         if inst_ind % 1000 == 0:
             if use_mixed_word_vec:
                 err, gradient, Wcrf = par_objective(
-                    epoch, inst, rel_dict, Wv, b, We, Wcrf, word_vec_dim + train_vec_len, n_classes, len(vocab),
+                    epoch, inst, rel_Wr_dict, Wv, b, We, Wcrf, word_vec_dim + train_vec_len, n_classes, len(vocab),
                     rel_list, lambdas, trainer, inst_ind, eta, decay, True)
             else:
                 err, gradient, Wcrf = par_objective(
-                    epoch, inst, rel_dict, Wv, b, We, Wcrf, word_vec_dim, n_classes, len(vocab),
+                    epoch, inst, rel_Wr_dict, Wv, b, We, Wcrf, word_vec_dim, n_classes, len(vocab),
                     rel_list, lambdas, trainer, inst_ind, eta, decay, True)
         else:
             if use_mixed_word_vec:
-                err, gradient, Wcrf = par_objective(epoch, inst, rel_dict, Wv, b, We, Wcrf,
+                err, gradient, Wcrf = par_objective(epoch, inst, rel_Wr_dict, Wv, b, We, Wcrf,
                                                     word_vec_dim + train_vec_len, n_classes, len(vocab),
                                                     rel_list, lambdas, trainer, inst_ind, eta, decay, False)
             else:
                 err, gradient, Wcrf = par_objective(
-                    epoch, inst, rel_dict, Wv, b, We, Wcrf, word_vec_dim, n_classes, len(vocab), rel_list,
+                    epoch, inst, rel_Wr_dict, Wv, b, We, Wcrf, word_vec_dim, n_classes, len(vocab), rel_list,
                     lambdas, trainer, inst_ind, eta, decay, False)
                 # gc.collect()
 
@@ -414,7 +420,7 @@ def __training_epoch(t, Wv, We, Wcrf, b):
         gradient = utils.unroll_params_noWcrf(update, word_vec_dim, n_classes, len(vocab), rel_list)
 
         for rel in rel_list:
-            rel_dict[rel] -= gradient[0][rel]
+            rel_Wr_dict[rel] -= gradient[0][rel]
         Wv -= gradient[1]
         b -= gradient[2]
         We -= gradient[3]
@@ -426,10 +432,10 @@ def __training_epoch(t, Wv, We, Wcrf, b):
         epoch_error += err
 
         if inst_ind % 1000 == 0:
-            evaluate(epoch, inst_ind, trees_test, rel_dict, Wv, b, We, vocab, rel_list,
+            evaluate(inst_ind, trees_test, rel_Wr_dict, Wv, b, We, vocab, rel_list,
                      word_vec_dim, n_classes, mixed=False)
 
-    Wcrf = Wcrf * decay
+    Wcrf *= decay
     # done with epoch
     print('done with epoch ', epoch, ' epoch error = ', epoch_error, ' min error = ', min_error)
     lstring = 'done with epoch ' + str(epoch) + ' epoch error = ' + str(epoch_error) \
@@ -485,16 +491,15 @@ if __name__ == '__main__':
 
     # import pre-trained model parameters
     with open(deprnn_params_file, 'rb') as f:
-        params, vocab, rel_list = pickle.load(f)
-    rel_dict, Wv, Wc, b, b_c, We = params
+        params_train, vocab, rel_list = pickle.load(f)
+    rel_Wr_dict, Wv, Wc, b, b_c, We = params_train
 
     word_vec_dim, n_words = We.shape
     lambdas = [lamb_W, lamb_We]
 
     print('number of training sentences:', len(trees_train))
-    # print 'number of validation sentences:', len(val_trees)
+    # print('number of validation sentences:', len(val_trees))
     print('number of dependency relations:', len(rel_list))
-    # number of classes
     print('number of classes:', n_classes)
 
     trees_train = filter_incorrect_dep_trees(trees_train)
@@ -508,7 +513,7 @@ if __name__ == '__main__':
     delta_features = np.zeros(3000)
 
     # r is 1-D param vector
-    r_noWcrf = utils.roll_params_noWcrf((rel_dict, Wv, b, We), rel_list)
+    r_noWcrf = utils.roll_params_noWcrf((rel_Wr_dict, Wv, b, We), rel_list)
 
     dim = r_noWcrf.shape[0]
     print('parameter vector dimensionality:', dim)
@@ -516,7 +521,7 @@ if __name__ == '__main__':
     crf_loss = np.zeros(1)
 
     # minibatch adagrad training
-    ag = Adagrad(r_noWcrf.shape)
+    ag = Adagrad(r_noWcrf.shape[0])
 
     # initialize trainer object for CRF
     trainer = pycrfsuite.Trainer(algorithm='l2sgd', verbose=False)
@@ -525,7 +530,6 @@ if __name__ == '__main__':
         'max_iterations': 1  # stop earlier
     })
 
-    # print(Wcrf)
     trainer = trainer_initialization(trainer, trees_train, r_noWcrf, word_vec_dim, n_classes, len(vocab), rel_list)
     trainer.train(model='', weight=Wcrf, delta=delta_features, inst=0, eta=0, decay=0, loss=crf_loss, check=0)
 

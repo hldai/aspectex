@@ -22,7 +22,6 @@ def der_tanh(x):
 
 
 def forward_prop(params, tree, d, c, labels=True):
-
     tree.reset_finished()
 
     to_do = tree.get_word_nodes()
