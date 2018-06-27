@@ -26,7 +26,23 @@ def __get_vocab_from_dep_trees(dep_trees):
     return vocab_test
 
 
-def evaluate(inst_ind, trees_test, rel_dict, Wv, b, We, vocab, rel_list, d, c, mixed=False):
+def __get_aspect_terms_from_labeled(sent_tree, y_pred):
+    words = [n.word for n in sent_tree.nodes[1:] if n.is_word]
+    phrases = list()
+    i = 0
+    while i < len(y_pred):
+        yi = y_pred[i]
+        if yi != '1':
+            i += 1
+            continue
+        while i + 1 < len(y_pred) and y_pred[i + 1] == '2':
+            i += 1
+        phrases.append(' '.join(words[i:i + 1]))
+        i += 1
+    return phrases
+
+
+def evaluate(inst_ind, trees_test, rel_dict, Wv, b, We, vocab, rel_list, d, c, aspect_terms_true, mixed=False):
     # output labels
     tagger = pycrfsuite.Tagger()
     # tagger.open(str(epoch) + str(inst_ind) + 'crf.model')
@@ -35,8 +51,8 @@ def evaluate(inst_ind, trees_test, rel_dict, Wv, b, We, vocab, rel_list, d, c, m
     vocab_test = __get_vocab_from_dep_trees(trees_test)
     word_vecs_dict = utils.load_word_vec_file(config.GNEWS_LIGHT_WORD_VEC_FILE, vocab_test)
 
-    true = []
-    predict = []
+    aspect_words = set()
+    all_y_true, all_y_pred = list(), list()
     count = 0
     for ind, tree in enumerate(trees_test):
         nodes = tree.get_word_nodes()
@@ -77,15 +93,20 @@ def evaluate(inst_ind, trees_test, rel_dict, Wv, b, We, vocab, rel_list, d, c, m
 
         crf_sent_features = sent2features(d, sent, h_input)
         for item in y_label:
-            true.append(str(item))
+            all_y_true.append(str(item))
 
-        # predict
         prediction = tagger.tag(crf_sent_features)
-        tree.disp()
-        print(prediction)
-        exit()
+        cur_aspect_terms = __get_aspect_terms_from_labeled(tree, prediction)
+        for t in cur_aspect_terms:
+            aspect_words.add(t)
+        # tree.disp()
+        # print(prediction)
+        # print(aspect_terms)
         for label in prediction:
-            predict.append(label)
+            all_y_pred.append(label)
+
+    p, r, f1 = utils.set_evaluate(aspect_terms_true, aspect_words)
+    print(p, r, f1)
 
 
 # convert pos tag to one-hot vector
@@ -383,7 +404,7 @@ def trainer_initialization(m_trainer, trees, params, d, c, len_voc, rel_list):
     return m_trainer
 
 
-def __training_epoch(t, Wv, We, Wcrf, b):
+def __training_epoch(t, Wv, We, Wcrf, b, aspect_terms_true):
     decay = 1.
     epoch_error = 0.0
 
@@ -433,7 +454,7 @@ def __training_epoch(t, Wv, We, Wcrf, b):
 
         if inst_ind % 1000 == 0:
             evaluate(inst_ind, trees_test, rel_Wr_dict, Wv, b, We, vocab, rel_list,
-                     word_vec_dim, n_classes, mixed=False)
+                     word_vec_dim, n_classes, aspect_terms_true, mixed=False)
 
     Wcrf *= decay
     # done with epoch
@@ -461,6 +482,16 @@ def __training_epoch(t, Wv, We, Wcrf, b):
     '''
 
 
+def __get_apects_true(sents):
+    aspect_terms = set()
+    for s in sents:
+        terms = s.get('terms', None)
+        if terms is not None:
+            for t in terms:
+                aspect_terms.add(t)
+    return aspect_terms
+
+
 # train and save model
 if __name__ == '__main__':
     # parser.add_argument('-agr', '--adagrad_reset', help='reset sum of squared gradients after this many\
@@ -472,6 +503,7 @@ if __name__ == '__main__':
     # parser.add_argument('-o', '--output', help='desired location of output model', \
     #                     default='final_model/final_params_sample')
 
+    sents_file = 'd:/data/aspect/rncrf/sample_sents.json'
     labeled_input_file = 'd:/data/aspect/rncrf/labeled_input.pkl'
     word_vecs_file = 'd:/data/aspect/rncrf/word_vecs.pkl'
     deprnn_params_file = 'd:/data/aspect/rncrf/deprnn-params.pkl'
@@ -487,7 +519,11 @@ if __name__ == '__main__':
     with open(labeled_input_file, 'rb') as f:
         _, _, trees = pickle.load(f)
 
-    trees_train, trees_test = trees[:75], trees[75:]
+    n_train = 75
+    trees_train, trees_test = trees[:n_train], trees[n_train:]
+
+    sents = utils.load_json_objs(sents_file)
+    aspect_terms_true = __get_apects_true(sents[n_train:])
 
     # import pre-trained model parameters
     with open(deprnn_params_file, 'rb') as f:
@@ -541,4 +577,4 @@ if __name__ == '__main__':
     for tdata in [trees_train]:
         min_error = float('inf')
         for epoch in range(0, n_epoch):
-            __training_epoch(t, Wv, We, Wcrf, b)
+            __training_epoch(t, Wv, We, Wcrf, b, aspect_terms_true)

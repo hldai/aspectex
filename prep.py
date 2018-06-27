@@ -75,24 +75,80 @@ def __process_hl04():
     fout.close()
 
 
-def __sem_eval_to_json(src_file, dst_file):
-    f = open(src_file, encoding='utf-8')
+def __read_opinions_file(filename):
+    opinions_sents = list()
+    f = open(filename, encoding='utf-8')
+    for line in f:
+        line = line.strip()
+        if line == 'NIL':
+            opinions_sents.append(None)
+            continue
+
+        vals = line.split(',')
+        terms = list()
+        for v in vals:
+            v = v.strip()
+            term = v[:-2].strip()
+            polarity = v[-2:]
+            terms.append(term)
+        opinions_sents.append(terms)
+    f.close()
+    return opinions_sents
+
+
+def __process_raw_sem_eval_data(xml_file, opinions_file, dst_sents_file, dst_sents_text_file):
+    opinions_sents = __read_opinions_file(opinions_file)
+
+    f = open(xml_file, encoding='utf-8')
     text_all = f.read()
     sents = list()
     sent_pattern = '<sentence id="(.*?)">\s*<text>(.*?)</text>\s*(.*?)</sentence>'
     miter = re.finditer(sent_pattern, text_all, re.DOTALL)
-    for m in miter:
+    for i, m in enumerate(miter):
         sent = {'id': m.group(1), 'text': m.group(2)}
         aspect_terms = list()
         aspect_term_pattern = '<aspectTerm\s*term="(.*)"\s*polarity="(.*)"\s*from="(\d*)"\s*to="(\d*)"/>'
         miter_terms = re.finditer(aspect_term_pattern, m.group(3))
         for m_terms in miter_terms:
             # print(m_terms.group(1), m_terms.group(2), m_terms.group(3))
+            # aspect_terms.append(
+            #     {'term': m_terms.group(1), 'polarity': m_terms.group(2), 'from': int(m_terms.group(3)),
+            #      'to': int(m_terms.group(4))})
             aspect_terms.append(
-                {'term': m_terms.group(1), 'polarity': m_terms.group(2), 'from': int(m_terms.group(3)),
-                 'to': int(m_terms.group(4))})
+                {'term': m_terms.group(1), 'polarity': m_terms.group(2), 'span': (
+                    int(m_terms.group(3)), int(m_terms.group(4)))})
         if aspect_terms:
             sent['terms'] = aspect_terms
+        if opinions_sents[i] is not None:
+            sent['opinions'] = opinions_sents[i]
+        sents.append(sent)
+    f.close()
+
+    utils.save_json_objs(sents, dst_sents_file)
+    with open(dst_sents_text_file, 'w', encoding='utf-8') as fout:
+        for sent in sents:
+            fout.write('{}\n'.format(sent['text']))
+
+
+def __rncrf_sample_to_json():
+    sent_text_file = 'd:/data/aspect/rncrf/sample.txt'
+    aspect_terms_file = 'd:/data/aspect/rncrf/aspectTerm_sample.txt'
+    dst_file = 'd:/data/aspect/rncrf/sample_sents.json'
+
+    with open(sent_text_file, encoding='utf-8') as f:
+        sent_texts = [line.strip() for line in f]
+
+    sents = list()
+    f = open(aspect_terms_file, encoding='utf-8')
+    for i, line in enumerate(f):
+        line = line.strip()
+        terms = None
+        if line != 'NULL':
+            terms = line.split(',')
+            terms = [t.lower() for t in terms]
+        sent = {'text': sent_texts[i]}
+        if terms is not None:
+            sent['terms'] = terms
         sents.append(sent)
     f.close()
 
@@ -105,5 +161,10 @@ train_file_xml = 'd:/data/aspect/semeval14/Laptops_Train.xml'
 train_file_json = 'd:/data/aspect/semeval14/Laptops_Train.json'
 
 # __process_hl04()
+# __rncrf_sample_to_json()
 # __sem_eval_to_json(test_file_xml, test_file_json)
 # __sem_eval_to_json(train_file_xml, train_file_json)
+# __process_raw_sem_eval_data(config.SE14_LAPTOP_TRAIN_SENTS_XML_FILE, config.SE14_LAPTOP_TRAIN_OPINIONS_FILE,
+#                             config.SE14_LAPTOP_TRAIN_SENTS_FILE, config.SE14_LAPTOP_TRAIN_SENT_TEXTS_FILE)
+# __process_raw_sem_eval_data(config.SE14_LAPTOP_TEST_SENTS_XML_FILE, config.SE14_LAPTOP_TEST_OPINIONS_FILE,
+#                             config.SE14_LAPTOP_TEST_SENTS_FILE, config.SE14_LAPTOP_TEST_SENT_TEXTS_FILE)

@@ -59,7 +59,7 @@ def __get_max_word_index(dep_tups):
     return max_ind
 
 
-def __label_opinion_nodes(labeled_sent, nodes, tree):
+def __label_nodes_with_opinions_sample(labeled_sent, nodes, tree):
     if '##' not in labeled_sent:
         return
 
@@ -67,32 +67,53 @@ def __label_opinion_nodes(labeled_sent, nodes, tree):
     opinions = opinions.split(',')
     # print(opinions)
     for opinion in opinions:
-        op_words = opinion.split()[:-1]
+        opinion_words = opinion.split()[:-1]
         # print(op_words)
-        if len(op_words) == 1:
+        if len(opinion_words) == 1:
             for ind, term in enumerate(nodes):
-                if term is not None and term == op_words[0] and tree.get_node(ind).true_label == 0:
+                if term is not None and term == opinion_words[0] and tree.get_node(ind).true_label == 0:
                     tree.get_node(ind).true_label = 3
-        elif len(op_words) > 1:
+        elif len(opinion_words) > 1:
             for ind, term in enumerate(nodes):
                 if term is None:
                     continue
-                if term == op_words[0] and ind < len(
-                        nodes) - 1 and nodes[ind + 1] is not None and nodes[ind + 1] == op_words[1]:
+                if term == opinion_words[0] and ind < len(
+                        nodes) - 1 and nodes[ind + 1] is not None and nodes[ind + 1] == opinion_words[1]:
                     tree.get_node(ind).true_label = 3
-                    for i in range(len(op_words) - 1):
-                        if nodes[ind + i + 1] is not None and nodes[ind + i + 1] == op_words[i + 1]:
+                    for i in range(len(opinion_words) - 1):
+                        if nodes[ind + i + 1] is not None and nodes[ind + i + 1] == opinion_words[i + 1]:
                             tree.get_node(ind + i + 1).true_label = 4
 
 
-def __label_aspect_nodes(aspect_term, nodes, tree):
-    if aspect_term == 'NIL':
-        return
+def __label_nodes_with_opinions(nodes, tree, opinion_terms):
+    # print(opinions)
+    for opinion_term in opinion_terms:
+        opinion_words = opinion_term.split()
+        # print(op_words)
+        if len(opinion_words) == 1:
+            for ind, term in enumerate(nodes):
+                if term is not None and term == opinion_words[0] and tree.get_node(ind).true_label == 0:
+                    tree.get_node(ind).true_label = 3
+        elif len(opinion_words) > 1:
+            for ind, term in enumerate(nodes):
+                if term is None:
+                    continue
+                if term == opinion_words[0] and ind < len(
+                        nodes) - 1 and nodes[ind + 1] is not None and nodes[ind + 1] == opinion_words[1]:
+                    tree.get_node(ind).true_label = 3
+                    for i in range(len(opinion_words) - 1):
+                        if nodes[ind + i + 1] is not None and nodes[ind + i + 1] == opinion_words[i + 1]:
+                            tree.get_node(ind + i + 1).true_label = 4
 
-    aspects = aspect_term.split(',')
+
+def __label_aspect_nodes(aspect_terms, nodes, tree):
+    # if aspect_term == 'NIL':
+    #     return
+    #
+    # aspects = aspect_term.split(',')
 
     # deals with same word but different labels
-    for aspect in aspects:
+    for aspect in aspect_terms:
         aspect = aspect.strip()
         # aspect is a phrase
         if ' ' in aspect:
@@ -113,20 +134,20 @@ def __label_aspect_nodes(aspect_term, nodes, tree):
                     tree.get_node(ind).true_label = 1
 
 
-def __build_tree_obj(dep_parse_file):
+def __build_tree_obj(dep_parse_file, sents_file):
     vocab = list()
     trees = list()
     rel_list = list()
 
-    aspect_words = utils.read_lines(aspect_word_file)
+    sents = utils.load_json_objs(sents_file)
 
     sent_idx = 0
     f = open(dep_parse_file, 'r', encoding='utf-8')
-    f_opinion_sents = open(sent_opinion_file, encoding='utf-8')
     while True:
         dep_tups = __read_sent_dep_tups(f)
         if not dep_tups:
             break
+        # print(dep_tups)
 
         max_ind = __get_max_word_index(dep_tups)
 
@@ -137,9 +158,17 @@ def __build_tree_obj(dep_parse_file):
 
         tree = DepTree(nodes)
 
-        labeled_sent = next(f_opinion_sents).strip()
-        __label_opinion_nodes(labeled_sent, nodes, tree)
-        __label_aspect_nodes(aspect_words[sent_idx], nodes, tree)
+        # labeled_sent = next(f_opinion_sents).strip()
+        # __label_opinion_nodes(labeled_sent, nodes, tree)
+        sent = sents[sent_idx]
+        sent_opinions = sent.get('opinions', None)
+        if sent_opinions:
+            __label_nodes_with_opinions(nodes, tree, sent_opinions)
+        sent_aspects = sent.get('terms', None)
+        if sent_aspects is not None:
+            terms = [a['term'] for a in sent_aspects]
+            __label_aspect_nodes(terms, nodes, tree)
+        # __label_aspect_nodes(aspect_words[sent_idx], nodes, tree)
 
         for rel, gov, dep in dep_tups:
             tree.add_edge(gov[0], dep[0], rel)
@@ -158,7 +187,6 @@ def __build_tree_obj(dep_parse_file):
         sent_idx += 1
 
     f.close()
-    f_opinion_sents.close()
 
     print(len(rel_list), 'relations')
     print(len(vocab), 'words in vocab')
@@ -171,13 +199,13 @@ def __get_pretrained_word_vecs():
     model.save_word2vec_format(config.GOOGLE_NEWS_WORD_VEC_FILE, binary=False)
 
 
-def __proc_word_vecs():
-    with open(labeled_input_file, 'rb') as f:
+def __proc_word_vecs(data_file, dst_file):
+    with open(data_file, 'rb') as f:
         vocab, _, _ = pickle.load(f)
 
     vocab_set = set(vocab)
     word_vec_dict = dict()
-    f = open(config.GOOGLE_NEWS_WORD_VEC_FILE, encoding='utf-8')
+    f = open(config.GNEWS_LIGHT_WORD_VEC_FILE, encoding='utf-8')
     for i, line in enumerate(f):
         if i % 10000 == 0:
             print(i)
@@ -197,7 +225,7 @@ def __proc_word_vecs():
         if vec is not None:
             word_vec_matrix[:, idx] = vec
 
-    with open(word_vecs_file, 'wb') as fout:
+    with open(dst_file, 'wb') as fout:
         pickle.dump(word_vec_matrix, fout, pickle.HIGHEST_PROTOCOL)
 
 
@@ -233,23 +261,50 @@ def __filter_word_vecs():
     print(wcnt)
 
 
+def __gen_data_for_train():
+    __dependency_parse(config.SE14_LAPTOP_TRAIN_SENT_TEXTS_FILE, config.SE14_LAPTOP_TRAIN_DEP_PARSE_FILE)
+    vocab, rel_list, trees = __build_tree_obj(
+        config.SE14_LAPTOP_TRAIN_DEP_PARSE_FILE, config.SE14_LAPTOP_TRAIN_SENTS_FILE)
+    with open(config.SE14_LAPTOP_TRAIN_RNCRF_DATA_FILE, 'wb') as fout:
+        pickle.dump((vocab, rel_list, trees), fout, pickle.HIGHEST_PROTOCOL)
+
+    __proc_word_vecs(config.SE14_LAPTOP_TRAIN_RNCRF_DATA_FILE, config.SE14_LAPTOP_TRAIN_WORD_VECS_FILE)
+
+
+def __gen_data_for_test():
+    __dependency_parse(config.SE14_LAPTOP_TEST_SENT_TEXTS_FILE, config.SE14_LAPTOP_TEST_DEP_PARSE_FILE)
+    vocab, rel_list, trees = __build_tree_obj(
+        config.SE14_LAPTOP_TEST_DEP_PARSE_FILE, config.SE14_LAPTOP_TEST_SENTS_FILE)
+    with open(config.SE14_LAPTOP_TEST_RNCRF_DATA_FILE, 'wb') as fout:
+        pickle.dump((vocab, rel_list, trees), fout, pickle.HIGHEST_PROTOCOL)
+
+
 stanford_nlp_lib_file = 'd:/lib/stanford-corenlp-full-2017-06-09/stanford-corenlp-3.8.0.jar'
 stanford_nlp_en_parse_file = 'd:/lib/stanford-models/englishPCFG.ser.gz'
 
-text_file = 'd:/data/aspect/rncrf/sample.txt'
+# text_file = 'd:/data/aspect/rncrf/sample.txt'
+# aspect_word_file = 'd:/data/aspect/rncrf/aspectTerm_sample.txt'
+# sent_opinion_file = 'd:/data/aspect/rncrf/opinion_sample.txt'
+# dep_parse_file = 'd:/data/aspect/rncrf/raw_parses_sample.txt'
+# labeled_input_file = 'd:/data/aspect/rncrf/labeled_input.pkl'
+# word_vecs_file = 'd:/data/aspect/rncrf/word_vecs.pkl'
+
+sents_file = 'd:/data/aspect/semeval14/Laptops_Train.json'
+sent_texts_file = 'd:/data/aspect/semeval14/Laptops_Train_text.txt'
 aspect_word_file = 'd:/data/aspect/rncrf/aspectTerm_sample.txt'
 sent_opinion_file = 'd:/data/aspect/rncrf/opinion_sample.txt'
 dep_parse_file = 'd:/data/aspect/rncrf/raw_parses_sample.txt'
 labeled_input_file = 'd:/data/aspect/rncrf/labeled_input.pkl'
 word_vecs_file = 'd:/data/aspect/rncrf/word_vecs.pkl'
 
-# __dependency_parse(text_file, dep_parse_file)
+# __get_pretrained_word_vecs()
+# __filter_word_vecs()
 
+# __dependency_parse(sent_texts_file, dep_parse_file)
 # vocab, rel_list, trees = __build_tree_obj(dep_parse_file)
 # with open(labeled_input_file, 'wb') as fout:
 #     pickle.dump((vocab, rel_list, trees), fout, pickle.HIGHEST_PROTOCOL)
-
-# __get_pretrained_word_vecs()
-
-# __filter_word_vecs()
 # __proc_word_vecs()
+
+# __gen_data_for_test()
+# __gen_data_for_train()

@@ -2,6 +2,20 @@ import json
 import numpy as np
 
 
+def set_evaluate(set_true, set_pred):
+    if not set_pred:
+        return 0, 0, 0
+
+    cnt_hit = 0
+    for v in set_true:
+        if v in set_pred:
+            cnt_hit += 1
+    p = cnt_hit / len(set_pred)
+    r = cnt_hit / len(set_true)
+    f1 = 2 * p * r / (p + r)
+    return p, r, f1
+
+
 def load_word_vec_file(filename, vocab):
     word_vecs = dict()
     f = open(filename, encoding='utf-8')

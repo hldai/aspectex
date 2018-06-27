@@ -63,7 +63,7 @@ def forward_prop(params, tree, d, c, labels=True):
 
             # otherwise, compute p at node
             else:
-                kid_sum = zeros( (d, 1) )
+                kid_sum = zeros((d, 1))
                 for ind, rel in curr.kids:
                     curr_kid = tree.get_node(ind)
 

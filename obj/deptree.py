@@ -1,6 +1,7 @@
 class DepNode:
     def __init__(self, word):
         self.label_error = 0
+        self.true_label = None
         self.word = None
         if word is not None:
             self.word = word
