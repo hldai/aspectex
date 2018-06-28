@@ -240,12 +240,6 @@ def sent2features(d, sent, h_input):
     return pycrfsuite.ItemSequence([word2features(d, sent, h_input, i) for i in range(len(sent))])
 
 
-'''
-from memory_profiler import profile
-@profile
-'''
-
-
 # compute gradients and updates
 # boolean determines whether to save the crf model
 def par_objective(epoch, data, rel_dict, Wv, b, L, Wcrf, dim, n_classes, len_voc,
@@ -404,7 +398,7 @@ def trainer_initialization(m_trainer, trees, params, d, c, len_voc, rel_list):
     return m_trainer
 
 
-def __training_epoch(t, Wv, We, Wcrf, b, aspect_terms_true):
+def __training_epoch(t, Wv, We, Wcrf, b, trees_test, aspect_terms_true):
     decay = 1.
     epoch_error = 0.0
 
@@ -488,7 +482,7 @@ def __get_apects_true(sents):
         terms = s.get('terms', None)
         if terms is not None:
             for t in terms:
-                aspect_terms.add(t)
+                aspect_terms.add(t['term'])
     return aspect_terms
 
 
@@ -496,18 +490,19 @@ def __get_apects_true(sents):
 if __name__ == '__main__':
     # parser.add_argument('-agr', '--adagrad_reset', help='reset sum of squared gradients after this many\
     #                      epochs', type=int, default=50)
-    # """
-    # parser.add_argument('-v', '--do_val', help='check performance on dev set after this many\
-    #                      epochs', type=int, default=4)
-    # """
-    # parser.add_argument('-o', '--output', help='desired location of output model', \
-    #                     default='final_model/final_params_sample')
 
-    sents_file = 'd:/data/aspect/rncrf/sample_sents.json'
-    labeled_input_file = 'd:/data/aspect/rncrf/labeled_input.pkl'
-    word_vecs_file = 'd:/data/aspect/rncrf/word_vecs.pkl'
-    deprnn_params_file = 'd:/data/aspect/rncrf/deprnn-params.pkl'
-    dst_params_file = 'd:/data/aspect/rncrf/rncrf-params.pkl'
+    # sents_file = 'd:/data/aspect/rncrf/sample_sents.json'
+    # train_data_file = 'd:/data/aspect/rncrf/labeled_input.pkl'
+    # word_vecs_file = 'd:/data/aspect/rncrf/word_vecs.pkl'
+    # deprnn_params_file = 'd:/data/aspect/rncrf/deprnn-params.pkl'
+    # dst_params_file = 'd:/data/aspect/rncrf/rncrf-params.pkl'
+
+    sents_file = config.SE14_LAPTOP_TEST_SENTS_FILE
+    train_data_file = config.SE14_LAPTOP_TRAIN_RNCRF_DATA_FILE
+    test_data_file = config.SE14_LAPTOP_TEST_RNCRF_DATA_FILE
+    word_vecs_file = config.SE14_LAPTOP_TRAIN_WORD_VECS_FILE
+    pretrain_model_file = config.SE14_LAPTOP_PRE_MODEL_FILE
+    dst_model_file = config.SE14_LAPTOP_MODEL_FILE
 
     n_classes = 5
     lamb_W = 0.0001
@@ -516,17 +511,21 @@ if __name__ == '__main__':
     use_mixed_word_vec = False
     train_vec_len = 50
 
-    with open(labeled_input_file, 'rb') as f:
-        _, _, trees = pickle.load(f)
+    with open(train_data_file, 'rb') as f:
+        _, _, trees_train = pickle.load(f)
+    with open(test_data_file, 'rb') as f:
+        _, _, trees_test = pickle.load(f)
 
     n_train = 75
-    trees_train, trees_test = trees[:n_train], trees[n_train:]
+    # trees_train, trees_test = trees[:n_train], trees[n_train:]
+    # sents = utils.load_json_objs(sents_file)
+    # aspect_terms_true = __get_apects_true(sents[n_train:])
 
     sents = utils.load_json_objs(sents_file)
-    aspect_terms_true = __get_apects_true(sents[n_train:])
+    aspect_terms_true = __get_apects_true(sents)
 
     # import pre-trained model parameters
-    with open(deprnn_params_file, 'rb') as f:
+    with open(pretrain_model_file, 'rb') as f:
         params_train, vocab, rel_list = pickle.load(f)
     rel_Wr_dict, Wv, Wc, b, b_c, We = params_train
 
@@ -577,4 +576,4 @@ if __name__ == '__main__':
     for tdata in [trees_train]:
         min_error = float('inf')
         for epoch in range(0, n_epoch):
-            __training_epoch(t, Wv, We, Wcrf, b, aspect_terms_true)
+            __training_epoch(t, Wv, We, Wcrf, b, trees_test, aspect_terms_true)

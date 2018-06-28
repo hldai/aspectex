@@ -32,3 +32,4 @@ SE14_LAPTOP_TEST_RNCRF_DATA_FILE = join(DATA_DIR_SE14, 'laptops_test_rncrf_data.
 SE14_LAPTOP_TRAIN_RNCRF_DATA_FILE = join(DATA_DIR_SE14, 'laptops_train_rncrf_data.pkl')
 SE14_LAPTOP_TRAIN_WORD_VECS_FILE = join(DATA_DIR_SE14, 'laptops_train_rncrf_word_vecs.pkl')
 SE14_LAPTOP_PRE_MODEL_FILE = join(DATA_DIR_SE14, 'laptops_pretrain_model.pkl')
+SE14_LAPTOP_MODEL_FILE = join(DATA_DIR_SE14, 'laptops_model.pkl')

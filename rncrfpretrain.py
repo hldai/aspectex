@@ -135,8 +135,8 @@ def __proc_batch(trees_batch, use_mixed_word_vec, rel_Wr_dict, word_vec_dim, vec
 def __train(train_data_file, word_vecs_file, dst_model_file):
     seed_i = 12
     n_classes = 5
-    batch_size = 20
-    n_epochs = 10
+    batch_size = 25
+    n_epochs = 5
     vec_len_mixed = 50
     adagrad_reset = 30
     use_mixed_word_vec = False
