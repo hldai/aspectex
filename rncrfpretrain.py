@@ -6,6 +6,7 @@ import rnn.propagation as prop
 from rnn.adagrad import Adagrad
 from utils import utils
 from utils.modelutils import filter_incorrect_dep_trees
+import config
 
 
 def __init_dtrnn_params(word_vec_dim, n_classes, rels):
@@ -131,25 +132,22 @@ def __proc_batch(trees_batch, use_mixed_word_vec, rel_Wr_dict, word_vec_dim, vec
     return err
 
 
-def __train():
-    labeled_input_file = 'd:/data/aspect/rncrf/labeled_input.pkl'
-    word_vecs_file = 'd:/data/aspect/rncrf/word_vecs.pkl'
-    dst_params_file = 'd:/data/aspect/rncrf/deprnn-params.pkl'
-
+def __train(train_data_file, word_vecs_file, dst_model_file):
     seed_i = 12
     n_classes = 5
-    batch_size = 5
+    batch_size = 20
     n_epochs = 10
     vec_len_mixed = 50
+    adagrad_reset = 30
     use_mixed_word_vec = False
     lamb_W, lamb_We, lamb_Wc = 0.001, 0.001, 0.001
     lambs = (lamb_W, lamb_We, lamb_Wc)
 
-    with open(labeled_input_file, 'rb') as f:
-        vocab, rel_list, trees = pickle.load(f)
+    with open(train_data_file, 'rb') as f:
+        vocab, rel_list, trees_train = pickle.load(f)
 
-    trees_train, trees_test = trees[:75], trees[75:]
-    print(len(trees_train), 'train samples', len(trees_test), 'test samples')
+    # trees_train, trees_test = trees[:75], trees[75:]
+    print(len(trees_train), 'train samples')
 
     with open(word_vecs_file, 'rb') as f:
         We_origin = pickle.load(f)
@@ -184,11 +182,19 @@ def __train():
             # )
             # print(log_str)
 
+        # reset adagrad weights
+        if epoch % adagrad_reset == 0 and epoch != 0:
+            ada.reset_weights()
+
         print('epoch={}, err={}, time={}'.format(epoch, epoch_err, time.time() - t))
 
-    with open(dst_params_file, 'wb') as fout:
+    with open(dst_model_file, 'wb') as fout:
         pickle.dump((params_train, vocab, rel_list), fout)
 
 
 if __name__ == '__main__':
-    __train()
+    # data_file = 'd:/data/aspect/rncrf/labeled_input.pkl'
+    # word_vecs_file = 'd:/data/aspect/rncrf/word_vecs.pkl'
+    # dst_params_file = 'd:/data/aspect/rncrf/deprnn-params.pkl'
+    __train(config.SE14_LAPTOP_TRAIN_RNCRF_DATA_FILE, config.SE14_LAPTOP_TRAIN_WORD_VECS_FILE,
+            config.SE14_LAPTOP_PRE_MODEL_FILE)
