@@ -207,7 +207,7 @@ def __build_tree_obj(dep_parse_file, sents_file, vocab=None):
 def __get_pretrained_word_vecs():
     from gensim.models.keyedvectors import KeyedVectors
     model = KeyedVectors.load_word2vec_format(config.RAW_WORD_VEC_FILE, binary=True)
-    model.save_word2vec_format(config.GOOGLE_NEWS_WORD_VEC_FILE, binary=False)
+    model.save_word2vec_format(config.WORD_VEC_FILE, binary=False)
 
 
 def __gen_word_vec_matrix_file(dep_parse_files, dst_file):
@@ -248,7 +248,7 @@ def __proc_word_vecs(data_file, dst_file):
         vocab, _, _ = pickle.load(f)
 
     vocab_set = set(vocab)
-    word_vec_dict = utils.load_word_vec_file(config.GNEWS_LIGHT_WORD_VEC_FILE, vocab_set)
+    word_vec_dict = utils.load_word_vec_file(config.WORD_VEC_FILE, vocab_set)
 
     vec_dim = len(next(iter(word_vec_dict.values())))
     word_vec_matrix = np.zeros((vec_dim, len(vocab)), np.float32)
@@ -273,8 +273,8 @@ def __word_legal(w):
 
 def __filter_word_vecs():
     wcnt = 0
-    f = open(config.GOOGLE_NEWS_WORD_VEC_FILE, encoding='utf-8')
-    fout = open(config.GNEWS_LIGHT_WORD_VEC_FILE, 'w', encoding='utf-8')
+    f = open(config.WORD_VEC_FILE, encoding='utf-8')
+    fout = open(config.LIGHT_WORD_VEC_FILE, 'w', encoding='utf-8')
     for i, line in enumerate(f):
         if i % 100000 == 0:
             print(i, wcnt)
@@ -349,5 +349,5 @@ word_vecs_file = 'd:/data/aspect/rncrf/word_vecs.pkl'
 
 # __gen_word_vec_matrix_file([config.SE14_LAPTOP_TRAIN_DEP_PARSE_FILE, config.SE14_LAPTOP_TEST_DEP_PARSE_FILE],
 #                            config.SE14_LAPTOP_WORD_VECS_FILE)
-# __gen_data_for_train()
+__gen_data_for_train()
 # __gen_data_for_test()

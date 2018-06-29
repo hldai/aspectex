@@ -1,8 +1,12 @@
 from os.path import join
 
-RAW_WORD_VEC_FILE = 'd:/data/res/GoogleNews-vectors-negative300.bin'
-GOOGLE_NEWS_WORD_VEC_FILE = 'd:/data/res/GoogleNews-vectors-negative300.txt'
-GNEWS_LIGHT_WORD_VEC_FILE = 'd:/data/res/GoogleNews-light-vectors-negative300.txt'
+# RAW_WORD_VEC_FILE = 'd:/data/res/GoogleNews-vectors-negative300.bin'
+# GOOGLE_NEWS_WORD_VEC_FILE = 'd:/data/res/GoogleNews-vectors-negative300.txt'
+# GNEWS_LIGHT_WORD_VEC_FILE = 'd:/data/res/GoogleNews-light-vectors-negative300.txt'
+
+RAW_WORD_VEC_FILE = 'd:/data/amazon/electronics-vectors.bin'
+WORD_VEC_FILE = 'd:/data/res/amazon-electronics-vectors.txt'
+LIGHT_WORD_VEC_FILE = 'd:/data/res/amazon-electronics-vectors-light.txt'
 
 DATA_DIR = 'd:/data/aspect/'
 DATA_DIR_HL04 = 'd:/data/aspect/huliu04'
