@@ -5,69 +5,57 @@ import numpy as np
 import rnn.propagation as prop
 from rnn.adagrad import Adagrad
 from utils import utils
-from utils.modelutils import filter_incorrect_dep_trees
+from utils.modelutils import filter_empty_dep_trees
 import config
 
 
-def evaluate(trees_test, rel_dict, Wv, b, We, rel_list, d, c, aspect_terms_true, mixed=False):
-    vocab_test = __get_vocab_from_dep_trees(trees_test)
-    word_vecs_dict = utils.load_word_vec_file(config.GNEWS_LIGHT_WORD_VEC_FILE, vocab_test)
+def __init_fixed_node_word_vecs(trees, word_vecs_dict, mixed=False):
+    word_vec_dim = next(iter(word_vecs_dict.values())).shape[0]
 
+    for ind, tree in enumerate(trees):
+        nodes = tree.get_word_nodes()
+        for index, node in enumerate(nodes):
+            w = node.word.lower()
+            if node.ind > -1:
+                continue
+            vec = word_vecs_dict.get(w, None)
+            if vec is not None:
+                node.vec = vec.reshape(word_vec_dim, 1) if not mixed else (
+                    vec.append(2 * np.random.rand(50) - 1)).reshape((word_vec_dim, 1))
+            else:
+                node.vec = np.random.rand(word_vec_dim, 1)
+
+
+def evaluate(trees_test, rel_Wr_dict, Wv, Wc, b, b_c, We, c, aspect_terms_true, mixed=False):
+    d = We.shape[0]
     aspect_words = set()
     all_y_true, all_y_pred = list(), list()
-    count = 0
     for ind, tree in enumerate(trees_test):
         nodes = tree.get_word_nodes()
-        sent = []
-        h_input = np.zeros((len(tree.nodes) - 1, d))
-        y_label = np.zeros((len(tree.nodes) - 1,), dtype=int)
-
         for index, node in enumerate(nodes):
-            if node.word.lower() in vocab:
+            if node.ind > -1:
                 node.vec = We[:, node.ind].reshape((d, 1))
-            elif node.word.lower() in word_vecs_dict.keys():
-                if mixed:
-                    node.vec = (word_vecs_dict[node.word.lower()].append(2 * np.random.rand(50) - 1)).reshape((d, 1))
-                else:
-                    node.vec = word_vecs_dict[node.word.lower()].reshape(d, 1)
-            else:
-                node.vec = np.random.rand(d, 1)
-                count += 1
+            # else:
+            #     vec = word_vecs_dict.get(w, None)
+            #     if vec is not None:
+            #         node.vec = vec.reshape(d, 1) if not mixed else (
+            #             vec.append(2 * np.random.rand(50) - 1)).reshape((d, 1))
+            #     else:
+            #         node.vec = np.random.rand(d, 1)
 
-        prop.forward_prop([rel_dict, Wv, b, We], tree, d, c, labels=False)
-
-        for idx, node in enumerate(tree.nodes):
-            if idx == 0:
-                continue
-
-            if tree.get_node(idx).is_word == 0:
-                y_label[idx - 1] = 0
-                sent.append(None)
-
-                for i in range(d):
-                    h_input[idx - 1][i] = 0
-            else:
-                y_label[idx - 1] = node.true_label
-                sent.append(node.word)
-
-                for i in range(d):
-                    h_input[idx - 1][i] = node.p[i]
-
-        crf_sent_features = sent2features(d, sent, h_input)
-        for item in y_label:
-            all_y_true.append(str(item))
-
-        prediction = tagger.tag(crf_sent_features)
-        print(tree.disp())
-        print(prediction)
-        cur_aspect_terms = __get_aspect_terms_from_labeled(tree, prediction)
+        prop.forward_prop([rel_Wr_dict, Wv, Wc, b, b_c, We], tree, d, c, labels=False)
+        y_pred = list()
+        for n in nodes[1:]:
+            if n.is_word:
+                yi_pred = n.predict_label.flatten().argmax()
+                y_pred.append(yi_pred)
+        cur_aspect_terms = utils.aspect_terms_from_labeled(tree, y_pred)
         for t in cur_aspect_terms:
             aspect_words.add(t)
         # tree.disp()
-        # print(prediction)
-        # print(aspect_terms)
-        for label in prediction:
-            all_y_pred.append(label)
+        # print(y_pred)
+        # print(cur_aspect_terms)
+        # print()
 
     p, r, f1 = utils.set_evaluate(aspect_terms_true, aspect_words)
     print(p, r, f1)
@@ -196,11 +184,11 @@ def __proc_batch(trees_batch, use_mixed_word_vec, rel_Wr_dict, word_vec_dim, vec
     return err
 
 
-def __train(train_data_file, word_vecs_file, test_data_file, dst_model_file):
+def __train(train_data_file, test_data_file, dst_model_file):
     seed_i = 12
     n_classes = 5
     batch_size = 25
-    n_epochs = 5
+    n_epochs = 50
     vec_len_mixed = 50
     adagrad_reset = 30
     use_mixed_word_vec = False
@@ -208,22 +196,25 @@ def __train(train_data_file, word_vecs_file, test_data_file, dst_model_file):
     lambs = (lamb_W, lamb_We, lamb_Wc)
 
     with open(train_data_file, 'rb') as f:
-        vocab, rel_list, trees_train = pickle.load(f)
-    with open(test_data_file, 'rb') as f:
-        _, _, trees_test = pickle.load(f)
-
-    # trees_train, trees_test = trees[:75], trees[75:]
+        vocab, We, rel_list, trees_train = pickle.load(f)
     print(len(trees_train), 'train samples')
 
-    with open(word_vecs_file, 'rb') as f:
-        We_origin = pickle.load(f)
-    word_vec_dim = We_origin.shape[0]
+    with open(test_data_file, 'rb') as f:
+        _, trees_test = pickle.load(f)
+    word_vecs_dict = utils.load_word_vec_file(config.GNEWS_LIGHT_WORD_VEC_FILE)
+    __init_fixed_node_word_vecs(trees_test, word_vecs_dict)
+    sents = utils.load_json_objs(config.SE14_LAPTOP_TEST_SENTS_FILE)
+    aspect_terms_true = utils.get_apects_true(sents)
+
+    # with open(word_vecs_file, 'rb') as f:
+    #     vocab, We_origin = pickle.load(f)
+    word_vec_dim = We.shape[0]
 
     rel_list.remove('root')
 
-    trees_train = filter_incorrect_dep_trees(trees_train)
+    trees_train = filter_empty_dep_trees(trees_train)
     rel_Wr_dict, Wv, Wc, b, b_c = __init_dtrnn_params(word_vec_dim, n_classes, rel_list)
-    params_train = (rel_Wr_dict, Wv, Wc, b, b_c, We_origin)
+    params_train = (rel_Wr_dict, Wv, Wc, b, b_c, We)
 
     r = utils.roll_params(params_train, rel_list)
     ada = Adagrad(r.shape[0])
@@ -241,7 +232,7 @@ def __train(train_data_file, word_vecs_file, test_data_file, dst_model_file):
         for batch_idx, batch in enumerate(batches):
             err = __proc_batch(
                 batch, use_mixed_word_vec, rel_Wr_dict, word_vec_dim, vec_len_mixed, n_classes, len(vocab), rel_list,
-                lambs, Wv, Wc, b, b_c, We_origin, ada)
+                lambs, Wv, Wc, b, b_c, We, ada)
             epoch_err += err
             # log_str = 'epoch: {}, batch_idx={}, err={}, time={}'.format(
             #     epoch, batch_idx, err, time.time() - t
@@ -253,6 +244,7 @@ def __train(train_data_file, word_vecs_file, test_data_file, dst_model_file):
             ada.reset_weights()
 
         print('epoch={}, err={}, time={}'.format(epoch, epoch_err, time.time() - t))
+        evaluate(trees_test, rel_Wr_dict, Wv, Wc, b, b_c, We, n_classes, aspect_terms_true)
 
     with open(dst_model_file, 'wb') as fout:
         pickle.dump((params_train, vocab, rel_list), fout)
@@ -262,5 +254,7 @@ if __name__ == '__main__':
     # data_file = 'd:/data/aspect/rncrf/labeled_input.pkl'
     # word_vecs_file = 'd:/data/aspect/rncrf/word_vecs.pkl'
     # dst_params_file = 'd:/data/aspect/rncrf/deprnn-params.pkl'
-    __train(config.SE14_LAPTOP_TRAIN_RNCRF_DATA_FILE, config.SE14_LAPTOP_TRAIN_WORD_VECS_FILE,
-            config.SE14_LAPTOP_TEST_RNCRF_DATA_FILE, config.SE14_LAPTOP_PRE_MODEL_FILE)
+    # __train(config.SE14_LAPTOP_TRAIN_RNCRF_DATA_FILE, config.SE14_LAPTOP_TRAIN_WORD_VECS_FILE,
+    #         config.SE14_LAPTOP_TEST_RNCRF_DATA_FILE, config.SE14_LAPTOP_PRE_MODEL_FILE)
+    __train(config.SE14_LAPTOP_TRAIN_RNCRF_DATA_FILE, config.SE14_LAPTOP_TEST_RNCRF_DATA_FILE,
+            config.SE14_LAPTOP_PRE_MODEL_FILE)

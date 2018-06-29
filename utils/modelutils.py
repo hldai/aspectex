@@ -1,4 +1,4 @@
-def filter_incorrect_dep_trees(trees):
+def filter_empty_dep_trees(trees):
     idxs_remove = set()
     for ind, tree in enumerate(trees):
         # the tree is empty

@@ -134,12 +134,16 @@ def __label_aspect_nodes(aspect_terms, nodes, tree):
                     tree.get_node(ind).true_label = 1
 
 
-def __build_tree_obj(dep_parse_file, sents_file):
-    vocab = list()
+def __build_tree_obj(dep_parse_file, sents_file, vocab=None):
     trees = list()
     rel_list = list()
 
     sents = utils.load_json_objs(sents_file)
+
+    make_vocab = False
+    if vocab is None:
+        make_vocab = True
+        vocab = list()
 
     sent_idx = 0
     f = open(dep_parse_file, 'r', encoding='utf-8')
@@ -176,9 +180,16 @@ def __build_tree_obj(dep_parse_file, sents_file):
         trees.append(tree)
 
         for node in tree.get_word_nodes():
-            if node.word.lower() not in vocab:
-                vocab.append(node.word.lower())
-            node.ind = vocab.index(node.word.lower())
+            w = node.word.lower()
+            if make_vocab:
+                if w not in vocab:
+                    vocab.append(w)
+                node.ind = vocab.index(w)
+            else:
+                if w in vocab:
+                    node.ind = vocab.index(w)
+                else:
+                    node.ind = -1
 
             for ind, rel in node.kids:
                 if rel not in rel_list:
@@ -189,7 +200,7 @@ def __build_tree_obj(dep_parse_file, sents_file):
     f.close()
 
     print(len(rel_list), 'relations')
-    print(len(vocab), 'words in vocab')
+    # print(len(vocab), 'words in vocab')
     return vocab, rel_list, trees
 
 
@@ -199,25 +210,28 @@ def __get_pretrained_word_vecs():
     model.save_word2vec_format(config.GOOGLE_NEWS_WORD_VEC_FILE, binary=False)
 
 
-def __proc_word_vecs(data_file, dst_file):
-    with open(data_file, 'rb') as f:
-        vocab, _, _ = pickle.load(f)
+def __gen_word_vec_matrix_file(dep_parse_files, dst_file):
+    word_vec_dict = utils.load_word_vec_file(config.GNEWS_LIGHT_WORD_VEC_FILE)
 
-    vocab_set = set(vocab)
-    word_vec_dict = dict()
-    f = open(config.GNEWS_LIGHT_WORD_VEC_FILE, encoding='utf-8')
-    for i, line in enumerate(f):
-        if i % 10000 == 0:
-            print(i)
+    # word_cnt_dict = dict()
+    vocab = set()
+    for dep_parse_file in dep_parse_files:
+        f = open(dep_parse_file, 'r', encoding='utf-8')
+        while True:
+            dep_tups = __read_sent_dep_tups(f)
+            if not dep_tups:
+                break
 
-        vals = line.split(' ')
-        word = vals[0]
-        if word not in vocab_set:
-            continue
+            for rel, gov, dep in dep_tups:
+                # print(rel, gov, dep)
+                word = dep[1].lower()
+                if word in word_vec_dict:
+                    vocab.add(word)
+            # exit()
+        f.close()
 
-        word_vec_dict[word] = np.asarray([float(v) for v in vals[1:]], np.float32)
-    f.close()
-
+    print(len(vocab), 'words in word vec vocab')
+    vocab = list(vocab)
     vec_dim = len(next(iter(word_vec_dict.values())))
     word_vec_matrix = np.zeros((vec_dim, len(vocab)), np.float32)
     for idx, word in enumerate(vocab):
@@ -226,7 +240,26 @@ def __proc_word_vecs(data_file, dst_file):
             word_vec_matrix[:, idx] = vec
 
     with open(dst_file, 'wb') as fout:
-        pickle.dump(word_vec_matrix, fout, pickle.HIGHEST_PROTOCOL)
+        pickle.dump((vocab, word_vec_matrix), fout, pickle.HIGHEST_PROTOCOL)
+
+
+def __proc_word_vecs(data_file, dst_file):
+    with open(data_file, 'rb') as f:
+        vocab, _, _ = pickle.load(f)
+
+    vocab_set = set(vocab)
+    word_vec_dict = utils.load_word_vec_file(config.GNEWS_LIGHT_WORD_VEC_FILE, vocab_set)
+
+    vec_dim = len(next(iter(word_vec_dict.values())))
+    word_vec_matrix = np.zeros((vec_dim, len(vocab)), np.float32)
+    for idx, word in enumerate(vocab):
+        vec = word_vec_dict.get(word, None)
+        if vec is not None:
+            word_vec_matrix[:, idx] = vec
+
+    return word_vec_matrix
+    # with open(dst_file, 'wb') as fout:
+    #     pickle.dump(word_vec_matrix, fout, pickle.HIGHEST_PROTOCOL)
 
 
 def __word_legal(w):
@@ -262,21 +295,29 @@ def __filter_word_vecs():
 
 
 def __gen_data_for_train():
-    __dependency_parse(config.SE14_LAPTOP_TRAIN_SENT_TEXTS_FILE, config.SE14_LAPTOP_TRAIN_DEP_PARSE_FILE)
+    # with open(config.SE14_LAPTOP_WORD_VECS_FILE, 'rb') as f:
+    #     vocab, _ = pickle.load(f)
+
+    # __dependency_parse(config.SE14_LAPTOP_TRAIN_SENT_TEXTS_FILE, config.SE14_LAPTOP_TRAIN_DEP_PARSE_FILE)
     vocab, rel_list, trees = __build_tree_obj(
         config.SE14_LAPTOP_TRAIN_DEP_PARSE_FILE, config.SE14_LAPTOP_TRAIN_SENTS_FILE)
-    with open(config.SE14_LAPTOP_TRAIN_RNCRF_DATA_FILE, 'wb') as fout:
-        pickle.dump((vocab, rel_list, trees), fout, pickle.HIGHEST_PROTOCOL)
 
-    __proc_word_vecs(config.SE14_LAPTOP_TRAIN_RNCRF_DATA_FILE, config.SE14_LAPTOP_TRAIN_WORD_VECS_FILE)
+    We = __proc_word_vecs(config.SE14_LAPTOP_TRAIN_RNCRF_DATA_FILE, config.SE14_LAPTOP_TRAIN_WORD_VECS_FILE)
+    with open(config.SE14_LAPTOP_TRAIN_RNCRF_DATA_FILE, 'wb') as fout:
+        pickle.dump((vocab, We, rel_list, trees), fout, pickle.HIGHEST_PROTOCOL)
 
 
 def __gen_data_for_test():
-    __dependency_parse(config.SE14_LAPTOP_TEST_SENT_TEXTS_FILE, config.SE14_LAPTOP_TEST_DEP_PARSE_FILE)
+    # with open(config.SE14_LAPTOP_WORD_VECS_FILE, 'rb') as f:
+    #     vocab, _ = pickle.load(f)
+    with open(config.SE14_LAPTOP_TRAIN_RNCRF_DATA_FILE, 'rb') as f:
+        vocab, _, _, _ = pickle.load(f)
+
+    # __dependency_parse(config.SE14_LAPTOP_TEST_SENT_TEXTS_FILE, config.SE14_LAPTOP_TEST_DEP_PARSE_FILE)
     vocab, rel_list, trees = __build_tree_obj(
-        config.SE14_LAPTOP_TEST_DEP_PARSE_FILE, config.SE14_LAPTOP_TEST_SENTS_FILE)
+        config.SE14_LAPTOP_TEST_DEP_PARSE_FILE, config.SE14_LAPTOP_TEST_SENTS_FILE, vocab)
     with open(config.SE14_LAPTOP_TEST_RNCRF_DATA_FILE, 'wb') as fout:
-        pickle.dump((vocab, rel_list, trees), fout, pickle.HIGHEST_PROTOCOL)
+        pickle.dump((rel_list, trees), fout, pickle.HIGHEST_PROTOCOL)
 
 
 stanford_nlp_lib_file = 'd:/lib/stanford-corenlp-full-2017-06-09/stanford-corenlp-3.8.0.jar'
@@ -306,5 +347,7 @@ word_vecs_file = 'd:/data/aspect/rncrf/word_vecs.pkl'
 #     pickle.dump((vocab, rel_list, trees), fout, pickle.HIGHEST_PROTOCOL)
 # __proc_word_vecs()
 
-# __gen_data_for_test()
+# __gen_word_vec_matrix_file([config.SE14_LAPTOP_TRAIN_DEP_PARSE_FILE, config.SE14_LAPTOP_TEST_DEP_PARSE_FILE],
+#                            config.SE14_LAPTOP_WORD_VECS_FILE)
 # __gen_data_for_train()
+# __gen_data_for_test()

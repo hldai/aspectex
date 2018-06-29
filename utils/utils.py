@@ -16,13 +16,13 @@ def set_evaluate(set_true, set_pred):
     return p, r, f1
 
 
-def load_word_vec_file(filename, vocab):
+def load_word_vec_file(filename, vocab=None):
     word_vecs = dict()
     f = open(filename, encoding='utf-8')
     for line in f:
         vals = line.strip().split(' ')
         word = vals[0]
-        if word not in vocab:
+        if vocab and word not in vocab:
             continue
 
         word_vecs[word] = np.asarray([float(v) for v in vals[1:]], np.float32)
@@ -113,19 +113,19 @@ def unroll_params(arr, d, c, len_voc, rel_list):
         rel_dict[r] = arr[ind: ind + mat_size].reshape((d, d))
         ind += mat_size
 
-    Wv = arr[ind : ind + mat_size].reshape((d, d))
+    Wv = arr[ind: ind + mat_size].reshape((d, d))
     ind += mat_size
 
-    Wc = arr[ind : ind + mat_class_size].reshape((c, d))
+    Wc = arr[ind: ind + mat_class_size].reshape((c, d))
     ind += mat_class_size
 
-    b = arr[ind : ind + d].reshape((d, 1))
+    b = arr[ind: ind + d].reshape((d, 1))
     ind += d
 
-    b_c = arr[ind : ind + c].reshape((c, 1))
+    b_c = arr[ind: ind + c].reshape((c, 1))
     ind += c
 
-    We = arr[ind : ind + len_voc * d].reshape( (d, len_voc))
+    We = arr[ind: ind + len_voc * d].reshape((d, len_voc))
 
     return [rel_dict, Wv, Wc, b, b_c, We]
 
@@ -162,3 +162,31 @@ def unroll_params_noWcrf(arr, d, c, len_voc, rel_list):
     We = arr[ind : ind + len_voc * d].reshape( (d, len_voc))
 
     return [rel_dict, Wv, b, We]
+
+
+def aspect_terms_from_labeled(sent_tree, y_pred):
+    y_pred = [str(yi) for yi in y_pred]
+    words = [n.word for n in sent_tree.nodes[1:] if n.is_word]
+    phrases = list()
+    i = 0
+    while i < len(y_pred):
+        yi = y_pred[i]
+        if yi != '1':
+            i += 1
+            continue
+        beg = i
+        while i + 1 < len(y_pred) and y_pred[i + 1] == '2':
+            i += 1
+        phrases.append(' '.join(words[beg:i + 1]))
+        i += 1
+    return phrases
+
+
+def get_apects_true(sents):
+    aspect_terms = set()
+    for s in sents:
+        terms = s.get('terms', None)
+        if terms is not None:
+            for t in terms:
+                aspect_terms.add(t['term'])
+    return aspect_terms
