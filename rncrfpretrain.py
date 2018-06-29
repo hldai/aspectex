@@ -188,7 +188,7 @@ def __train(train_data_file, test_data_file, dst_model_file):
     seed_i = 12
     n_classes = 5
     batch_size = 25
-    n_epochs = 50
+    n_epochs = 5
     vec_len_mixed = 50
     adagrad_reset = 30
     use_mixed_word_vec = False
@@ -203,7 +203,7 @@ def __train(train_data_file, test_data_file, dst_model_file):
 
     with open(test_data_file, 'rb') as f:
         _, trees_test = pickle.load(f)
-    word_vecs_dict = utils.load_word_vec_file(config.GNEWS_LIGHT_WORD_VEC_FILE)
+    word_vecs_dict = utils.load_word_vec_file(config.WORD_VEC_FILE)
     __init_fixed_node_word_vecs(trees_test, word_vecs_dict)
     sents = utils.load_json_objs(config.SE14_LAPTOP_TEST_SENTS_FILE)
     aspect_terms_true = utils.get_apects_true(sents)

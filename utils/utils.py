@@ -19,12 +19,14 @@ def set_evaluate(set_true, set_pred):
 def load_word_vec_file(filename, vocab=None):
     word_vecs = dict()
     f = open(filename, encoding='utf-8')
+    next(f)
     for line in f:
         vals = line.strip().split(' ')
         word = vals[0]
         if vocab and word not in vocab:
             continue
 
+        # vec = [float(v) for v in vals[1:]]
         word_vecs[word] = np.asarray([float(v) for v in vals[1:]], np.float32)
     f.close()
     return word_vecs

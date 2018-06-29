@@ -8,7 +8,7 @@ import pickle
 import time
 import config
 from utils import utils
-from utils.modelutils import filter_incorrect_dep_trees
+from utils.modelutils import filter_empty_dep_trees
 
 import pycrfsuite
 
@@ -18,7 +18,7 @@ from collections import OrderedDict
 
 def __get_vocab_from_dep_trees(dep_trees):
     vocab_test = set()
-    trees_test = filter_incorrect_dep_trees(dep_trees)
+    trees_test = filter_empty_dep_trees(dep_trees)
     for ind, tree in enumerate(trees_test):
         nodes = tree.get_word_nodes()
         for index, node in enumerate(nodes):
@@ -48,8 +48,8 @@ def evaluate(trees_test, rel_dict, Wv, b, We, vocab, rel_list, d, c, aspect_term
     # tagger.open(str(epoch) + str(inst_ind) + 'crf.model')
     tagger.open('crfmodel.bin')
 
-    vocab_test = __get_vocab_from_dep_trees(trees_test)
-    word_vecs_dict = utils.load_word_vec_file(config.GNEWS_LIGHT_WORD_VEC_FILE, vocab_test)
+    # vocab_test = __get_vocab_from_dep_trees(trees_test)
+    # word_vecs_dict = utils.load_word_vec_file(config.WORD_VEC_FILE, vocab_test)
 
     aspect_words = set()
     all_y_true, all_y_pred = list(), list()
@@ -61,17 +61,19 @@ def evaluate(trees_test, rel_dict, Wv, b, We, vocab, rel_list, d, c, aspect_term
         y_label = np.zeros((len(tree.nodes) - 1,), dtype=int)
 
         for index, node in enumerate(nodes):
-            # TODO incorrect
-            if node.word.lower() in vocab:
+            if node.ind > -1:
                 node.vec = We[:, node.ind].reshape((d, 1))
-            elif node.word.lower() in word_vecs_dict.keys():
-                if mixed:
-                    node.vec = (word_vecs_dict[node.word.lower()].append(2 * np.random.rand(50) - 1)).reshape((d, 1))
-                else:
-                    node.vec = word_vecs_dict[node.word.lower()].reshape(d, 1)
-            else:
-                node.vec = np.random.rand(d, 1)
-                count += 1
+        # for index, node in enumerate(nodes):
+        #     if node.word.lower() in vocab:
+        #         node.vec = We[:, node.ind].reshape((d, 1))
+        #     elif node.word.lower() in word_vecs_dict.keys():
+        #         if mixed:
+        #             node.vec = (word_vecs_dict[node.word.lower()].append(2 * np.random.rand(50) - 1)).reshape((d, 1))
+        #         else:
+        #             node.vec = word_vecs_dict[node.word.lower()].reshape(d, 1)
+        #     else:
+        #         node.vec = np.random.rand(d, 1)
+        #         count += 1
 
         prop.forward_prop([rel_dict, Wv, b, We], tree, d, c, labels=False)
 
@@ -492,6 +494,23 @@ def __get_apects_true(sents):
     return aspect_terms
 
 
+def __init_fixed_node_word_vecs(trees, word_vecs_dict, mixed=False):
+    word_vec_dim = next(iter(word_vecs_dict.values())).shape[0]
+
+    for ind, tree in enumerate(trees):
+        nodes = tree.get_word_nodes()
+        for index, node in enumerate(nodes):
+            w = node.word.lower()
+            if node.ind > -1:
+                continue
+            vec = word_vecs_dict.get(w, None)
+            if vec is not None:
+                node.vec = vec.reshape(word_vec_dim, 1) if not mixed else (
+                    vec.append(2 * np.random.rand(50) - 1)).reshape((word_vec_dim, 1))
+            else:
+                node.vec = np.random.rand(word_vec_dim, 1)
+
+
 # train and save model
 if __name__ == '__main__':
     # parser.add_argument('-agr', '--adagrad_reset', help='reset sum of squared gradients after this many\
@@ -506,7 +525,7 @@ if __name__ == '__main__':
     sents_file = config.SE14_LAPTOP_TEST_SENTS_FILE
     train_data_file = config.SE14_LAPTOP_TRAIN_RNCRF_DATA_FILE
     test_data_file = config.SE14_LAPTOP_TEST_RNCRF_DATA_FILE
-    word_vecs_file = config.SE14_LAPTOP_TRAIN_WORD_VECS_FILE
+    # word_vecs_file = config.SE14_LAPTOP_TRAIN_WORD_VECS_FILE
     pretrain_model_file = config.SE14_LAPTOP_PRE_MODEL_FILE
     dst_model_file = config.SE14_LAPTOP_MODEL_FILE
 
@@ -518,17 +537,21 @@ if __name__ == '__main__':
     train_vec_len = 50
 
     with open(train_data_file, 'rb') as f:
-        _, _, trees_train = pickle.load(f)
+        _, _, _, trees_train = pickle.load(f)
     with open(test_data_file, 'rb') as f:
-        _, _, trees_test = pickle.load(f)
+        _, trees_test = pickle.load(f)
+    word_vecs_dict = utils.load_word_vec_file(config.WORD_VEC_FILE)
+    __init_fixed_node_word_vecs(trees_test, word_vecs_dict)
+    sents = utils.load_json_objs(config.SE14_LAPTOP_TEST_SENTS_FILE)
+    aspect_terms_true = utils.get_apects_true(sents)
 
     # n_train_def = 75
     # trees_train, trees_test = trees[:n_train_def], trees[n_train_def:]
     # sents = utils.load_json_objs(sents_file)
     # aspect_terms_true = __get_apects_true(sents[n_train_def:])
 
-    sents = utils.load_json_objs(sents_file)
-    aspect_terms_true = __get_apects_true(sents)
+    # sents = utils.load_json_objs(sents_file)
+    # aspect_terms_true = __get_apects_true(sents)
 
     # import pre-trained model parameters
     with open(pretrain_model_file, 'rb') as f:
