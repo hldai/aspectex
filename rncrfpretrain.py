@@ -9,6 +9,70 @@ from utils.modelutils import filter_incorrect_dep_trees
 import config
 
 
+def evaluate(trees_test, rel_dict, Wv, b, We, rel_list, d, c, aspect_terms_true, mixed=False):
+    vocab_test = __get_vocab_from_dep_trees(trees_test)
+    word_vecs_dict = utils.load_word_vec_file(config.GNEWS_LIGHT_WORD_VEC_FILE, vocab_test)
+
+    aspect_words = set()
+    all_y_true, all_y_pred = list(), list()
+    count = 0
+    for ind, tree in enumerate(trees_test):
+        nodes = tree.get_word_nodes()
+        sent = []
+        h_input = np.zeros((len(tree.nodes) - 1, d))
+        y_label = np.zeros((len(tree.nodes) - 1,), dtype=int)
+
+        for index, node in enumerate(nodes):
+            if node.word.lower() in vocab:
+                node.vec = We[:, node.ind].reshape((d, 1))
+            elif node.word.lower() in word_vecs_dict.keys():
+                if mixed:
+                    node.vec = (word_vecs_dict[node.word.lower()].append(2 * np.random.rand(50) - 1)).reshape((d, 1))
+                else:
+                    node.vec = word_vecs_dict[node.word.lower()].reshape(d, 1)
+            else:
+                node.vec = np.random.rand(d, 1)
+                count += 1
+
+        prop.forward_prop([rel_dict, Wv, b, We], tree, d, c, labels=False)
+
+        for idx, node in enumerate(tree.nodes):
+            if idx == 0:
+                continue
+
+            if tree.get_node(idx).is_word == 0:
+                y_label[idx - 1] = 0
+                sent.append(None)
+
+                for i in range(d):
+                    h_input[idx - 1][i] = 0
+            else:
+                y_label[idx - 1] = node.true_label
+                sent.append(node.word)
+
+                for i in range(d):
+                    h_input[idx - 1][i] = node.p[i]
+
+        crf_sent_features = sent2features(d, sent, h_input)
+        for item in y_label:
+            all_y_true.append(str(item))
+
+        prediction = tagger.tag(crf_sent_features)
+        print(tree.disp())
+        print(prediction)
+        cur_aspect_terms = __get_aspect_terms_from_labeled(tree, prediction)
+        for t in cur_aspect_terms:
+            aspect_words.add(t)
+        # tree.disp()
+        # print(prediction)
+        # print(aspect_terms)
+        for label in prediction:
+            all_y_pred.append(label)
+
+    p, r, f1 = utils.set_evaluate(aspect_terms_true, aspect_words)
+    print(p, r, f1)
+
+
 def __init_dtrnn_params(word_vec_dim, n_classes, rels):
     r = np.sqrt(6) / np.sqrt(2 * word_vec_dim + 1)
     r_Wc = 1.0 / np.sqrt(word_vec_dim)
@@ -132,7 +196,7 @@ def __proc_batch(trees_batch, use_mixed_word_vec, rel_Wr_dict, word_vec_dim, vec
     return err
 
 
-def __train(train_data_file, word_vecs_file, dst_model_file):
+def __train(train_data_file, word_vecs_file, test_data_file, dst_model_file):
     seed_i = 12
     n_classes = 5
     batch_size = 25
@@ -145,6 +209,8 @@ def __train(train_data_file, word_vecs_file, dst_model_file):
 
     with open(train_data_file, 'rb') as f:
         vocab, rel_list, trees_train = pickle.load(f)
+    with open(test_data_file, 'rb') as f:
+        _, _, trees_test = pickle.load(f)
 
     # trees_train, trees_test = trees[:75], trees[75:]
     print(len(trees_train), 'train samples')
@@ -197,4 +263,4 @@ if __name__ == '__main__':
     # word_vecs_file = 'd:/data/aspect/rncrf/word_vecs.pkl'
     # dst_params_file = 'd:/data/aspect/rncrf/deprnn-params.pkl'
     __train(config.SE14_LAPTOP_TRAIN_RNCRF_DATA_FILE, config.SE14_LAPTOP_TRAIN_WORD_VECS_FILE,
-            config.SE14_LAPTOP_PRE_MODEL_FILE)
+            config.SE14_LAPTOP_TEST_RNCRF_DATA_FILE, config.SE14_LAPTOP_PRE_MODEL_FILE)

@@ -61,6 +61,7 @@ def evaluate(trees_test, rel_dict, Wv, b, We, vocab, rel_list, d, c, aspect_term
         y_label = np.zeros((len(tree.nodes) - 1,), dtype=int)
 
         for index, node in enumerate(nodes):
+            # TODO incorrect
             if node.word.lower() in vocab:
                 node.vec = We[:, node.ind].reshape((d, 1))
             elif node.word.lower() in word_vecs_dict.keys():
