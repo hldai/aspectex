@@ -177,6 +177,7 @@ def aspect_terms_from_labeled(sent_tree, y_pred):
         beg = i
         while i + 1 < len(y_pred) and y_pred[i + 1] == '2':
             i += 1
+        # phrases.append(' '.join(words[beg:i + 1]).lower())
         phrases.append(' '.join(words[beg:i + 1]))
         i += 1
     return phrases
@@ -188,5 +189,6 @@ def get_apects_true(sents):
         terms = s.get('terms', None)
         if terms is not None:
             for t in terms:
+                # aspect_terms.add(t['term'].lower())
                 aspect_terms.add(t['term'])
     return aspect_terms

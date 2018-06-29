@@ -192,7 +192,9 @@ def __train(train_data_file, test_data_file, dst_model_file):
     vec_len_mixed = 50
     adagrad_reset = 30
     use_mixed_word_vec = False
+    # lamb_W, lamb_We, lamb_Wc = 0.0001, 0.0001, 0.0001
     lamb_W, lamb_We, lamb_Wc = 0.001, 0.001, 0.001
+    # lamb_W, lamb_We, lamb_Wc = 0.01, 0.01, 0.01
     lambs = (lamb_W, lamb_We, lamb_Wc)
 
     with open(train_data_file, 'rb') as f:

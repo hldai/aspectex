@@ -9,8 +9,8 @@ class Adagrad:
         # initial learning rate
         # self.learning_rate = 0.05  #original 100-dim depnn
         # self.learning_rate = 0.0001  #crf 100-dim
-        self.learning_rate = 0.02
-        # self.learning_rate = 0.01
+        # self.learning_rate = 0.02
+        self.learning_rate = 0.01
         # stores sum of squared gradients 
         self.h = np.zeros(self.dim)
 
