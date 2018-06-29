@@ -42,7 +42,7 @@ def __get_aspect_terms_from_labeled(sent_tree, y_pred):
     return phrases
 
 
-def evaluate(inst_ind, trees_test, rel_dict, Wv, b, We, vocab, rel_list, d, c, aspect_terms_true, mixed=False):
+def evaluate(trees_test, rel_dict, Wv, b, We, vocab, rel_list, d, c, aspect_terms_true, mixed=False):
     # output labels
     tagger = pycrfsuite.Tagger()
     # tagger.open(str(epoch) + str(inst_ind) + 'crf.model')
@@ -96,6 +96,8 @@ def evaluate(inst_ind, trees_test, rel_dict, Wv, b, We, vocab, rel_list, d, c, a
             all_y_true.append(str(item))
 
         prediction = tagger.tag(crf_sent_features)
+        print(tree.disp())
+        print(prediction)
         cur_aspect_terms = __get_aspect_terms_from_labeled(tree, prediction)
         for t in cur_aspect_terms:
             aspect_words.add(t)
@@ -447,8 +449,11 @@ def __training_epoch(t, Wv, We, Wcrf, b, trees_test, aspect_terms_true):
         epoch_error += err
 
         if inst_ind % 1000 == 0:
-            evaluate(inst_ind, trees_test, rel_Wr_dict, Wv, b, We, vocab, rel_list,
+            evaluate(trees_test, rel_Wr_dict, Wv, b, We, vocab, rel_list,
                      word_vec_dim, n_classes, aspect_terms_true, mixed=False)
+
+    evaluate(trees_test, rel_Wr_dict, Wv, b, We, vocab, rel_list,
+             word_vec_dim, n_classes, aspect_terms_true, mixed=False)
 
     Wcrf *= decay
     # done with epoch
@@ -516,10 +521,10 @@ if __name__ == '__main__':
     with open(test_data_file, 'rb') as f:
         _, _, trees_test = pickle.load(f)
 
-    n_train = 75
-    # trees_train, trees_test = trees[:n_train], trees[n_train:]
+    # n_train_def = 75
+    # trees_train, trees_test = trees[:n_train_def], trees[n_train_def:]
     # sents = utils.load_json_objs(sents_file)
-    # aspect_terms_true = __get_apects_true(sents[n_train:])
+    # aspect_terms_true = __get_apects_true(sents[n_train_def:])
 
     sents = utils.load_json_objs(sents_file)
     aspect_terms_true = __get_apects_true(sents)

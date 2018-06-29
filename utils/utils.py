@@ -12,7 +12,7 @@ def set_evaluate(set_true, set_pred):
             cnt_hit += 1
     p = cnt_hit / len(set_pred)
     r = cnt_hit / len(set_true)
-    f1 = 2 * p * r / (p + r)
+    f1 = 0 if p + r == 0 else 2 * p * r / (p + r)
     return p, r, f1
 
 
