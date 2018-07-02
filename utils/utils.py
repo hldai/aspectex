@@ -66,7 +66,9 @@ def next_sent_pos(fin):
 def get_indexed_word(w, dec=True):
     p = w.rfind('-')
     s = w[:p]
-    idx = int(w[p + 1:]) - 1
+    idx = int(w[p + 1:])
+    if dec:
+        idx -= 1
     return s, idx
 
 

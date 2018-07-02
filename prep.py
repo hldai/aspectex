@@ -160,6 +160,7 @@ def __gen_judge_train_data():
     judge_train_dep_file = 'd:/data/aspect/semeval14/judge_data/laptops_jtrain_dep.txt'
     judge_test_sents_file = 'd:/data/aspect/semeval14/judge_data/laptops_jtest_sents.json'
     judge_test_dep_file = 'd:/data/aspect/semeval14/judge_data/laptops_jtest_dep.txt'
+    judge_test_text_file = 'd:/data/aspect/semeval14/judge_data/laptops_jtest_texts.txt'
 
     sents = utils.load_json_objs(config.SE14_LAPTOP_TRAIN_SENTS_FILE)
     dep_tags_list = utils.load_dep_tags_list(config.SE14_LAPTOP_TRAIN_DEP_PARSE_FILE, space_sep=False)
@@ -180,6 +181,10 @@ def __gen_judge_train_data():
     utils.save_dep_tags(dep_tags_train, judge_train_dep_file, False)
     utils.save_dep_tags(dep_tags_test, judge_test_dep_file, False)
 
+    with open(judge_test_text_file, 'w', encoding='utf-8', newline='\n') as fout:
+        for sent in sents_test:
+            fout.write('{}\n'.format(sent['text']))
+
 
 test_file_xml = 'd:/data/aspect/semeval14/Laptops_Test_Gold.xml'
 test_file_json = 'd:/data/aspect/semeval14/Laptops_Test_Gold.json'
@@ -194,4 +199,4 @@ train_file_json = 'd:/data/aspect/semeval14/Laptops_Train.json'
 #                             config.SE14_LAPTOP_TRAIN_SENTS_FILE, config.SE14_LAPTOP_TRAIN_SENT_TEXTS_FILE)
 # __process_raw_sem_eval_data(config.SE14_LAPTOP_TEST_SENTS_XML_FILE, config.SE14_LAPTOP_TEST_OPINIONS_FILE,
 #                             config.SE14_LAPTOP_TEST_SENTS_FILE, config.SE14_LAPTOP_TEST_SENT_TEXTS_FILE)
-# __gen_judge_train_data()
+__gen_judge_train_data()

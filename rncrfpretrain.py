@@ -26,7 +26,8 @@ def __init_fixed_node_word_vecs(trees, word_vecs_dict, mixed=False):
                 node.vec = np.random.rand(word_vec_dim, 1)
 
 
-def evaluate(trees_test, rel_Wr_dict, Wv, Wc, b, b_c, We, c, sents_test, aspect_terms_true, mixed=False):
+def evaluate(trees_test, rel_Wr_dict, Wv, Wc, b, b_c, We, c, sents_test, aspect_terms_true, correctness_file,
+             mixed=False):
     d = We.shape[0]
     aspect_words = set()
     all_y_true, all_y_pred = list(), list()
@@ -204,7 +205,7 @@ def __proc_batch(trees_batch, use_mixed_word_vec, rel_Wr_dict, word_vec_dim, vec
     return err
 
 
-def __train(train_data_file, test_data_file, test_sents_file, dst_model_file):
+def __train(train_data_file, test_data_file, test_sents_file, dst_model_file, eval_correctness_file):
     seed_i = 12
     n_classes = 5
     batch_size = 25
@@ -254,6 +255,7 @@ def __train(train_data_file, test_data_file, test_sents_file, dst_model_file):
         t = time.time()
         epoch_err = 0
         for batch_idx, batch in enumerate(batches):
+            # print('batch', batch_idx)
             err = __proc_batch(
                 batch, use_mixed_word_vec, rel_Wr_dict, word_vec_dim, vec_len_mixed, n_classes, len(vocab), rel_list,
                 lambs, Wv, Wc, b, b_c, We, ada)
@@ -271,7 +273,8 @@ def __train(train_data_file, test_data_file, test_sents_file, dst_model_file):
             ada.reset_weights()
 
         print('epoch={}, err={}, time={}'.format(epoch, epoch_err, time.time() - t))
-        evaluate(trees_test, rel_Wr_dict, Wv, Wc, b, b_c, We, n_classes, sents_test, aspect_terms_true)
+        evaluate(trees_test, rel_Wr_dict, Wv, Wc, b, b_c, We, n_classes, sents_test, aspect_terms_true,
+                 eval_correctness_file)
 
     with open(dst_model_file, 'wb') as fout:
         pickle.dump((params_train, vocab, rel_list), fout)
@@ -291,4 +294,5 @@ if __name__ == '__main__':
     test_data_file = 'd:/data/aspect/semeval14/judge_data/laptops_jtest_rncrf.pkl'
     model_file = 'd:/data/aspect/semeval14/judge_data/laptops_jtest_pre_model.pkl'
     test_sents_file = 'd:/data/aspect/semeval14/judge_data/laptops_jtest_sents.json'
-    __train(train_data_file, test_data_file, test_sents_file, model_file)
+    eval_correctness_file = 'd:/data/aspect/semeval14/judge_data/test_correctness.txt'
+    __train(train_data_file, test_data_file, test_sents_file, model_file, eval_correctness_file)
