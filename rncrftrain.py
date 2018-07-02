@@ -26,23 +26,24 @@ def __get_vocab_from_dep_trees(dep_trees):
     return vocab_test
 
 
-def __get_aspect_terms_from_labeled(sent_tree, y_pred):
-    words = [n.word for n in sent_tree.nodes[1:] if n.is_word]
+def __get_aspect_terms_from_labeled(sent_terms, y_pred):
     phrases = list()
     i = 0
-    while i < len(y_pred):
+    n_terms = len(sent_terms)
+    while i < n_terms:
         yi = y_pred[i]
-        if yi != '1':
+        if sent_terms[i] is None or yi != '1':
             i += 1
             continue
-        while i + 1 < len(y_pred) and y_pred[i + 1] == '2':
-            i += 1
-        phrases.append(' '.join(words[i:i + 1]))
-        i += 1
+        pend = i + 1
+        while pend < n_terms and sent_terms[pend] is not None and y_pred[pend] == '2':
+            pend += 1
+        phrases.append(' '.join(sent_terms[i:pend]))
+        i = pend + 1
     return phrases
 
 
-def evaluate(trees_test, rel_dict, Wv, b, We, vocab, rel_list, d, c, aspect_terms_true, mixed=False):
+def evaluate(trees_test, rel_dict, Wv, b, We, d, c, sents_test, aspect_terms_true, mixed=False):
     # output labels
     tagger = pycrfsuite.Tagger()
     # tagger.open(str(epoch) + str(inst_ind) + 'crf.model')
@@ -52,8 +53,8 @@ def evaluate(trees_test, rel_dict, Wv, b, We, vocab, rel_list, d, c, aspect_term
     # word_vecs_dict = utils.load_word_vec_file(config.WORD_VEC_FILE, vocab_test)
 
     aspect_words = set()
-    all_y_true, all_y_pred = list(), list()
-    count = 0
+    aspect_pred_cnt, aspect_true_cnt = 0, 0
+    hit_cnt = 0
     for ind, tree in enumerate(trees_test):
         nodes = tree.get_word_nodes()
         sent = []
@@ -63,17 +64,6 @@ def evaluate(trees_test, rel_dict, Wv, b, We, vocab, rel_list, d, c, aspect_term
         for index, node in enumerate(nodes):
             if node.ind > -1:
                 node.vec = We[:, node.ind].reshape((d, 1))
-        # for index, node in enumerate(nodes):
-        #     if node.word.lower() in vocab:
-        #         node.vec = We[:, node.ind].reshape((d, 1))
-        #     elif node.word.lower() in word_vecs_dict.keys():
-        #         if mixed:
-        #             node.vec = (word_vecs_dict[node.word.lower()].append(2 * np.random.rand(50) - 1)).reshape((d, 1))
-        #         else:
-        #             node.vec = word_vecs_dict[node.word.lower()].reshape(d, 1)
-        #     else:
-        #         node.vec = np.random.rand(d, 1)
-        #         count += 1
 
         prop.forward_prop([rel_dict, Wv, b, We], tree, d, c, labels=False)
 
@@ -81,7 +71,7 @@ def evaluate(trees_test, rel_dict, Wv, b, We, vocab, rel_list, d, c, aspect_term
             if idx == 0:
                 continue
 
-            if tree.get_node(idx).is_word == 0:
+            if node.is_word == 0:
                 y_label[idx - 1] = 0
                 sent.append(None)
 
@@ -95,23 +85,32 @@ def evaluate(trees_test, rel_dict, Wv, b, We, vocab, rel_list, d, c, aspect_term
                     h_input[idx - 1][i] = node.p[i]
 
         crf_sent_features = sent2features(d, sent, h_input)
-        for item in y_label:
-            all_y_true.append(str(item))
+        # for item in y_label:
+        #     all_y_true.append(str(item))
 
         prediction = tagger.tag(crf_sent_features)
-        print(tree.disp())
-        print(prediction)
-        cur_aspect_terms = __get_aspect_terms_from_labeled(tree, prediction)
-        for t in cur_aspect_terms:
-            aspect_words.add(t)
-        # tree.disp()
-        # print(prediction)
-        # print(aspect_terms)
-        for label in prediction:
-            all_y_pred.append(label)
+        assert len(prediction) == len(sent)
+        cur_aspect_terms = __get_aspect_terms_from_labeled(sent, prediction)
+        aspect_pred_cnt += len(cur_aspect_terms)
+        cur_aspects_true = sents_test[ind].get('terms', list())
+        aspect_true_cnt += len(cur_aspects_true)
+        for t in cur_aspects_true:
+            if t['term'] in cur_aspect_terms:
+                hit_cnt += 1
+        # for t in cur_aspect_terms:
+        #     aspect_words.add(t)
+        # if cur_aspect_terms:
+        #     print(sent)
+        #     print(prediction)
+        #     print(cur_aspect_terms)
+        #     print()
+        # for label in prediction:
+        #     all_y_pred.append(label)
 
-    p, r, f1 = utils.set_evaluate(aspect_terms_true, aspect_words)
-    print(p, r, f1)
+    # p, r, f1 = utils.set_evaluate(aspect_terms_true, aspect_words)
+    # print(p, r, f1)
+    p1, r1 = hit_cnt / aspect_pred_cnt, hit_cnt / aspect_true_cnt
+    print(p1, r1, 2 * p1 * r1 / (p1 + r1))
 
 
 # convert pos tag to one-hot vector
@@ -161,7 +160,7 @@ def word2features(d, sent, h_input, i):
     word_features['bias'] = 1.
 
     # if it is punctuation
-    if sent[i] == None:
+    if sent[i] is None:
         word_features['punkt'] = 1.
 
     else:
@@ -403,7 +402,7 @@ def trainer_initialization(m_trainer, trees, params, d, c, len_voc, rel_list):
     return m_trainer
 
 
-def __training_epoch(t, Wv, We, Wcrf, b, trees_test, aspect_terms_true):
+def __training_epoch(t, Wv, We, Wcrf, b, trees_test, sents_test, aspect_terms_true):
     decay = 1.
     epoch_error = 0.0
 
@@ -452,11 +451,11 @@ def __training_epoch(t, Wv, We, Wcrf, b, trees_test, aspect_terms_true):
         epoch_error += err
 
         if inst_ind % 1000 == 0:
-            evaluate(trees_test, rel_Wr_dict, Wv, b, We, vocab, rel_list,
-                     word_vec_dim, n_classes, aspect_terms_true, mixed=False)
+            evaluate(trees_test, rel_Wr_dict, Wv, b, We, word_vec_dim, n_classes,
+                     sents_test, aspect_terms_true, mixed=False)
 
-    evaluate(trees_test, rel_Wr_dict, Wv, b, We, vocab, rel_list,
-             word_vec_dim, n_classes, aspect_terms_true, mixed=False)
+    evaluate(trees_test, rel_Wr_dict, Wv, b, We, word_vec_dim, n_classes,
+             sents_test, aspect_terms_true, mixed=False)
 
     Wcrf *= decay
     # done with epoch
@@ -532,7 +531,9 @@ if __name__ == '__main__':
     n_classes = 5
     lamb_W = 0.0001
     lamb_We = 0.0001
-    n_epoch = 10
+    # lamb_W = 0.001
+    # lamb_We = 0.001
+    n_epoch = 50
     use_mixed_word_vec = False
     train_vec_len = 50
 
@@ -542,8 +543,8 @@ if __name__ == '__main__':
         _, trees_test = pickle.load(f)
     word_vecs_dict = utils.load_word_vec_file(config.WORD_VEC_FILE)
     __init_fixed_node_word_vecs(trees_test, word_vecs_dict)
-    sents = utils.load_json_objs(config.SE14_LAPTOP_TEST_SENTS_FILE)
-    aspect_terms_true = utils.get_apects_true(sents)
+    sents_test = utils.load_json_objs(config.SE14_LAPTOP_TEST_SENTS_FILE)
+    aspect_terms_true = utils.get_apects_true(sents_test)
 
     # n_train_def = 75
     # trees_train, trees_test = trees[:n_train_def], trees[n_train_def:]
@@ -566,7 +567,7 @@ if __name__ == '__main__':
     print('number of dependency relations:', len(rel_list))
     print('number of classes:', n_classes)
 
-    trees_train = filter_incorrect_dep_trees(trees_train)
+    trees_train = filter_empty_dep_trees(trees_train)
 
     # add train_size
     n_train = len(trees_train)
@@ -605,4 +606,4 @@ if __name__ == '__main__':
     for tdata in [trees_train]:
         min_error = float('inf')
         for epoch in range(0, n_epoch):
-            __training_epoch(t, Wv, We, Wcrf, b, trees_test, aspect_terms_true)
+            __training_epoch(t, Wv, We, Wcrf, b, trees_test, sents_test, aspect_terms_true)

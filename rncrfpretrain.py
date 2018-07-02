@@ -26,22 +26,18 @@ def __init_fixed_node_word_vecs(trees, word_vecs_dict, mixed=False):
                 node.vec = np.random.rand(word_vec_dim, 1)
 
 
-def evaluate(trees_test, rel_Wr_dict, Wv, Wc, b, b_c, We, c, aspect_terms_true, mixed=False):
+def evaluate(trees_test, rel_Wr_dict, Wv, Wc, b, b_c, We, c, sents_test, aspect_terms_true, mixed=False):
     d = We.shape[0]
     aspect_words = set()
     all_y_true, all_y_pred = list(), list()
+    assert len(trees_test) == len(sents_test)
+    correctness = list()
+    hit_cnt, aspect_true_cnt, aspect_pred_cnt = 0, 0, 0
     for ind, tree in enumerate(trees_test):
         nodes = tree.get_word_nodes()
         for index, node in enumerate(nodes):
             if node.ind > -1:
                 node.vec = We[:, node.ind].reshape((d, 1))
-            # else:
-            #     vec = word_vecs_dict.get(w, None)
-            #     if vec is not None:
-            #         node.vec = vec.reshape(d, 1) if not mixed else (
-            #             vec.append(2 * np.random.rand(50) - 1)).reshape((d, 1))
-            #     else:
-            #         node.vec = np.random.rand(d, 1)
 
         prop.forward_prop([rel_Wr_dict, Wv, Wc, b, b_c, We], tree, d, c, labels=False)
         y_pred = list()
@@ -52,13 +48,37 @@ def evaluate(trees_test, rel_Wr_dict, Wv, Wc, b, b_c, We, c, aspect_terms_true, 
         cur_aspect_terms = utils.aspect_terms_from_labeled(tree, y_pred)
         for t in cur_aspect_terms:
             aspect_words.add(t)
-        # tree.disp()
-        # print(y_pred)
-        # print(cur_aspect_terms)
-        # print()
 
-    p, r, f1 = utils.set_evaluate(aspect_terms_true, aspect_words)
-    print(p, r, f1)
+        aspect_pred_cnt += len(cur_aspect_terms)
+        cur_aspects_true = sents_test[ind].get('terms', list())
+        aspect_true_cnt += len(cur_aspects_true)
+        new_hit_cnt = 0
+        for t in cur_aspects_true:
+            if t['term'] in cur_aspect_terms:
+                new_hit_cnt += 1
+        hit_cnt += new_hit_cnt
+
+        if new_hit_cnt == len(cur_aspects_true) and new_hit_cnt == len(cur_aspect_terms):
+            correctness.append(1)
+        else:
+            correctness.append(0)
+        # if len(cur_aspect_terms) != len(cur_aspects_true) or not hit:
+        #     tree.disp()
+        #     print(y_pred)
+        #     print(cur_aspect_terms)
+        #     print(sents_test[ind])
+        #     print()
+
+    # p, r, f1 = utils.set_evaluate(aspect_terms_true, aspect_words)
+    # print(p, r, f1)
+
+    p1, r1 = hit_cnt / aspect_pred_cnt, hit_cnt / aspect_true_cnt
+    print(p1, r1, 2 * p1 * r1 / (p1 + r1))
+    # for w in aspect_terms_true:
+    #     if w not in aspect_words:
+    #         print(w)
+    with open('d:/data/aspect/semeval14/deprnn-correctness.txt', 'w', encoding='utf-8') as fout:
+        fout.write('\n'.join([str(i) for i in correctness]))
 
 
 def __init_dtrnn_params(word_vec_dim, n_classes, rels):
@@ -184,7 +204,7 @@ def __proc_batch(trees_batch, use_mixed_word_vec, rel_Wr_dict, word_vec_dim, vec
     return err
 
 
-def __train(train_data_file, test_data_file, dst_model_file):
+def __train(train_data_file, test_data_file, test_sents_file, dst_model_file):
     seed_i = 12
     n_classes = 5
     batch_size = 25
@@ -204,9 +224,10 @@ def __train(train_data_file, test_data_file, dst_model_file):
     with open(test_data_file, 'rb') as f:
         _, trees_test = pickle.load(f)
     word_vecs_dict = utils.load_word_vec_file(config.WORD_VEC_FILE)
+    print(len(word_vecs_dict), 'word vecs')
     __init_fixed_node_word_vecs(trees_test, word_vecs_dict)
-    sents = utils.load_json_objs(config.SE14_LAPTOP_TEST_SENTS_FILE)
-    aspect_terms_true = utils.get_apects_true(sents)
+    sents_test = utils.load_json_objs(test_sents_file)
+    aspect_terms_true = utils.get_apects_true(sents_test)
 
     # with open(word_vecs_file, 'rb') as f:
     #     vocab, We_origin = pickle.load(f)
@@ -215,6 +236,7 @@ def __train(train_data_file, test_data_file, dst_model_file):
     rel_list.remove('root')
 
     trees_train = filter_empty_dep_trees(trees_train)
+    # trees_train = trees_train[:2000]
     rel_Wr_dict, Wv, Wc, b, b_c = __init_dtrnn_params(word_vec_dim, n_classes, rel_list)
     params_train = (rel_Wr_dict, Wv, Wc, b, b_c, We)
 
@@ -241,12 +263,15 @@ def __train(train_data_file, test_data_file, dst_model_file):
             # )
             # print(log_str)
 
+            # if batch_idx % 40 == 0:
+            #     evaluate(trees_test, rel_Wr_dict, Wv, Wc, b, b_c, We, n_classes, sents, aspect_terms_true)
+
         # reset adagrad weights
         if epoch % adagrad_reset == 0 and epoch != 0:
             ada.reset_weights()
 
         print('epoch={}, err={}, time={}'.format(epoch, epoch_err, time.time() - t))
-        evaluate(trees_test, rel_Wr_dict, Wv, Wc, b, b_c, We, n_classes, aspect_terms_true)
+        evaluate(trees_test, rel_Wr_dict, Wv, Wc, b, b_c, We, n_classes, sents_test, aspect_terms_true)
 
     with open(dst_model_file, 'wb') as fout:
         pickle.dump((params_train, vocab, rel_list), fout)
@@ -258,5 +283,12 @@ if __name__ == '__main__':
     # dst_params_file = 'd:/data/aspect/rncrf/deprnn-params.pkl'
     # __train(config.SE14_LAPTOP_TRAIN_RNCRF_DATA_FILE, config.SE14_LAPTOP_TRAIN_WORD_VECS_FILE,
     #         config.SE14_LAPTOP_TEST_RNCRF_DATA_FILE, config.SE14_LAPTOP_PRE_MODEL_FILE)
-    __train(config.SE14_LAPTOP_TRAIN_RNCRF_DATA_FILE, config.SE14_LAPTOP_TEST_RNCRF_DATA_FILE,
-            config.SE14_LAPTOP_PRE_MODEL_FILE)
+
+    # __train(config.SE14_LAPTOP_TRAIN_RNCRF_DATA_FILE, config.SE14_LAPTOP_TEST_RNCRF_DATA_FILE,
+    #         config.SE14_LAPTOP_TEST_SENTS_FILE, config.SE14_LAPTOP_PRE_MODEL_FILE)
+
+    train_data_file = 'd:/data/aspect/semeval14/judge_data/laptops_jtrain_rncrf.pkl'
+    test_data_file = 'd:/data/aspect/semeval14/judge_data/laptops_jtest_rncrf.pkl'
+    model_file = 'd:/data/aspect/semeval14/judge_data/laptops_jtest_pre_model.pkl'
+    test_sents_file = 'd:/data/aspect/semeval14/judge_data/laptops_jtest_sents.json'
+    __train(train_data_file, test_data_file, test_sents_file, model_file)

@@ -63,6 +63,13 @@ def next_sent_pos(fin):
     return pos_tags
 
 
+def get_indexed_word(w, dec=True):
+    p = w.rfind('-')
+    s = w[:p]
+    idx = int(w[p + 1:]) - 1
+    return s, idx
+
+
 def next_sent_dependency(fin):
     dep_list = list()
     for line in fin:
@@ -70,15 +77,38 @@ def next_sent_dependency(fin):
         if not line:
             break
         dep_tup = line.split(' ')
+        wgov, idx_gov = get_indexed_word(dep_tup[0])
+        wdep, idx_dep = get_indexed_word(dep_tup[1])
+        dep_tup = (dep_tup[2], (idx_gov, wgov), (idx_dep, wdep))
         dep_list.append(dep_tup)
     return dep_list
 
 
-def load_dep_tags_list(filename):
+def read_sent_dep_tups_rbsep(fin):
+    tups = list()
+    for line in fin:
+        line = line.strip()
+        if not line:
+            return tups
+        line = line[:-1]
+        line = line.replace('(', ' ')
+        line = line.replace(', ', ' ')
+        rel, gov, dep = line.split(' ')
+        w_gov, idx_gov = get_indexed_word(gov, False)
+        w_dep, idx_dep = get_indexed_word(dep, False)
+        tups.append((rel, (idx_gov, w_gov), (idx_dep, w_dep)))
+        # tups.append(line.split(' '))
+    return tups
+
+
+def load_dep_tags_list(filename, space_sep=True):
     f = open(filename, encoding='utf-8')
     sent_dep_tags_list = list()
     while True:
-        dep_tags = next_sent_dependency(f)
+        if space_sep:
+            dep_tags = next_sent_dependency(f)
+        else:
+            dep_tags = read_sent_dep_tups_rbsep(f)
         if not dep_tags:
             break
         sent_dep_tags_list.append(dep_tags)
@@ -96,6 +126,19 @@ def load_pos_tags(filename):
         sent_pos_tags_list.append(sent_pos_tags)
     f.close()
     return sent_pos_tags_list
+
+
+def save_dep_tags(dep_tags_list, filename, sep_by_space):
+    fout = open(filename, 'w', encoding='utf-8', newline='\n')
+    for dep_tags in dep_tags_list:
+        for dep_tup in dep_tags:
+            rel, (igov, wgov), (idep, wdep) = dep_tup
+            if sep_by_space:
+                fout.write('{}-{} {}-{} {}\n'.format(wgov, igov, wdep, idep, rel))
+            else:
+                fout.write('{}({}-{}, {}-{})\n'.format(rel, wgov, igov, wdep, idep))
+        fout.write('\n')
+    fout.close()
 
 
 def roll_params(params, rel_list):
@@ -158,10 +201,10 @@ def unroll_params_noWcrf(arr, d, c, len_voc, rel_list):
     Wv = arr[ind : ind + mat_size].reshape((d, d))
     ind += mat_size
 
-    b = arr[ind : ind + d].reshape((d, 1))
+    b = arr[ind: ind + d].reshape((d, 1))
     ind += d
 
-    We = arr[ind : ind + len_voc * d].reshape( (d, len_voc))
+    We = arr[ind: ind + len_voc * d].reshape( (d, len_voc))
 
     return [rel_dict, Wv, b, We]
 

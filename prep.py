@@ -155,6 +155,32 @@ def __rncrf_sample_to_json():
     utils.save_json_objs(sents, dst_file)
 
 
+def __gen_judge_train_data():
+    judge_train_sents_file = 'd:/data/aspect/semeval14/judge_data/laptops_jtrain_sents.json'
+    judge_train_dep_file = 'd:/data/aspect/semeval14/judge_data/laptops_jtrain_dep.txt'
+    judge_test_sents_file = 'd:/data/aspect/semeval14/judge_data/laptops_jtest_sents.json'
+    judge_test_dep_file = 'd:/data/aspect/semeval14/judge_data/laptops_jtest_dep.txt'
+
+    sents = utils.load_json_objs(config.SE14_LAPTOP_TRAIN_SENTS_FILE)
+    dep_tags_list = utils.load_dep_tags_list(config.SE14_LAPTOP_TRAIN_DEP_PARSE_FILE, space_sep=False)
+    n_sents = len(sents)
+    n_train = 2000
+    assert n_sents == len(dep_tags_list)
+
+    import numpy as np
+    perm = np.random.permutation(n_sents)
+    idxs_train, idxs_test = perm[:n_train], perm[n_train:]
+    sents_train = [sents[idx] for idx in idxs_train]
+    sents_test = [sents[idx] for idx in idxs_test]
+    dep_tags_train = [dep_tags_list[idx] for idx in idxs_train]
+    dep_tags_test = [dep_tags_list[idx] for idx in idxs_test]
+
+    utils.save_json_objs(sents_train, judge_train_sents_file)
+    utils.save_json_objs(sents_test, judge_test_sents_file)
+    utils.save_dep_tags(dep_tags_train, judge_train_dep_file, False)
+    utils.save_dep_tags(dep_tags_test, judge_test_dep_file, False)
+
+
 test_file_xml = 'd:/data/aspect/semeval14/Laptops_Test_Gold.xml'
 test_file_json = 'd:/data/aspect/semeval14/Laptops_Test_Gold.json'
 train_file_xml = 'd:/data/aspect/semeval14/Laptops_Train.xml'
@@ -168,3 +194,4 @@ train_file_json = 'd:/data/aspect/semeval14/Laptops_Train.json'
 #                             config.SE14_LAPTOP_TRAIN_SENTS_FILE, config.SE14_LAPTOP_TRAIN_SENT_TEXTS_FILE)
 # __process_raw_sem_eval_data(config.SE14_LAPTOP_TEST_SENTS_XML_FILE, config.SE14_LAPTOP_TEST_OPINIONS_FILE,
 #                             config.SE14_LAPTOP_TEST_SENTS_FILE, config.SE14_LAPTOP_TEST_SENT_TEXTS_FILE)
+# __gen_judge_train_data()

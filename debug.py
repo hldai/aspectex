@@ -20,4 +20,22 @@ def __check_word_vec_matrix():
     print(' '.join(words))
 
 
-__check_word_vec_matrix()
+# __check_word_vec_matrix()
+f = open('d:/data/amazon/electronics_5_text_tok.txt', encoding='utf-8')
+word_cnts = dict()
+for line in f:
+    words = line.strip().split(' ')
+    for w in words:
+        cnt = word_cnts.get(w, 0)
+        word_cnts[w] = cnt + 1
+    # print(words)
+    # break
+f.close()
+
+cnts = [0, 0]
+for w, cnt in word_cnts.items():
+    if cnt >= 2:
+        cnts[0] += 1
+    if cnt >= 3:
+        cnts[1] += 1
+print(cnts)
