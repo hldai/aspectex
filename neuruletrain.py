@@ -1,6 +1,7 @@
 import numpy as np
 import pickle
 import config
+from models.lstmcrf import LSTMCRF
 from utils import utils
 
 
@@ -51,24 +52,36 @@ def __data_from_sents_file(filename, tok_text_file, vocab):
     len_max = max([len(words) for words in words_list])
     print('max sentence len:', len_max)
 
-    label_seqs = list()
+    labels_list = list()
     for sent_idx, (sent, sent_words) in enumerate(zip(sents, words_list)):
         aspect_objs = sent.get('terms', None)
         aspect_terms = [t['term'] for t in aspect_objs] if aspect_objs is not None else list()
         x = __label_sentence(sent_words, aspect_terms)
-        label_seqs.append(x)
+        labels_list.append(x)
 
     word_idxs_list = __get_word_idx_sequence(words_list, vocab)
 
-    return label_seqs, word_idxs_list
+    return labels_list, word_idxs_list
 
 
-def __get_data(word_vecs_file, sents_files):
+def __get_data(word_vecs_file, sents_files, tok_text_files):
     with open(word_vecs_file, 'rb') as f:
         vocab, word_vecs_matrix = pickle.load(f)
 
-    label_seqs, word_idxs_list = __data_from_sents_file(
-        config.SE14_LAPTOP_TRAIN_SENTS_FILE, config.SE14_LAPTOP_TRAIN_TOK_TEXTS_FILE, vocab)
+    labels_lists, word_idxs_lists = list(), list()
+    for sents_file, tok_text_file in zip(sents_files, tok_text_files):
+        labels_list, word_idxs_list = __data_from_sents_file(sents_file, tok_text_file, vocab)
+        labels_lists.append(labels_list)
+        word_idxs_lists.append(word_idxs_list)
+    return labels_lists, word_idxs_lists, word_vecs_matrix
 
 
-__get_data(config.SE14_LAPTOP_GLOVE_WORD_VEC_FILE, [])
+def __train(word_vecs_matrix):
+    n_tags = 3
+    lstmcrf = LSTMCRF(n_tags, word_vecs_matrix)
+
+
+labels_lists, word_idxs_lists, word_vecs_matrix = __get_data(
+    config.SE14_LAPTOP_GLOVE_WORD_VEC_FILE,
+    [config.SE14_LAPTOP_TRAIN_SENTS_FILE], [config.SE14_LAPTOP_TRAIN_TOK_TEXTS_FILE])
+__train(word_vecs_matrix)
