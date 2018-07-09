@@ -1,4 +1,5 @@
 import numpy as np
+import pickle
 import tensorflow as tf
 import config
 from utils import utils
@@ -87,20 +88,124 @@ def __train():
     judge.train(0.01, 100, 5, X_train, y_train_true, X_test, y_test_true)
 
 
-def __build_cnn_data(sent_tok_texts_file, word_vecs, correctness_file):
+def __gen_word_vec_file_for_data(sent_tok_texts_file, word_vecs, dst_file):
     sent_texts = utils.read_lines(sent_tok_texts_file)
     data_vocab = set()
     for text in sent_texts:
         words = text.split(' ')
         for w in words:
-            data_vocab.add(w)
+            if w in word_vecs:
+                data_vocab.add(w)
+
+    vec_dim = next(iter(word_vecs.values())).shape[0]
+    data_vocab = list(data_vocab)
+    n_words = len(data_vocab)
+    print(n_words, vec_dim)
+    word_vec_matrix = np.zeros((n_words + 1, vec_dim), np.float32)
+    word_vec_matrix[0] = np.random.uniform(-1, 1, vec_dim)
+    for i in range(1, n_words + 1):
+        word = data_vocab[i - 1]
+        word_vec_matrix[i] = word_vecs[word]
+    with open(dst_file, 'wb') as fout:
+        pickle.dump((data_vocab, word_vec_matrix), fout, protocol=pickle.HIGHEST_PROTOCOL)
+
+
+def __build_cnn_data(sent_tok_texts_file, vocab, correctness_file):
+    sent_texts = utils.read_lines(sent_tok_texts_file)
+    max_sent_len = 0
+    sent_words_list = list()
+    for text in sent_texts:
+        words = text.split(' ')
+        sent_words_list.append(words)
+        if len(words) > max_sent_len:
+            max_sent_len = len(words)
+    print('max sent len: {}'.format(max_sent_len))
+
+    # Note: first row in word_vec_matrix is not for a word
+    word_idx_dict = {w: i + 1 for i, w in enumerate(vocab)}
+    n_sents = len(sent_texts)
+    X = np.zeros((n_sents, max_sent_len), np.int32)
+    for i, sent_words in enumerate(sent_words_list):
+        for j, w in enumerate(sent_words):
+            X[i][j] = word_idx_dict.get(w, 0)
+
+    y_true_str = utils.read_lines(correctness_file)
+    y_true = np.zeros((len(y_true_str), 2), np.int32)
+    for i, yi in enumerate(y_true_str):
+        yi = int(yi)
+        if yi == 0:
+            y_true[i][0] = 1
+        else:
+            y_true[i][1] = 1
+    # y_true = np.asarray([int(yi) for yi in y_true], np.int32)
+    return X, y_true
 
 
 def __train_cnn():
+    from models.textcnn import TextCNN
+
     sent_tok_texts_file = 'd:/data/aspect/semeval14/judge_data/laptops_jtest_texts_tok.txt'
     correctness_file = 'd:/data/aspect/semeval14/judge_data/test_correctness.txt'
-    word_vecs = utils.load_word_vec_file(config.WORD_VEC_FILE)
-    __build_cnn_data(sent_tok_texts_file, word_vecs, correctness_file)
+    word_vec_data_file = 'd:/data/aspect/semeval14/judge_data/word_vecs.pkl'
+
+    # word_vecs = utils.load_word_vec_file(config.WORD_VEC_FILE)
+    # __gen_word_vec_file_for_data(sent_tok_texts_file, word_vecs, word_vec_data_file)
+
+    with open(word_vec_data_file, 'rb') as f:
+        vocab, word_vec_matrix = pickle.load(f)
+    print('{} words, word vec dim: {}'.format(len(vocab), word_vec_matrix.shape[1]))
+    X, y_true = __build_cnn_data(sent_tok_texts_file, vocab, correctness_file)
+    n_train = 600
+    X_train = X[:n_train]
+    y_true_train = y_true[:n_train]
+    X_test = X[n_train:]
+    y_true_test = y_true[n_train:]
+
+    batch_size = 5
+    n_batch = len(X_train) // batch_size
+    n_epoch = 100
+    filter_sizes = [2, 3, 4, 5]
+    n_filters = 20
+    l2_reg_lamb = 0.1
+    cnnmodel = TextCNN(
+        X.shape[1], 2, len(vocab), word_vec_matrix.shape[1], filter_sizes, n_filters, l2_reg_lamb, word_vec_matrix)
+
+    optimizer = tf.train.AdamOptimizer(1e-4)
+    train_op = optimizer.minimize(cnnmodel.loss)
+    # grads_and_vars = optimizer.compute_gradients(cnnmodel.loss)
+    # train_op = optimizer.apply_gradients(grads_and_vars, global_step=global_step)
+
+    sess = tf.Session()
+    sess.run(tf.global_variables_initializer())
+    for epoch in range(n_epoch):
+        losses = list()
+        for batch_idx in range(n_batch):
+            X_batch = X_train[batch_size * batch_idx: batch_size * (batch_idx + 1)]
+            y_true_batch = y_true_train[batch_size * batch_idx: batch_size * (batch_idx + 1)]
+            feed_dict = {
+                cnnmodel.input_x: X_batch,
+                cnnmodel.input_y: y_true_batch,
+                cnnmodel.dropout_keep_prob: 0.5
+            }
+            _, loss = sess.run([train_op, cnnmodel.loss], feed_dict)
+            losses.append(loss)
+        y_pred = sess.run(cnnmodel.predictions, feed_dict={
+            cnnmodel.input_x: X_test,
+            cnnmodel.input_y: y_true_test,
+            cnnmodel.dropout_keep_prob: 1.0
+        })
+        y_true_tmp = np.argmax(y_true_test, axis=1)
+        n_neg, neg_hit_cnt = 0, 0
+        for yi_true, yi_pred in zip(y_true_tmp, y_pred):
+            if yi_true == 0:
+                n_neg += 1
+                if yi_pred == 0:
+                    neg_hit_cnt += 1
+        print(neg_hit_cnt / n_neg, np.sum(np.equal(y_pred, y_true_tmp)) / len(y_pred))
+        # print(sum(losses))
+        # print(y_pred)
+        # print(y_true_tmp)
+        # print(len(y_pred), len(y_true_tmp))
 
 
 # __train()

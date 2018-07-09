@@ -1,4 +1,4 @@
-import utils
+from utils import utils
 
 
 def __posible_alt(w, wt):
@@ -130,4 +130,17 @@ def __semeval_rule_insight():
 
 
 # __count_adj_phrases()
-__semeval_rule_insight()
+# __semeval_rule_insight()
+
+texts = utils.read_lines('d:/data/aspect/semeval14/judge_data/laptops_jtest_texts_tok.txt')
+y = utils.read_lines('d:/data/aspect/semeval14/judge_data/test_correctness.txt')
+y = [int(yi) for yi in y]
+pos_len, neg_len = 0, 0
+for text, yi in zip(texts, y):
+    if yi == 0:
+        neg_len += len(text)
+    else:
+        pos_len += len(text)
+n_pos = sum(y)
+n_neg = len(y) - n_pos
+print(neg_len / n_neg, pos_len / n_pos)
