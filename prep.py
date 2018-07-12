@@ -231,7 +231,7 @@ train_file_json = 'd:/data/aspect/semeval14/Laptops_Train.json'
 # __gen_judge_train_data()
 
 
-__trim_word_vecs_file(
-    [config.SE14_LAPTOP_TRAIN_TOK_TEXTS_FILE, config.SE14_LAPTOP_TEST_TOK_TEXTS_FILE],
-    config.GLOVE_WORD_VEC_FILE, config.SE14_LAPTOP_GLOVE_WORD_VEC_FILE
-)
+# __trim_word_vecs_file(
+#     [config.SE14_LAPTOP_TRAIN_TOK_TEXTS_FILE, config.SE14_LAPTOP_TEST_TOK_TEXTS_FILE],
+#     config.GLOVE_WORD_VEC_FILE, config.SE14_LAPTOP_GLOVE_WORD_VEC_FILE
+# )

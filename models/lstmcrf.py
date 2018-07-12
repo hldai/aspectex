@@ -1,4 +1,5 @@
 import tensorflow as tf
+from utils.utils import pad_sequences, save_json_objs
 
 
 class LSTMCRF:
@@ -10,6 +11,7 @@ class LSTMCRF:
         self.batch_size = batch_size
         self.lr_method = lr_method
         self.clip = clip
+
         self.n_words, self.dim_word = word_embeddings.shape
         self.use_crf = use_crf
 
@@ -60,7 +62,7 @@ class LSTMCRF:
             output = tf.nn.dropout(output, self.dropout)
 
         with tf.variable_scope("proj"):
-            W = tf.get_variable("W", dtype=tf.float32, shape=[
+            self.W = tf.get_variable("W", dtype=tf.float32, shape=[
                 2 * self.hidden_size_lstm, self.n_tags])
 
             b = tf.get_variable("b", shape=[self.n_tags],
@@ -68,7 +70,7 @@ class LSTMCRF:
 
             nsteps = tf.shape(output)[1]
             output = tf.reshape(output, [-1, 2 * self.hidden_size_lstm])
-            pred = tf.matmul(output, W) + b
+            pred = tf.matmul(output, self.W) + b
             self.logits = tf.reshape(pred, [-1, nsteps, self.n_tags])
 
     def __add_pred_op(self):
@@ -88,6 +90,7 @@ class LSTMCRF:
             mask = tf.sequence_mask(self.sequence_lengths)
             losses = tf.boolean_mask(losses, mask)
             self.loss = tf.reduce_mean(losses)
+            # self.loss = tf.reduce_mean(losses) + 0.01 * tf.nn.l2_loss(self.W)
 
         # for tensorboard
         tf.summary.scalar("loss", self.loss)
@@ -130,41 +133,116 @@ class LSTMCRF:
         self.sess.run(tf.global_variables_initializer())
         self.saver = tf.train.Saver()
 
-    def run_epoch(self, train, dev, epoch):
-        """Performs one complete pass over the train set and evaluate on dev
+    def get_feed_dict(self, word_idx_seqs, label_seqs=None, lr=None, dropout=None):
+        word_idx_seqs = [list(word_idxs) for word_idxs in word_idx_seqs]
+        word_ids, sequence_lengths = pad_sequences(word_idx_seqs, 0)
 
-        Args:
-            train: dataset that yields tuple of sentences, tags
-            dev: dataset
-            epoch: (int) index of the current epoch
+        # build feed dictionary
+        feed = {
+            self.word_idxs: word_ids,
+            self.sequence_lengths: sequence_lengths
+        }
 
-        Returns:
-            f1: (python float), score to select model on, higher is better
+        if label_seqs is not None:
+            label_seqs = [list(labels) for labels in label_seqs]
+            labels, _ = pad_sequences(label_seqs, 0)
+            feed[self.labels] = labels
 
-        """
-        # progbar stuff for logging
-        batch_size = self.batch_size
-        nbatches = (len(train) + batch_size - 1) // batch_size
-        # prog = Progbar(target=nbatches)
+        feed[self.lr] = lr
+        feed[self.dropout] = dropout
 
-        # iterate over dataset
-        for i, (words, labels) in enumerate(minibatches(train, batch_size)):
-            fd, _ = self.get_feed_dict(words, labels, self.config.lr,
-                    self.config.dropout)
+        return feed, sequence_lengths
 
-            _, train_loss, summary = self.sess.run(
-                    [self.train_op, self.loss, self.merged], feed_dict=fd)
+    def train(self, word_idxs_list_train, labels_list_train, word_idxs_list_valid, labels_list_valid,
+              vocab, test_texts, sents_test, n_epochs=10, lr=0.001, dropout=0.5):
+        n_train = len(word_idxs_list_train)
+        n_batches = (n_train + self.batch_size - 1) // self.batch_size
 
-            # prog.update(i + 1, [("train loss", train_loss)])
-            print('loss={}'.format(train_loss))
+        for epoch in range(n_epochs):
+            losses = list()
+            for i in range(n_batches):
+                word_idxs_list_batch = word_idxs_list_train[i * self.batch_size: (i + 1) * self.batch_size]
+                labels_list_batch = labels_list_train[i * self.batch_size: (i + 1) * self.batch_size]
+                feed_dict, _ = self.get_feed_dict(word_idxs_list_batch, labels_list_batch, lr, dropout)
+                _, train_loss = self.sess.run(
+                    [self.train_op, self.loss], feed_dict=feed_dict)
+                losses.append(train_loss)
+            print('iter {}, loss={}'.format(epoch, sum(losses)))
+            # metrics = self.run_evaluate(dev)
+            self.evaluate(word_idxs_list_valid, labels_list_valid, vocab, test_texts, sents_test)
 
-            # tensorboard
-            if i % 10 == 0:
-                self.file_writer.add_summary(summary, epoch*nbatches + i)
+    def predict_batch(self, word_idxs):
+        fd, sequence_lengths = self.get_feed_dict(word_idxs, dropout=1.0)
 
-        metrics = self.run_evaluate(dev)
-        msg = " - ".join(["{} {:04.2f}".format(k, v)
-                for k, v in metrics.items()])
-        # self.logger.info(msg)
+        # get tag scores and transition params of CRF
+        viterbi_sequences = []
+        logits, trans_params = self.sess.run(
+                [self.logits, self.trans_params], feed_dict=fd)
 
-        return metrics["f1"]
+        # iterate over the sentences because no batching in vitervi_decode
+        for logit, sequence_length in zip(logits, sequence_lengths):
+            logit = logit[:sequence_length]  # keep only the valid steps
+            viterbi_seq, viterbi_score = tf.contrib.crf.viterbi_decode(
+                    logit, trans_params)
+            viterbi_sequences += [viterbi_seq]
+
+        return viterbi_sequences, sequence_lengths
+
+    def evaluate(self, word_idxs_list_valid, labels_list_valid, vocab, test_texts, sents_test):
+        cnt_true, cnt_sys, cnt_hit = 0, 0, 0
+        error_sents, error_terms = list(), list()
+        correct_sent_idxs = list()
+        sent_idx = 0
+        for word_idxs, labels, text, sent in zip(word_idxs_list_valid, labels_list_valid, test_texts, sents_test):
+            terms_sys = set()
+            labels_pred, sequence_lengths = self.predict_batch([word_idxs])
+            labels_pred = labels_pred[0]
+            words = text.split(' ')
+            # print(labels_pred)
+            # print(len(words), len(labels_pred))
+            assert len(words) == len(labels_pred)
+
+            p = 0
+            while p < len(words):
+                yi = labels_pred[p]
+                if yi == 1:
+                    pright = p
+                    while pright + 1 < len(words) and labels_pred[pright + 1] == 2:
+                        pright += 1
+                    terms_sys.add(' '.join(words[p: pright + 1]))
+                    p = pright + 1
+                else:
+                    p += 1
+
+            terms_true = [t['term'].lower() for t in sent['terms']] if 'terms' in sent else list()
+            hit = True
+            terms_not_hit = set()
+            for t in terms_true:
+                if t in terms_sys:
+                    cnt_hit += 1
+                else:
+                    hit = False
+                    terms_not_hit.add(t)
+            cnt_true += len(terms_true)
+            cnt_sys += len(terms_sys)
+            if not hit:
+                error_sents.append(sent)
+                error_terms.append(terms_not_hit)
+            else:
+                correct_sent_idxs.append(sent_idx)
+            sent_idx += 1
+
+        # save_json_objs(error_sents, 'd:/data/aspect/semeval14/error-sents.txt')
+        with open('d:/data/aspect/semeval14/error-sents.txt', 'w', encoding='utf-8') as fout:
+            for sent, terms in zip(error_sents, error_terms):
+                # terms_true = [t['term'].lower() for t in sent['terms']] if 'terms' in sent else list()
+                fout.write('{}\n{}\n\n'.format(sent['text'], terms))
+        with open('d:/data/aspect/semeval14/lstmcrf-correct.txt', 'w', encoding='utf-8') as fout:
+            fout.write('\n'.join([str(i) for i in correct_sent_idxs]))
+
+        p = cnt_hit / cnt_sys
+        r = cnt_hit / (cnt_true - 16)
+        f1 = 2 * p * r / (p + r)
+        print(p, r, f1, cnt_true)
+        # p, r, f1 = set_evaluate(terms_true, terms_sys)
+        # print(p, r, f1)

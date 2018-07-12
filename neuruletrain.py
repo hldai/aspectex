@@ -73,15 +73,26 @@ def __get_data(word_vecs_file, sents_files, tok_text_files):
         labels_list, word_idxs_list = __data_from_sents_file(sents_file, tok_text_file, vocab)
         labels_lists.append(labels_list)
         word_idxs_lists.append(word_idxs_list)
-    return labels_lists, word_idxs_lists, word_vecs_matrix
+    return labels_lists, word_idxs_lists, word_vecs_matrix, vocab
 
 
-def __train(word_vecs_matrix):
+def __train():
+    print('loading data ...')
+    labels_lists, word_idxs_lists, word_vecs_matrix, vocab = __get_data(
+        config.SE14_LAPTOP_GLOVE_WORD_VEC_FILE,
+        [config.SE14_LAPTOP_TRAIN_SENTS_FILE, config.SE14_LAPTOP_TEST_SENTS_FILE],
+        [config.SE14_LAPTOP_TRAIN_TOK_TEXTS_FILE, config.SE14_LAPTOP_TEST_TOK_TEXTS_FILE])
+    sents_test = utils.load_json_objs(config.SE14_LAPTOP_TEST_SENTS_FILE)
+    test_texts = utils.read_lines(config.SE14_LAPTOP_TEST_TOK_TEXTS_FILE)
+    print('done')
+    # aspects_test_true = utils.get_apects_true(sents_test, True)
+    # print('{} aspect terms'.format(len(aspects_test_true)))
     n_tags = 3
     lstmcrf = LSTMCRF(n_tags, word_vecs_matrix)
+    word_idxs_list_train, word_idxs_list_test = word_idxs_lists
+    labels_list_train, labels_list_test = labels_lists
+    lstmcrf.train(word_idxs_list_train, labels_list_train, word_idxs_list_test,
+                  labels_list_test, vocab, test_texts, sents_test, n_epochs=100)
 
 
-labels_lists, word_idxs_lists, word_vecs_matrix = __get_data(
-    config.SE14_LAPTOP_GLOVE_WORD_VEC_FILE,
-    [config.SE14_LAPTOP_TRAIN_SENTS_FILE], [config.SE14_LAPTOP_TRAIN_TOK_TEXTS_FILE])
-__train(word_vecs_matrix)
+__train()

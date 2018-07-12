@@ -132,15 +132,33 @@ def __semeval_rule_insight():
 # __count_adj_phrases()
 # __semeval_rule_insight()
 
-texts = utils.read_lines('d:/data/aspect/semeval14/judge_data/laptops_jtest_texts_tok.txt')
-y = utils.read_lines('d:/data/aspect/semeval14/judge_data/test_correctness.txt')
-y = [int(yi) for yi in y]
-pos_len, neg_len = 0, 0
-for text, yi in zip(texts, y):
-    if yi == 0:
-        neg_len += len(text)
-    else:
-        pos_len += len(text)
-n_pos = sum(y)
-n_neg = len(y) - n_pos
-print(neg_len / n_neg, pos_len / n_pos)
+import config
+sents = utils.load_json_objs(config.SE14_LAPTOP_TEST_SENTS_FILE)
+texts = utils.read_lines(config.SE14_LAPTOP_TEST_TOK_TEXTS_FILE)
+term_cnt, not_in_cnt = 0, 0
+for sent, text in zip(sents, texts):
+    terms_obj = sent.get('terms', None)
+    if terms_obj is None:
+        continue
+    terms = [t['term'].lower() for t in terms_obj]
+    term_cnt += len(terms)
+    words = text.split(' ')
+    for t in terms:
+        term_words = t.split(' ')
+        pleft, pright = 0, 0
+        while pleft + len(term_words) <= len(words):
+            pright = pleft + len(term_words)
+            hit = True
+            for i in range(pleft, pright):
+                if words[i] != term_words[i - pleft]:
+                    hit = False
+                    break
+            if hit:
+                break
+            pleft += 1
+        if pleft + len(term_words) > len(words):
+            not_in_cnt += 1
+            print(term_words)
+            print(words)
+            print()
+print(not_in_cnt, term_cnt)

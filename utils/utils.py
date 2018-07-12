@@ -16,6 +16,19 @@ def set_evaluate(set_true, set_pred):
     return p, r, f1
 
 
+def pad_sequences(sequences, pad_token):
+    max_len = 0
+    for s in sequences:
+        max_len = max(max_len, len(s))
+
+    padded_seqs, seq_lens = list(), list()
+    for seq in sequences:
+        padded_seq = seq + [pad_token for _ in range(max_len - len(seq))]
+        padded_seqs.append(padded_seq)
+        seq_lens.append(len(seq))
+    return padded_seqs, seq_lens
+
+
 def load_word_vec_file(filename, vocab=None):
     word_vecs = dict()
     f = open(filename, encoding='utf-8')
@@ -230,12 +243,14 @@ def aspect_terms_from_labeled(sent_tree, y_pred):
     return phrases
 
 
-def get_apects_true(sents):
+def get_apects_true(sents, to_lower=False):
     aspect_terms = set()
     for s in sents:
         terms = s.get('terms', None)
         if terms is not None:
             for t in terms:
-                # aspect_terms.add(t['term'].lower())
-                aspect_terms.add(t['term'])
+                if to_lower:
+                    aspect_terms.add(t['term'].lower())
+                else:
+                    aspect_terms.add(t['term'])
     return aspect_terms
