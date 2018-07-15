@@ -8,9 +8,17 @@ from os.path import join
 # WORD_VEC_FILE = 'd:/data/res/amazon-electronics-vectors.txt'
 # LIGHT_WORD_VEC_FILE = 'd:/data/res/amazon-electronics-vectors-light.txt'
 
-RES_DIR = 'd:/data/res/'
-DATA_DIR = 'd:/data/aspect/'
-AMAZON_DATA_DIR = 'd:/data/amazon'
+env = 'windows'
+# env = 'linux'
+
+if env == 'windows':
+    RES_DIR = 'd:/data/res/'
+    DATA_DIR = 'd:/data/aspect/'
+    AMAZON_DATA_DIR = 'd:/data/amazon'
+else:
+    RES_DIR = '/home/data/hldai/res/'
+    DATA_DIR = '/home/data/hldai/aspect/'
+    AMAZON_DATA_DIR = '/home/data/hldai/amazon'
 
 RAW_WORD_VEC_FILE = join(RES_DIR, 'eletronics-vectors-sg-n10.bin')
 WORD_VEC_FILE = join(RES_DIR, 'amazon-eletronics-vectors-sg-n10.txt')
