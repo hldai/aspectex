@@ -3,7 +3,9 @@ import pickle
 import config
 from collections import namedtuple
 from models.lstmcrf import LSTMCRF
+from models.nrcomb import NeuRuleComb
 from utils import utils
+import tensorflow as tf
 
 
 TrainData = namedtuple("TrainData", ["labels_list", "word_idxs_list"])
@@ -124,19 +126,49 @@ def __train():
     print('loading data ...')
     with open(config.SE14_LAPTOP_GLOVE_WORD_VEC_FILE, 'rb') as f:
         vocab, word_vecs_matrix = pickle.load(f)
-    # train_data, valid_data = __get_data_semeval(vocab)
-    train_data, valid_data = __get_data_amazon(vocab)
+    train_data, valid_data = __get_data_semeval(vocab)
+    # train_data, valid_data = __get_data_amazon(vocab)
     # model_file = 'd:/data/amazon/model/lstmcrfrule.ckpt'
     model_file = config.LAPTOP_RULE_MODEL_FILE
+    save_model_file = None
     print('done')
     n_tags = 3
     hidden_size_lstm = 100
-    lstmcrf = LSTMCRF(n_tags, word_vecs_matrix, hidden_size_lstm=hidden_size_lstm)
-    # lstmcrf = LSTMCRF(n_tags, word_vecs_matrix, model_file=model_file)
+    # lstmcrf = LSTMCRF(n_tags, word_vecs_matrix, hidden_size_lstm=hidden_size_lstm)
+    lstmcrf = LSTMCRF(n_tags, word_vecs_matrix, hidden_size_lstm=hidden_size_lstm, model_file=model_file)
     lstmcrf.train(train_data.word_idxs_list, train_data.labels_list, valid_data.word_idxs_list,
                   valid_data.labels_list, vocab, valid_data.tok_texts, valid_data.terms_true_list,
-                  n_epochs=100, save_file=model_file)
+                  n_epochs=100, save_file=save_model_file)
 
 
-__train()
+def __train_neurule():
+    print('loading data ...')
+    with open(config.SE14_LAPTOP_GLOVE_WORD_VEC_FILE, 'rb') as f:
+        vocab, word_vecs_matrix = pickle.load(f)
+    train_data, valid_data = __get_data_semeval(vocab)
+    # train_data, valid_data = __get_data_amazon(vocab)
+    # model_file = 'd:/data/amazon/model/lstmcrfrule.ckpt'
+    rule_model_file = config.LAPTOP_RULE_MODEL_FILE
+    save_model_file = None
+    print('done')
+    n_tags = 3
+    batch_size = 20
+    hidden_size_lstm = 100
+    hidden_size_lstm_rule = 100
+    lstmcrf = LSTMCRF(n_tags, word_vecs_matrix, batch_size=batch_size, hidden_size_lstm=hidden_size_lstm_rule,
+                      model_file=rule_model_file)
+    hidden_vecs_batch_list_train = lstmcrf.calc_hidden_vecs(train_data.word_idxs_list, batch_size)
+    hidden_vecs_list_valid = lstmcrf.calc_hidden_vecs(valid_data.word_idxs_list, 1)
+
+    tf.reset_default_graph()
+    nrc = NeuRuleComb(n_tags, word_vecs_matrix, rule_model_file, hidden_size_lstm=hidden_size_lstm,
+                      hidden_size_lstm_rule=hidden_size_lstm_rule, model_file=None)
+    nrc.train(train_data.word_idxs_list, train_data.labels_list, valid_data.word_idxs_list,
+              valid_data.labels_list, vocab, valid_data.tok_texts, valid_data.terms_true_list,
+              hidden_vecs_batch_list_train, hidden_vecs_list_valid,
+              n_epochs=100, save_file=save_model_file)
+
+
+# __train()
+__train_neurule()
 # __get_data_amazon(None)

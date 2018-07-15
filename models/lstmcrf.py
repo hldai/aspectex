@@ -63,8 +63,8 @@ class LSTMCRF:
             (output_fw, output_bw), _ = tf.nn.bidirectional_dynamic_rnn(
                     cell_fw, cell_bw, self.word_embeddings,
                     sequence_length=self.sequence_lengths, dtype=tf.float32)
-            output = tf.concat([output_fw, output_bw], axis=-1)
-            output = tf.nn.dropout(output, self.dropout)
+            self.lstm_output = tf.concat([output_fw, output_bw], axis=-1)
+            self.lstm_output = tf.nn.dropout(self.lstm_output, self.dropout)
 
         with tf.variable_scope("proj"):
             self.W = tf.get_variable("W", dtype=tf.float32, shape=[
@@ -73,8 +73,8 @@ class LSTMCRF:
             b = tf.get_variable("b", shape=[self.n_tags],
                                 dtype=tf.float32, initializer=tf.zeros_initializer())
 
-            nsteps = tf.shape(output)[1]
-            output = tf.reshape(output, [-1, 2 * self.hidden_size_lstm])
+            nsteps = tf.shape(self.lstm_output)[1]
+            output = tf.reshape(self.lstm_output, [-1, 2 * self.hidden_size_lstm])
             pred = tf.matmul(output, self.W) + b
             self.logits = tf.reshape(pred, [-1, nsteps, self.n_tags])
 
@@ -138,8 +138,7 @@ class LSTMCRF:
         if model_file is None:
             self.sess.run(tf.global_variables_initializer())
         else:
-            self.saver = tf.train.Saver()
-            self.saver.restore(self.sess, model_file)
+            tf.train.Saver().restore(self.sess, model_file)
 
     def get_feed_dict(self, word_idx_seqs, label_seqs=None, lr=None, dropout=None):
         word_idx_seqs = [list(word_idxs) for word_idxs in word_idx_seqs]
@@ -161,6 +160,18 @@ class LSTMCRF:
 
         return feed, sequence_lengths
 
+    def calc_hidden_vecs(self, word_idxs_list, batch_size):
+        n_samples = len(word_idxs_list)
+        n_batches = (n_samples + batch_size - 1) // batch_size
+
+        hidden_vecs_batch_list = list()
+        for i in range(n_batches):
+            word_idxs_list_batch = word_idxs_list[i * batch_size: (i + 1) * batch_size]
+            fd, sequence_lengths = self.get_feed_dict(word_idxs_list_batch, dropout=1.0)
+            hidden_vecs_batch = self.sess.run(self.lstm_output, feed_dict=fd)
+            hidden_vecs_batch_list.append(hidden_vecs_batch)
+        return hidden_vecs_batch_list
+
     def train(self, word_idxs_list_train, labels_list_train, word_idxs_list_valid, labels_list_valid,
               vocab, valid_texts, terms_true_list, n_epochs=10, lr=0.001, dropout=0.5, save_file=None):
         if save_file is not None and self.saver is None:
@@ -176,8 +187,10 @@ class LSTMCRF:
                 word_idxs_list_batch = word_idxs_list_train[i * self.batch_size: (i + 1) * self.batch_size]
                 labels_list_batch = labels_list_train[i * self.batch_size: (i + 1) * self.batch_size]
                 feed_dict, _ = self.get_feed_dict(word_idxs_list_batch, labels_list_batch, lr, dropout)
-                _, train_loss = self.sess.run(
-                    [self.train_op, self.loss], feed_dict=feed_dict)
+                # _, train_loss = self.sess.run(
+                #     [self.train_op, self.loss], feed_dict=feed_dict)
+                _, train_loss, lstm_output = self.sess.run(
+                    [self.train_op, self.loss, self.lstm_output], feed_dict=feed_dict)
                 losses.append(train_loss)
                 losses_seg.append(train_loss)
 

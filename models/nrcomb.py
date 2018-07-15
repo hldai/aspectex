@@ -3,11 +3,13 @@ from utils.utils import pad_sequences
 
 
 class NeuRuleComb:
-    def __init__(self, n_tags, word_embeddings, hidden_size_lstm=300, batch_size=20, train_word_embeddings=False,
+    def __init__(self, n_tags, word_embeddings, rule_model_file, hidden_size_lstm=300, hidden_size_lstm_rule=100,
+                 batch_size=20, train_word_embeddings=False,
                  lr_method='adam', clip=-1, use_crf=True, model_file=None):
         self.n_tags = n_tags
         self.vals_word_embeddings = word_embeddings
         self.hidden_size_lstm = hidden_size_lstm
+        self.hidden_size_lstm_rule = hidden_size_lstm_rule
         self.batch_size = batch_size
         self.lr_method = lr_method
         self.clip = clip
@@ -17,17 +19,20 @@ class NeuRuleComb:
         self.use_crf = use_crf
 
         self.word_idxs = tf.placeholder(tf.int32, shape=[None, None], name='word_idxs')
+        self.rule_hidden_input = tf.placeholder(tf.float32, shape=[None, None, hidden_size_lstm_rule * 2],
+                                                name='rule_hidden_input')
         self.sequence_lengths = tf.placeholder(tf.int32, shape=[None], name='sequence_lengths')
         self.labels = tf.placeholder(tf.int32, shape=[None, None], name='labels')
         self.dropout = tf.placeholder(dtype=tf.float32, shape=[], name="dropout")
         self.lr = tf.placeholder(dtype=tf.float32, shape=[], name="lr")
 
         self.__add_word_embedding_op(train_word_embeddings)
+        # self.__setup_rule_lstm_hidden()
         self.__add_logits_op()
         self.__add_pred_op()
         self.__add_loss_op()
         self.__add_train_op(self.lr_method, self.lr, self.loss, self.clip)
-        self.__init_session(model_file)
+        self.__init_session(rule_model_file, model_file)
 
     def __add_word_embedding_op(self, train_word_embeddings):
         with tf.variable_scope("words"):
@@ -51,30 +56,44 @@ class NeuRuleComb:
             word_embeddings = tf.nn.embedding_lookup(_word_embeddings, self.word_idxs, name="word_embeddings")
         self.word_embeddings = tf.nn.dropout(word_embeddings, self.dropout)
 
+    def __setup_rule_lstm_hidden(self):
+        # TODO rename
+        with tf.variable_scope("bi-lstm"):
+            cell_fw_rule = tf.contrib.rnn.LSTMCell(self.hidden_size_lstm_rule)
+            cell_bw_rule = tf.contrib.rnn.LSTMCell(self.hidden_size_lstm_rule)
+            (output_fw_rule, output_bw_rule), _ = tf.nn.bidirectional_dynamic_rnn(
+                    cell_fw_rule, cell_bw_rule, self.word_embeddings,
+                    sequence_length=self.sequence_lengths, dtype=tf.float32)
+
+            self.rule_hidden = tf.concat([output_fw_rule, output_bw_rule], axis=-1)
+            self.rule_hidden = tf.nn.dropout(self.rule_hidden, self.dropout)
+
     def __add_logits_op(self):
         """Defines self.logits
 
         For each word in each sentence of the batch, it corresponds to a vector
         of scores, of dimension equal to the number of tags.
         """
-        with tf.variable_scope("bi-lstm"):
-            cell_fw = tf.contrib.rnn.LSTMCell(self.hidden_size_lstm)
-            cell_bw = tf.contrib.rnn.LSTMCell(self.hidden_size_lstm)
-            (output_fw, output_bw), _ = tf.nn.bidirectional_dynamic_rnn(
-                    cell_fw, cell_bw, self.word_embeddings,
+
+        with tf.variable_scope("bi-lstm-data"):
+            cell_fw_data = tf.contrib.rnn.LSTMCell(self.hidden_size_lstm)
+            cell_bw_data = tf.contrib.rnn.LSTMCell(self.hidden_size_lstm)
+            (output_fw_data, output_bw_data), _ = tf.nn.bidirectional_dynamic_rnn(
+                    cell_fw_data, cell_bw_data, self.word_embeddings,
                     sequence_length=self.sequence_lengths, dtype=tf.float32)
-            output = tf.concat([output_fw, output_bw], axis=-1)
+
+            output = tf.concat([output_fw_data, output_bw_data, self.rule_hidden_input], axis=-1)
             output = tf.nn.dropout(output, self.dropout)
 
-        with tf.variable_scope("proj"):
+        with tf.variable_scope("proj-data"):
             self.W = tf.get_variable("W", dtype=tf.float32, shape=[
-                2 * self.hidden_size_lstm, self.n_tags])
+                2 * (self.hidden_size_lstm + self.hidden_size_lstm_rule), self.n_tags])
 
             b = tf.get_variable("b", shape=[self.n_tags],
                                 dtype=tf.float32, initializer=tf.zeros_initializer())
 
             nsteps = tf.shape(output)[1]
-            output = tf.reshape(output, [-1, 2 * self.hidden_size_lstm])
+            output = tf.reshape(output, [-1, 2 * (self.hidden_size_lstm + self.hidden_size_lstm_rule)])
             pred = tf.matmul(output, self.W) + b
             self.logits = tf.reshape(pred, [-1, nsteps, self.n_tags])
 
@@ -131,15 +150,17 @@ class NeuRuleComb:
             else:
                 self.train_op = optimizer.minimize(loss)
 
-    def __init_session(self, model_file):
+    def __init_session(self, rule_model_file, model_file):
         """Defines self.sess and initialize the variables"""
         # self.logger.info("Initializing tf session")
         self.sess = tf.Session()
         if model_file is None:
+            # self.saver = tf.train.Saver()
             self.sess.run(tf.global_variables_initializer())
+            # self.saver.restore(self.sess, rule_model_file)
         else:
-            self.saver = tf.train.Saver()
-            self.saver.restore(self.sess, model_file)
+            # self.saver = tf.train.Saver()
+            tf.train.Saver().restore(self.sess, model_file)
 
     def get_feed_dict(self, word_idx_seqs, label_seqs=None, lr=None, dropout=None):
         word_idx_seqs = [list(word_idxs) for word_idxs in word_idx_seqs]
@@ -162,7 +183,8 @@ class NeuRuleComb:
         return feed, sequence_lengths
 
     def train(self, word_idxs_list_train, labels_list_train, word_idxs_list_valid, labels_list_valid,
-              vocab, valid_texts, terms_true_list, n_epochs=10, lr=0.001, dropout=0.5, save_file=None):
+              vocab, valid_texts, terms_true_list, hidden_vecs_list_train, hidden_vecs_list_valid,
+              n_epochs=10, lr=0.001, dropout=0.5, save_file=None):
         if save_file is not None and self.saver is None:
             self.saver = tf.train.Saver()
 
@@ -176,6 +198,7 @@ class NeuRuleComb:
                 word_idxs_list_batch = word_idxs_list_train[i * self.batch_size: (i + 1) * self.batch_size]
                 labels_list_batch = labels_list_train[i * self.batch_size: (i + 1) * self.batch_size]
                 feed_dict, _ = self.get_feed_dict(word_idxs_list_batch, labels_list_batch, lr, dropout)
+                feed_dict[self.rule_hidden_input] = hidden_vecs_list_train[i]
                 _, train_loss = self.sess.run(
                     [self.train_op, self.loss], feed_dict=feed_dict)
                 losses.append(train_loss)
@@ -183,7 +206,7 @@ class NeuRuleComb:
 
                 if (i + 1) % (5000 // self.batch_size) == 0:
                     print('iter {}, batch {}, loss={}'.format(epoch, i, sum(losses_seg)))
-                    p, r, f1 = self.evaluate(word_idxs_list_valid, labels_list_valid, vocab,
+                    p, r, f1 = self.evaluate(word_idxs_list_valid, hidden_vecs_list_valid, labels_list_valid, vocab,
                                              valid_texts, terms_true_list)
                     losses_seg = list()
 
@@ -194,15 +217,17 @@ class NeuRuleComb:
                             print('model saved to {}'.format(save_file))
             print('iter {}, loss={}'.format(epoch, sum(losses)))
             # metrics = self.run_evaluate(dev)
-            p, r, f1 = self.evaluate(word_idxs_list_valid, labels_list_valid, vocab, valid_texts, terms_true_list)
+            p, r, f1 = self.evaluate(
+                word_idxs_list_valid, hidden_vecs_list_valid, labels_list_valid, vocab, valid_texts, terms_true_list)
             if f1 > best_f1:
                 best_f1 = f1
                 if self.saver is not None:
                     self.saver.save(self.sess, save_file)
                     print('model saved to {}'.format(save_file))
 
-    def predict_batch(self, word_idxs):
+    def predict_batch(self, word_idxs, hidden_vecs):
         fd, sequence_lengths = self.get_feed_dict(word_idxs, dropout=1.0)
+        fd[self.rule_hidden_input] = hidden_vecs
 
         # get tag scores and transition params of CRF
         viterbi_sequences = []
@@ -218,15 +243,14 @@ class NeuRuleComb:
 
         return viterbi_sequences, sequence_lengths
 
-    def evaluate(self, word_idxs_list_valid, labels_list_valid, vocab, test_texts, terms_true_list):
+    def evaluate(self, word_idxs_list_valid, hidden_vecs_list, labels_list_valid, vocab, test_texts, terms_true_list):
         cnt_true, cnt_sys, cnt_hit = 0, 0, 0
         error_sents, error_terms = list(), list()
         correct_sent_idxs = list()
-        sent_idx = 0
-        for word_idxs, labels, text, terms_true in zip(
-                word_idxs_list_valid, labels_list_valid, test_texts, terms_true_list):
+        for sent_idx, (word_idxs, labels, text, terms_true) in enumerate(zip(
+                word_idxs_list_valid, labels_list_valid, test_texts, terms_true_list)):
             terms_sys = set()
-            labels_pred, sequence_lengths = self.predict_batch([word_idxs])
+            labels_pred, sequence_lengths = self.predict_batch([word_idxs], hidden_vecs_list[sent_idx])
             labels_pred = labels_pred[0]
             words = text.split(' ')
             # print(labels_pred)
@@ -260,7 +284,6 @@ class NeuRuleComb:
                 error_terms.append(terms_not_hit)
             else:
                 correct_sent_idxs.append(sent_idx)
-            sent_idx += 1
 
         # save_json_objs(error_sents, 'd:/data/aspect/semeval14/error-sents.txt')
         with open('d:/data/aspect/semeval14/error-sents.txt', 'w', encoding='utf-8') as fout:

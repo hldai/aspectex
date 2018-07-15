@@ -33,29 +33,46 @@ def create_model():
 
 
 def restore_model():
+    v0 = tf.constant([3, 4, 2], dtype=tf.float32)
+    v4 = tf.get_variable("v4", shape=[3], initializer=tf.random_normal_initializer)
+    v5 = v4 + v0
+    g2_init = tf.global_variables_initializer()
+
+    g1 = tf.Graph()
+    with g1.as_default():
+        # Create some variables.
+        v1 = tf.get_variable("v1", shape=[3], initializer=tf.zeros_initializer)
+        v2 = tf.get_variable("v2", shape=[5], initializer=tf.zeros_initializer)
+        # v2 = tf.Variable([1, 1, 2], name="v2", dtype=tf.float32)
+        saver = tf.train.Saver()
+        sess = tf.Session()
+        saver.restore(sess, "d:/data/tmp/model.ckpt")
+        v1_val, v2_val = sess.run([v1, v2])
+        print("v1 : %s" % v1_val)
+        print("v2 : %s" % v2_val)
+
     tf.reset_default_graph()
 
-    # Create some variables.
-    v1 = tf.get_variable("v1", shape=[3], initializer=tf.zeros_initializer)
-    # v2 = tf.get_variable("v2", shape=[5], initializer=tf.zeros_initializer)
-    v2 = tf.Variable([1, 1, 2, 1, 1], name="v2", dtype=tf.float32)
-    v3 = tf.constant([3, 2, 2], dtype=tf.float32, name="v3")
-
     # Add ops to save and restore all the variables.
-    saver = tf.train.Saver()
+    # tf.reset_default_graph()
 
     # Later, launch the model, use the saver to restore variables from disk, and
     # do some work with the model.
-    with tf.Session() as sess:
-        # sess.run(tf.global_variables_initializer())
-        # Restore variables from disk.
-        saver.restore(sess, "d:/data/tmp/model.ckpt")
-        print("Model restored.")
-        # Check the values of the variables
-        print("v1 : %s" % v1.eval())
-        print("v2 : %s" % v2.eval())
-        print("v3 : %s" % v3.eval())
+    # with tf.Session(graph=g1) as sess:
+
+    # sess1 = tf.Session(graph=g1)
+    sess = tf.Session()
+
+    # sess.run(tf.global_variables_initializer())
+    # Restore variables from disk.
+
+    # sess2.run(tf.local_variables_initializer())
+    sess.run(g2_init)
+    # sess2.run(tf.variables_initializer([v4]))
+    v4_val, v5_val = sess.run([v4, v5])
+    print(v4_val)
+    print(v5_val)
 
 
-create_model()
+# create_model()
 restore_model()
