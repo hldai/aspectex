@@ -86,8 +86,8 @@ def __get_data_semeval(vocab):
 
 
 def __get_data_amazon(vocab):
-    tok_texts_file = 'd:/data/amazon/laptops-reivews-sent-tok-text.txt'
-    terms_true_file = 'd:/data/amazon/laptops-rule-result.txt'
+    tok_texts_file = config.AMAZON_TOK_TEXTS_FILE
+    terms_true_file = config.AMAZON_TERMS_TRUE_FILE
     terms_true_list = utils.load_json_objs(terms_true_file)
     tok_texts = utils.read_lines(tok_texts_file)
     assert len(terms_true_list) == len(tok_texts)
@@ -126,7 +126,8 @@ def __train():
         vocab, word_vecs_matrix = pickle.load(f)
     # train_data, valid_data = __get_data_semeval(vocab)
     train_data, valid_data = __get_data_amazon(vocab)
-    model_file = 'd:/data/amazon/model/lstmcrfrule.ckpt'
+    # model_file = 'd:/data/amazon/model/lstmcrfrule.ckpt'
+    model_file = config.LAPTOP_RULE_MODEL_FILE
     print('done')
     n_tags = 3
     hidden_size_lstm = 100

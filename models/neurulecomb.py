@@ -169,6 +169,7 @@ class NeuRuleComb:
         n_train = len(word_idxs_list_train)
         n_batches = (n_train + self.batch_size - 1) // self.batch_size
 
+        best_f1 = 0
         for epoch in range(n_epochs):
             losses, losses_seg = list(), list()
             for i in range(n_batches):
@@ -182,15 +183,23 @@ class NeuRuleComb:
 
                 if (i + 1) % (5000 // self.batch_size) == 0:
                     print('iter {}, batch {}, loss={}'.format(epoch, i, sum(losses_seg)))
-                    self.evaluate(word_idxs_list_valid, labels_list_valid, vocab, valid_texts, terms_true_list)
+                    p, r, f1 = self.evaluate(word_idxs_list_valid, labels_list_valid, vocab,
+                                             valid_texts, terms_true_list)
                     losses_seg = list()
 
-                    if self.saver is not None:
-                        self.saver.save(self.sess, save_file)
-                        print('model saved to {}'.format(save_file))
+                    if f1 > best_f1:
+                        best_f1 = f1
+                        if self.saver is not None:
+                            self.saver.save(self.sess, save_file)
+                            print('model saved to {}'.format(save_file))
             print('iter {}, loss={}'.format(epoch, sum(losses)))
             # metrics = self.run_evaluate(dev)
-            self.evaluate(word_idxs_list_valid, labels_list_valid, vocab, valid_texts, terms_true_list)
+            p, r, f1 = self.evaluate(word_idxs_list_valid, labels_list_valid, vocab, valid_texts, terms_true_list)
+            if f1 > best_f1:
+                best_f1 = f1
+                if self.saver is not None:
+                    self.saver.save(self.sess, save_file)
+                    print('model saved to {}'.format(save_file))
 
     def predict_batch(self, word_idxs):
         fd, sequence_lengths = self.get_feed_dict(word_idxs, dropout=1.0)
@@ -267,3 +276,4 @@ class NeuRuleComb:
         print(p, r, f1, cnt_true)
         # p, r, f1 = set_evaluate(terms_true, terms_sys)
         # print(p, r, f1)
+        return p, r, f1

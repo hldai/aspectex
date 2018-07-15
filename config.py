@@ -8,15 +8,19 @@ from os.path import join
 # WORD_VEC_FILE = 'd:/data/res/amazon-electronics-vectors.txt'
 # LIGHT_WORD_VEC_FILE = 'd:/data/res/amazon-electronics-vectors-light.txt'
 
-RAW_WORD_VEC_FILE = 'd:/data/amazon/eletronics-vectors-sg-n10.bin'
-WORD_VEC_FILE = 'd:/data/res/amazon-eletronics-vectors-sg-n10.txt'
-
-GLOVE_WORD_VEC_FILE = 'd:/data/res/glove.6B/glove.6B.100d.txt'
-SE14_LAPTOP_GLOVE_WORD_VEC_FILE = 'd:/data/aspect/semeval14/model-data/glove-word-vecs.pkl'
-
+RES_DIR = 'd:/data/res/'
 DATA_DIR = 'd:/data/aspect/'
-DATA_DIR_HL04 = 'd:/data/aspect/huliu04'
-DATA_DIR_SE14 = 'd:/data/aspect/semeval14'
+AMAZON_DATA_DIR = 'd:/data/amazon'
+
+RAW_WORD_VEC_FILE = join(RES_DIR, 'eletronics-vectors-sg-n10.bin')
+WORD_VEC_FILE = join(RES_DIR, 'amazon-eletronics-vectors-sg-n10.txt')
+GLOVE_WORD_VEC_FILE = join(RES_DIR, 'glove.6B/glove.6B.100d.txt')
+
+DATA_DIR_HL04 = join(DATA_DIR, 'huliu04')
+DATA_DIR_SE14 = join(DATA_DIR, 'semeval14')
+
+# SE14_LAPTOP_GLOVE_WORD_VEC_FILE = 'd:/data/aspect/semeval14/model-data/glove-word-vecs.pkl'
+SE14_LAPTOP_GLOVE_WORD_VEC_FILE = join(DATA_DIR_SE14, 'model-data/glove-word-vecs.pkl')
 
 DATA_FILE_LIST_FILE_HL04 = join(DATA_DIR_HL04, 'data-file-names.txt')
 REVIEWS_FILE_HL04 = join(DATA_DIR_HL04, 'reviews.json')
@@ -46,3 +50,7 @@ SE14_LAPTOP_TRAIN_WORD_VECS_FILE = join(DATA_DIR_SE14, 'laptops_train_rncrf_word
 SE14_LAPTOP_WORD_VECS_FILE = join(DATA_DIR_SE14, 'laptops_rncrf_word_vecs.pkl')
 SE14_LAPTOP_PRE_MODEL_FILE = join(DATA_DIR_SE14, 'laptops_pretrain_model.pkl')
 SE14_LAPTOP_MODEL_FILE = join(DATA_DIR_SE14, 'laptops_model.pkl')
+
+AMAZON_TOK_TEXTS_FILE = join(AMAZON_DATA_DIR, 'laptops-reivews-sent-tok-text.txt')
+AMAZON_TERMS_TRUE_FILE = join(AMAZON_DATA_DIR, 'laptops-rule-result.txt')
+LAPTOP_RULE_MODEL_FILE = join(DATA_DIR_SE14, 'tf-model/laptop-rule.ckpl')
