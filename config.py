@@ -8,8 +8,8 @@ from os.path import join
 # WORD_VEC_FILE = 'd:/data/res/amazon-electronics-vectors.txt'
 # LIGHT_WORD_VEC_FILE = 'd:/data/res/amazon-electronics-vectors-light.txt'
 
-env = 'windows'
-# env = 'linux'
+#env = 'windows'
+env = 'linux'
 
 if env == 'windows':
     RES_DIR = 'd:/data/res/'
