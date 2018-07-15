@@ -168,4 +168,4 @@ laptop_reivew_sent_text_file = 'd:/data/amazon/laptops-reivews-sent-text.txt'
 # __get_prod_by_category(metadata_file, 'Laptops', laptop_asins_file)
 # __select_reviews_file(electronics_reviews_file, laptop_asins_file, laptop_reivews_file)
 # __gen_review_text_file(laptop_reivews_file, laptop_reivew_text_file)
-__to_sents(laptop_reivew_text_file, laptop_reivew_sent_text_file)
+# __to_sents(laptop_reivew_text_file, laptop_reivew_sent_text_file)

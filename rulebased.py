@@ -1,3 +1,4 @@
+import json
 import config
 from utils import utils
 
@@ -26,37 +27,6 @@ def __read_sent_dep_tups(fin):
         tups.append((rel, (idx_gov, w_gov), (idx_dep, w_dep)))
         # tups.append(line.split(' '))
     return tups
-
-
-def __subj_noun_rule(sents, dep_parse_file):
-    f = open(dep_parse_file, encoding='utf-8')
-    for i, sent in enumerate(sents):
-        dep_tups = __read_sent_dep_tups(f)
-        has_nsubj = False
-        for ix, (rel, gov, dep) in enumerate(dep_tups):
-            if rel == 'nmod':
-                print(rel, gov, dep)
-                print(sent['text'])
-                print(sent['terms'])
-                print()
-            if rel != 'nsubj':
-                continue
-            # idx_gov, w_gov = gov
-            # for jx in range(len(dep_tups)):
-            #     rel2, gov2, dep2 = dep_tups[jx]
-            #     # if dep2[0] == idx_gov and rel2 not in {'root', 'conj', 'dep', 'parataxis', 'ccomp', 'advcl'}:
-            #     if ix != jx and gov2[0] == idx_gov and rel2 == 'advmod':
-            #         print(sent)
-            #         print(rel, gov, dep)
-            #         print(dep_tups[jx])
-            #         print()
-            # has_nsubj = True
-
-        # if has_nsubj:
-        #     print(sent)
-        #     print(dep_tups)
-        #     print()
-    f.close()
 
 
 def __load_terms_in_train():
@@ -164,7 +134,7 @@ def __get_phrase_for_rule1(dep_tags, pos_tags, words, idep, igov):
     return ' '.join(words[ibeg: iend])
 
 
-def __rule1(dep_tags, pos_tags, sent_text, opinion_terms, nouns_filter, terms_true):
+def __rule1(dep_tags, pos_tags, opinion_terms, nouns_filter):
     aspect_terms = set()
     sent_words = [dep_tup[2][1] for dep_tup in dep_tags]
     for dep_tup in dep_tags:
@@ -195,7 +165,7 @@ def __rule1(dep_tags, pos_tags, sent_text, opinion_terms, nouns_filter, terms_tr
     return aspect_terms
 
 
-def __rule2(dep_tags, pos_tags, sent_text, opinion_terms, nouns_filter, terms_true):
+def __rule2(dep_tags, pos_tags, opinion_terms, nouns_filter):
     aspect_terms = set()
     for dep_tup in dep_tags:
         rel, gov, dep = dep_tup
@@ -216,7 +186,7 @@ def __rule2(dep_tags, pos_tags, sent_text, opinion_terms, nouns_filter, terms_tr
 
 
 tmp_tup_list = list()
-def __rule3(dep_tags, pos_tags, sent_text, opinion_terms, nouns_filter, terms_true):
+def __rule3(dep_tags, pos_tags, opinion_terms, nouns_filter):
     aspect_terms = set()
     for dep_tup in dep_tags:
         rel, gov, dep = dep_tup
@@ -278,11 +248,20 @@ def __pharse_for_span(span, sent_text_lower, words, pos_tags, dep_tags, opinion_
         if (wspan[0] <= span[0] < wspan[1]) or (wspan[0] < span[1] <= wspan[1]):
             widxs.append(i)
 
+    if not widxs:
+        # print(span)
+        # print(sent_text_lower[span[0]: span[1]])
+        # print(sent_text_lower)
+        # print(words)
+        # print(word_spans)
+        # exit()
+        return None
+
     phrase = __get_phrase_new(dep_tags, pos_tags, widxs, opinion_terms)
     return phrase
 
 
-def __rule4(dep_tags, pos_tags, sent_text, opinion_terms, nouns_filter, terms_train, terms_true):
+def __rule4(dep_tags, pos_tags, sent_text, opinion_terms, nouns_filter, terms_train):
     sent_text_lower = sent_text.lower()
     matched_tups = list()
     for t in terms_train:
@@ -302,7 +281,8 @@ def __rule4(dep_tags, pos_tags, sent_text, opinion_terms, nouns_filter, terms_tr
     aspect_terms = set()
     for matched_span in matched_tups:
         phrase = __pharse_for_span(matched_span, sent_text_lower, sent_words, pos_tags, dep_tags, opinion_terms)
-        aspect_terms.add(phrase)
+        if phrase is not None:
+            aspect_terms.add(phrase)
 
     return aspect_terms
 
@@ -314,7 +294,7 @@ def __word_in_terms(word, terms):
     return False
 
 
-def __rule5(dep_tags, pos_tags, sent_text, opinion_terms, nouns_filter, terms_extracted):
+def __rule5(dep_tags, pos_tags, opinion_terms, nouns_filter, terms_extracted):
     aspect_terms = set()
     for dep_tup in dep_tags:
         rel, gov, dep = dep_tup
@@ -344,58 +324,14 @@ def __count_hit(y_true, y_sys):
     return hit_cnt
 
 
-def __rule_insight():
-    # print(terms_train)
-    terms_train = __load_terms_in_train()
-    opinion_terms = utils.read_lines('d:/data/aspect/semeval14/opinion-terms.txt')
-    opinion_terms = set(opinion_terms)
-    nouns_filter = utils.read_lines('d:/data/aspect/semeval14/nouns-filter.txt')
-    nouns_filter = set(nouns_filter)
-
-    dep_tags_list = utils.load_dep_tags_list('d:/data/aspect/semeval14/laptops-test-rule-dep.txt')
-    pos_tags_list = utils.load_pos_tags('d:/data/aspect/semeval14/laptops-test-rule-pos.txt')
-    # dep_tags_list = utils.load_dep_tags_list('d:/data/aspect/semeval14/laptops-train-rule-dep.txt')
-    # pos_tags_list = utils.load_pos_tags('d:/data/aspect/semeval14/laptops-train-rule-pos.txt')
-    sents = utils.load_json_objs(config.SE14_LAPTOP_TEST_SENTS_FILE)
-    # sents = utils.load_json_objs(config.SE14_LAPTOP_TRAIN_SENTS_FILE)
-
+def __evaluate(terms_sys_list, sents):
     correct_sent_idxs = list()
-
     hit_cnt, true_cnt, sys_cnt = 0, 0, 0
-    for sent_idx, sent in enumerate(sents):
+    for sent_idx, (terms_sys, sent) in enumerate(zip(terms_sys_list, sents)):
         term_objs = sent.get('terms', list())
+        sent_text = sent['text']
         terms_true = [t['term'].lower() for t in term_objs]
         true_cnt += len(terms_true)
-        sent_text = sent['text']
-        dep_tags = dep_tags_list[sent_idx]
-        pos_tags = pos_tags_list[sent_idx]
-        assert len(dep_tags) == len(pos_tags)
-
-        aspect_terms = set()
-        aspect_terms_new = __rule1(dep_tags, pos_tags, sent_text, opinion_terms, nouns_filter, terms_true)
-        aspect_terms.update(aspect_terms_new)
-        aspect_terms_new = __rule2(dep_tags, pos_tags, sent_text, opinion_terms, nouns_filter, terms_true)
-        aspect_terms.update(aspect_terms_new)
-        aspect_terms_new = __rule3(dep_tags, pos_tags, sent_text, opinion_terms, nouns_filter, terms_true)
-        aspect_terms.update(aspect_terms_new)
-        aspect_terms_new = __rule4(dep_tags, pos_tags, sent_text, opinion_terms, nouns_filter, terms_train, terms_true)
-        aspect_terms.update(aspect_terms_new)
-        aspect_terms_new = __rule5(dep_tags, pos_tags, sent_text, opinion_terms, nouns_filter, aspect_terms)
-        aspect_terms.update(aspect_terms_new)
-
-        terms_sys = list(aspect_terms)
-        terms_sys.sort(key=lambda x: len(x))
-        terms_sys_tmp = list()
-        for i, t in enumerate(terms_sys):
-            sub_term = False
-            for j in range(i + 1, len(terms_sys)):
-                if t in terms_sys[j]:
-                    sub_term = True
-                    break
-            if not sub_term:
-                terms_sys_tmp.append(t)
-        terms_sys = terms_sys_tmp
-
         sys_cnt += len(terms_sys)
         # new_hit_cnt = __count_hit(terms_true, aspect_terms)
         new_hit_cnt = __count_hit(terms_true, terms_sys)
@@ -406,17 +342,84 @@ def __rule_insight():
             print(terms_true)
             print(terms_sys)
             print(sent_text)
-            print(pos_tags)
-            print(dep_tags)
+            # print(pos_tags)
+            # print(dep_tags)
             print()
 
     print(hit_cnt, true_cnt, sys_cnt)
     p = hit_cnt / (sys_cnt + 1e-8)
     r = hit_cnt / (true_cnt + 1e-8)
     print(p, r, 2 * p * r / (p + r + 1e-8))
+    return correct_sent_idxs
 
-    with open('d:/data/aspect/semeval14/rules-correct.txt', 'w', encoding='utf-8') as fout:
-        fout.write('\n'.join([str(i) for i in correct_sent_idxs]))
+
+def __rule_insight(opinion_terms_file, filter_nouns_file, dep_tags_file, pos_tags_file,
+                   sent_text_file, dst_result_file=None, sents_file=None):
+    # print(terms_train)
+    print('loading data ...')
+    terms_train = __load_terms_in_train()
+    opinion_terms = utils.read_lines(opinion_terms_file)
+    opinion_terms = set(opinion_terms)
+    nouns_filter = utils.read_lines(filter_nouns_file)
+    nouns_filter = set(nouns_filter)
+
+    dep_tags_list = utils.load_dep_tags_list(dep_tags_file)
+    pos_tags_list = utils.load_pos_tags(pos_tags_file)
+
+    sent_texts = utils.read_lines(sent_text_file)
+    print('done.')
+
+    assert len(dep_tags_list) == len(sent_texts)
+    assert len(pos_tags_list) == len(dep_tags_list)
+
+    terms_sys_list = list()
+    for sent_idx, sent_text in enumerate(sent_texts):
+        dep_tags = dep_tags_list[sent_idx]
+        pos_tags = pos_tags_list[sent_idx]
+        assert len(dep_tags) == len(pos_tags)
+
+        aspect_terms = set()
+        aspect_terms_new = __rule1(dep_tags, pos_tags, opinion_terms, nouns_filter)
+        aspect_terms.update(aspect_terms_new)
+        aspect_terms_new = __rule2(dep_tags, pos_tags, opinion_terms, nouns_filter)
+        aspect_terms.update(aspect_terms_new)
+        aspect_terms_new = __rule3(dep_tags, pos_tags, opinion_terms, nouns_filter)
+        aspect_terms.update(aspect_terms_new)
+        aspect_terms_new = __rule4(dep_tags, pos_tags, sent_text, opinion_terms, nouns_filter, terms_train)
+        aspect_terms.update(aspect_terms_new)
+        aspect_terms_new = __rule5(dep_tags, pos_tags, opinion_terms, nouns_filter, aspect_terms)
+        aspect_terms.update(aspect_terms_new)
+
+        terms_sys_tmp = list(aspect_terms)
+        terms_sys_tmp.sort(key=lambda x: len(x))
+        terms_sys = list()
+        for i, t in enumerate(terms_sys_tmp):
+            sub_term = False
+            for j in range(i + 1, len(terms_sys_tmp)):
+                if t in terms_sys_tmp[j]:
+                    sub_term = True
+                    break
+            if not sub_term:
+                terms_sys.append(t)
+        terms_sys_list.append(terms_sys)
+
+        if sent_idx % 10000 == 0:
+            print(sent_idx)
+
+    if dst_result_file is not None:
+        fout = open(dst_result_file, 'w', encoding='utf-8', newline='\n')
+        for terms_sys, sent_text in zip(terms_sys_list, sent_texts):
+            sent_obj = {'text': sent_text}
+            if terms_sys:
+                sent_obj['terms'] = terms_sys
+            fout.write('{}\n'.format(json.dumps(terms_sys, ensure_ascii=False)))
+        fout.close()
+
+    if sents_file is not None:
+        sents = utils.load_json_objs(sents_file)
+        correct_sent_idxs = __evaluate(terms_sys_list, sents)
+        with open('d:/data/aspect/semeval14/rules-correct.txt', 'w', encoding='utf-8') as fout:
+            fout.write('\n'.join([str(i) for i in correct_sent_idxs]))
 
 
 def __differ():
@@ -441,6 +444,28 @@ def __differ():
 
 
 # sents = utils.load_json_objs(config.SE14_LAPTOP_TEST_SENTS_FILE)
-# __subj_noun_rule(sents, config.SE14_LAPTOP_TEST_DEP_PARSE_FILE)
-# __rule_insight()
-__differ()
+
+opinion_terms_file = 'd:/data/aspect/semeval14/opinion-terms.txt'
+filter_nouns_file = 'd:/data/aspect/semeval14/nouns-filter.txt'
+
+# dep_tags_file = 'd:/data/aspect/semeval14/laptops-test-rule-dep.txt'
+# pos_tags_file = 'd:/data/aspect/semeval14/laptops-test-rule-pos.txt'
+# result_file = 'd:/data/aspect/semeval14/laptops-test-rule-result.txt'
+# sent_texts_file = 'd:/data/aspect/semeval14/laptops_test_texts.txt'
+# sents_file = config.SE14_LAPTOP_TEST_SENTS_FILE
+
+# dep_tags_file = 'd:/data/aspect/semeval14/laptops-train-rule-dep.txt'
+# pos_tags_file = 'd:/data/aspect/semeval14/laptops-train-rule-pos.txt'
+# sent_texts_file = 'd:/data/aspect/semeval14/laptops_train_texts.txt'
+# sents_file = config.SE14_LAPTOP_TRAIN_SENTS_FILE
+
+dep_tags_file = 'd:/data/amazon/laptops-rule-dep.txt'
+pos_tags_file = 'd:/data/amazon/laptops-rule-pos.txt'
+result_file = 'd:/data/amazon/laptops-rule-result.txt'
+sent_texts_file = 'd:/data/amazon/laptops-reivews-sent-text.txt'
+sents_file = None
+
+__rule_insight(opinion_terms_file, filter_nouns_file, dep_tags_file,
+               pos_tags_file, sent_texts_file, dst_result_file=result_file, sents_file=sents_file)
+
+# __differ()

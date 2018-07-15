@@ -1,8 +1,8 @@
 import tensorflow as tf
-from utils.utils import pad_sequences, save_json_objs
+from utils.utils import pad_sequences
 
 
-class LSTMCRF:
+class NeuRuleComb:
     def __init__(self, n_tags, word_embeddings, hidden_size_lstm=300, batch_size=20, train_word_embeddings=False,
                  lr_method='adam', clip=-1, use_crf=True, model_file=None):
         self.n_tags = n_tags
