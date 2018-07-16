@@ -212,7 +212,7 @@ class NeuRuleJoint:
                 train_loss_tar = self.__train_batch(
                     data_tar.word_idxs_list_train, data_tar.labels_list_train, i, lr, dropout, False)
                 train_loss_src = self.__train_batch(
-                    data_src.word_idxs_list_train, data_src.labels_list_train, batch_idx_src, lr, dropout, False)
+                    data_src.word_idxs_list_train, data_src.labels_list_train, batch_idx_src, lr, dropout, True)
                 batch_idx_src = batch_idx_src + 1 if batch_idx_src + 1 < n_batches_src else 0
                 losses_tar.append(train_loss_tar)
             # for i in range(n_batches):
