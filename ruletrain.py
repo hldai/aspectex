@@ -4,6 +4,7 @@ import config
 from collections import namedtuple
 from models.lstmcrf import LSTMCRF
 from models.nrcomb import NeuRuleComb
+from nrjoint import NeuRuleJoint, NRJTrainData
 from utils import utils
 import tensorflow as tf
 
@@ -141,7 +142,7 @@ def __train():
                   n_epochs=100, save_file=save_model_file)
 
 
-def __train_neurule():
+def __train_neurule_comb():
     print('loading data ...')
     with open(config.SE14_LAPTOP_GLOVE_WORD_VEC_FILE, 'rb') as f:
         vocab, word_vecs_matrix = pickle.load(f)
@@ -154,21 +155,53 @@ def __train_neurule():
     n_tags = 3
     batch_size = 20
     hidden_size_lstm = 100
+
     hidden_size_lstm_rule = 100
     lstmcrf = LSTMCRF(n_tags, word_vecs_matrix, batch_size=batch_size, hidden_size_lstm=hidden_size_lstm_rule,
                       model_file=rule_model_file)
     hidden_vecs_batch_list_train = lstmcrf.calc_hidden_vecs(train_data.word_idxs_list, batch_size)
     hidden_vecs_list_valid = lstmcrf.calc_hidden_vecs(valid_data.word_idxs_list, 1)
+    W, b = lstmcrf.get_W_b()
 
     tf.reset_default_graph()
-    nrc = NeuRuleComb(n_tags, word_vecs_matrix, rule_model_file, hidden_size_lstm=hidden_size_lstm,
+    nrc = NeuRuleComb(n_tags, word_vecs_matrix, rule_model_file, W, b, hidden_size_lstm=hidden_size_lstm,
                       hidden_size_lstm_rule=hidden_size_lstm_rule, model_file=None)
     nrc.train(train_data.word_idxs_list, train_data.labels_list, valid_data.word_idxs_list,
               valid_data.labels_list, vocab, valid_data.tok_texts, valid_data.terms_true_list,
               hidden_vecs_batch_list_train, hidden_vecs_list_valid,
               n_epochs=100, save_file=save_model_file)
+    # nrc = NeuRuleJoint(n_tags, word_vecs_matrix, model_file=None)
+    # nrc.train(train_data.word_idxs_list, train_data.labels_list, valid_data.word_idxs_list,
+    #           valid_data.labels_list, vocab, valid_data.tok_texts, valid_data.terms_true_list,
+    #           n_epochs=100, save_file=save_model_file)
+
+
+def __train_neurule_joint():
+    print('loading data ...')
+    with open(config.SE14_LAPTOP_GLOVE_WORD_VEC_FILE, 'rb') as f:
+        vocab, word_vecs_matrix = pickle.load(f)
+    train_data_tar, valid_data_tar = __get_data_semeval(vocab)
+    train_data_src, valid_data_src = __get_data_amazon(vocab)
+    # model_file = 'd:/data/amazon/model/lstmcrfrule.ckpt'
+    rule_model_file = config.LAPTOP_RULE_MODEL_FILE
+    save_model_file = None
+    print('done')
+    n_tags = 3
+    batch_size = 20
+    hidden_size_lstm = 100
+    n_epochs = 100
+    nrc = NeuRuleJoint(n_tags, word_vecs_matrix, model_file=None)
+    nrj_train_data_src = NRJTrainData(
+        train_data_src.word_idxs_list, train_data_src.labels_list, valid_data_src.word_idxs_list,
+        valid_data_src.labels_list, valid_data_src.tok_texts, valid_data_src.terms_true_list
+    )
+    nrj_train_data_tar = NRJTrainData(
+        train_data_tar.word_idxs_list, train_data_tar.labels_list, valid_data_tar.word_idxs_list,
+        valid_data_tar.labels_list, valid_data_tar.tok_texts, valid_data_tar.terms_true_list
+    )
+    nrc.train(nrj_train_data_src, nrj_train_data_tar, vocab, n_epochs=n_epochs)
 
 
 # __train()
-__train_neurule()
+__train_neurule_joint()
 # __get_data_amazon(None)

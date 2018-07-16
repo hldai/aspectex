@@ -70,12 +70,12 @@ class LSTMCRF:
             self.W = tf.get_variable("W", dtype=tf.float32, shape=[
                 2 * self.hidden_size_lstm, self.n_tags])
 
-            b = tf.get_variable("b", shape=[self.n_tags],
-                                dtype=tf.float32, initializer=tf.zeros_initializer())
+            self.b = tf.get_variable(
+                "b", shape=[self.n_tags], dtype=tf.float32, initializer=tf.zeros_initializer())
 
             nsteps = tf.shape(self.lstm_output)[1]
             output = tf.reshape(self.lstm_output, [-1, 2 * self.hidden_size_lstm])
-            pred = tf.matmul(output, self.W) + b
+            pred = tf.matmul(output, self.W) + self.b
             self.logits = tf.reshape(pred, [-1, nsteps, self.n_tags])
 
     def __add_pred_op(self):
@@ -139,6 +139,10 @@ class LSTMCRF:
             self.sess.run(tf.global_variables_initializer())
         else:
             tf.train.Saver().restore(self.sess, model_file)
+
+    def get_W_b(self):
+        W_val, b_val = self.sess.run([self.W, self.b])
+        return W_val, b_val
 
     def get_feed_dict(self, word_idx_seqs, label_seqs=None, lr=None, dropout=None):
         word_idx_seqs = [list(word_idxs) for word_idxs in word_idx_seqs]

@@ -1,9 +1,11 @@
 import tensorflow as tf
+import numpy as np
 from utils.utils import pad_sequences
 
 
 class NeuRuleComb:
-    def __init__(self, n_tags, word_embeddings, rule_model_file, hidden_size_lstm=300, hidden_size_lstm_rule=100,
+    def __init__(self, n_tags, word_embeddings, rule_model_file, rule_W, rule_b,
+                 hidden_size_lstm=300, hidden_size_lstm_rule=100,
                  batch_size=20, train_word_embeddings=False,
                  lr_method='adam', clip=-1, use_crf=True, model_file=None):
         self.n_tags = n_tags
@@ -28,7 +30,7 @@ class NeuRuleComb:
 
         self.__add_word_embedding_op(train_word_embeddings)
         # self.__setup_rule_lstm_hidden()
-        self.__add_logits_op()
+        self.__add_logits_op(rule_W, rule_b)
         self.__add_pred_op()
         self.__add_loss_op()
         self.__add_train_op(self.lr_method, self.lr, self.loss, self.clip)
@@ -68,7 +70,7 @@ class NeuRuleComb:
             self.rule_hidden = tf.concat([output_fw_rule, output_bw_rule], axis=-1)
             self.rule_hidden = tf.nn.dropout(self.rule_hidden, self.dropout)
 
-    def __add_logits_op(self):
+    def __add_logits_op(self, rule_W, rule_b):
         """Defines self.logits
 
         For each word in each sentence of the batch, it corresponds to a vector
@@ -86,15 +88,20 @@ class NeuRuleComb:
             output = tf.nn.dropout(output, self.dropout)
 
         with tf.variable_scope("proj-data"):
-            self.W = tf.get_variable("W", dtype=tf.float32, shape=[
-                2 * (self.hidden_size_lstm + self.hidden_size_lstm_rule), self.n_tags])
+            W_val = np.zeros((2 * (self.hidden_size_lstm + self.hidden_size_lstm_rule), self.n_tags), np.float32)
+            W_val[2 * self.hidden_size_lstm:, :] = rule_W
+            self.W_init = W_val
 
-            b = tf.get_variable("b", shape=[self.n_tags],
-                                dtype=tf.float32, initializer=tf.zeros_initializer())
+            # self.W = tf.get_variable("W", dtype=tf.float32, shape=[
+            #     2 * (self.hidden_size_lstm + self.hidden_size_lstm_rule), self.n_tags])
+            # b = tf.get_variable("b", shape=[self.n_tags],
+            #                     dtype=tf.float32, initializer=tf.zeros_initializer())
+            self.W = tf.Variable(W_val, name='W')
+            self.b = tf.Variable(rule_b, name='b')
 
             nsteps = tf.shape(output)[1]
             output = tf.reshape(output, [-1, 2 * (self.hidden_size_lstm + self.hidden_size_lstm_rule)])
-            pred = tf.matmul(output, self.W) + b
+            pred = tf.matmul(output, self.W) + self.b
             self.logits = tf.reshape(pred, [-1, nsteps, self.n_tags])
 
     def __add_pred_op(self):
@@ -108,13 +115,13 @@ class NeuRuleComb:
                     self.logits, self.labels, self.sequence_lengths)
             self.trans_params = trans_params  # need to evaluate it for decoding
             self.loss = tf.reduce_mean(-log_likelihood)
+            # self.loss = tf.reduce_mean(-log_likelihood) + 0.01 * tf.nn.l2_loss(self.W - self.W_init)
         else:
             losses = tf.nn.sparse_softmax_cross_entropy_with_logits(
                     logits=self.logits, labels=self.labels)
             mask = tf.sequence_mask(self.sequence_lengths)
             losses = tf.boolean_mask(losses, mask)
             self.loss = tf.reduce_mean(losses)
-            # self.loss = tf.reduce_mean(losses) + 0.01 * tf.nn.l2_loss(self.W)
 
         # for tensorboard
         tf.summary.scalar("loss", self.loss)
@@ -286,12 +293,12 @@ class NeuRuleComb:
                 correct_sent_idxs.append(sent_idx)
 
         # save_json_objs(error_sents, 'd:/data/aspect/semeval14/error-sents.txt')
-        with open('d:/data/aspect/semeval14/error-sents.txt', 'w', encoding='utf-8') as fout:
-            for sent, terms in zip(error_sents, error_terms):
+        # with open('d:/data/aspect/semeval14/error-sents.txt', 'w', encoding='utf-8') as fout:
+        #     for sent, terms in zip(error_sents, error_terms):
                 # terms_true = [t['term'].lower() for t in sent['terms']] if 'terms' in sent else list()
-                fout.write('{}\n{}\n\n'.format(sent['text'], terms))
-        with open('d:/data/aspect/semeval14/lstmcrf-correct.txt', 'w', encoding='utf-8') as fout:
-            fout.write('\n'.join([str(i) for i in correct_sent_idxs]))
+                # fout.write('{}\n{}\n\n'.format(sent['text'], terms))
+        # with open('d:/data/aspect/semeval14/lstmcrf-correct.txt', 'w', encoding='utf-8') as fout:
+        #     fout.write('\n'.join([str(i) for i in correct_sent_idxs]))
 
         p = cnt_hit / cnt_sys
         r = cnt_hit / (cnt_true - 16)
