@@ -215,31 +215,12 @@ class NeuRuleJoint:
                     data_src.word_idxs_list_train, data_src.labels_list_train, batch_idx_src, lr, dropout, True)
                 batch_idx_src = batch_idx_src + 1 if batch_idx_src + 1 < n_batches_src else 0
                 losses_tar.append(train_loss_tar)
-            # for i in range(n_batches):
-            #     word_idxs_list_batch = word_idxs_list_train[i * self.batch_size: (i + 1) * self.batch_size]
-            #     labels_list_batch = labels_list_train[i * self.batch_size: (i + 1) * self.batch_size]
-            #     feed_dict, _ = self.get_feed_dict(word_idxs_list_batch, labels_list_batch, lr, dropout)
-            #     _, train_loss = self.sess.run(
-            #         [self.train_op, self.loss], feed_dict=feed_dict)
-            #     losses.append(train_loss)
-            #     losses_seg.append(train_loss)
-            #
-            #     if (i + 1) % (5000 // self.batch_size) == 0:
-            #         print('iter {}, batch {}, loss={}'.format(epoch, i, sum(losses_seg)))
-            #         p, r, f1 = self.evaluate(word_idxs_list_valid, labels_list_valid, vocab,
-            #                                  valid_texts, terms_true_list)
-            #         losses_seg = list()
-            #
-            #         if f1 > best_f1:
-            #             best_f1 = f1
-            #             if self.saver is not None:
-            #                 self.saver.save(self.sess, save_file)
-            #                 print('model saved to {}'.format(save_file))
             print('iter {}, loss={}'.format(epoch, sum(losses_tar)))
             # metrics = self.run_evaluate(dev)
             p, r, f1 = self.evaluate(
                 data_tar.word_idxs_list_valid, data_tar.labels_list_valid, vocab,
                 data_tar.valid_texts, data_tar.terms_true_list, False)
+            print('p={}, r={}, f1={}, best_f1={}'.format(p, r, f1, best_f1))
             if f1 > best_f1:
                 best_f1 = f1
                 if self.saver is not None:
@@ -248,6 +229,7 @@ class NeuRuleJoint:
             p, r, f1 = self.evaluate(
                 data_src.word_idxs_list_valid, data_src.labels_list_valid, vocab,
                 data_src.valid_texts, data_src.terms_true_list, True)
+            print('src, p={}, r={}, f1={}'.format(p, r, f1))
 
     def predict_batch(self, word_idxs, for_src):
         fd, sequence_lengths = self.get_feed_dict(word_idxs, for_src, dropout=1.0)
@@ -322,7 +304,7 @@ class NeuRuleJoint:
         p = cnt_hit / cnt_sys
         r = cnt_hit / (cnt_true - 16)
         f1 = 2 * p * r / (p + r)
-        print(p, r, f1, cnt_true)
+        # print(p, r, f1, cnt_true)
         # p, r, f1 = set_evaluate(terms_true, terms_sys)
         # print(p, r, f1)
         return p, r, f1
