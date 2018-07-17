@@ -72,9 +72,13 @@ def __data_from_sents_file(filename, tok_text_file, vocab):
     return labels_list, word_idxs_list
 
 
-def __get_data_semeval(vocab):
+def __get_data_semeval(vocab, n_train):
     labels_list_train, word_idxs_list_train = __data_from_sents_file(
         config.SE14_LAPTOP_TRAIN_SENTS_FILE, config.SE14_LAPTOP_TRAIN_TOK_TEXTS_FILE, vocab)
+    if n_train > -1:
+        labels_list_train = labels_list_train[:n_train]
+        word_idxs_list_train = word_idxs_list_train[:n_train]
+
     labels_list_test, word_idxs_list_test = __data_from_sents_file(
         config.SE14_LAPTOP_TEST_SENTS_FILE, config.SE14_LAPTOP_TEST_TOK_TEXTS_FILE, vocab)
     sents_test = utils.load_json_objs(config.SE14_LAPTOP_TEST_SENTS_FILE)
@@ -177,10 +181,12 @@ def __train_neurule_comb():
 
 
 def __train_neurule_joint():
+    n_train = 1000
+
     print('loading data ...')
     with open(config.SE14_LAPTOP_GLOVE_WORD_VEC_FILE, 'rb') as f:
         vocab, word_vecs_matrix = pickle.load(f)
-    train_data_tar, valid_data_tar = __get_data_semeval(vocab)
+    train_data_tar, valid_data_tar = __get_data_semeval(vocab, n_train)
     train_data_src, valid_data_src = __get_data_amazon(vocab)
     # model_file = 'd:/data/amazon/model/lstmcrfrule.ckpt'
     rule_model_file = config.LAPTOP_RULE_MODEL_FILE
