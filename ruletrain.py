@@ -196,7 +196,8 @@ def __train_neurule_joint():
     batch_size = 20
     hidden_size_lstm = 100
     n_epochs = 100
-    nrc = NeuRuleJoint(n_tags, word_vecs_matrix, model_file=None)
+    share_W = False
+    nrc = NeuRuleJoint(n_tags, word_vecs_matrix, share_W, model_file=None)
     nrj_train_data_src = NRJTrainData(
         train_data_src.word_idxs_list, train_data_src.labels_list, valid_data_src.word_idxs_list,
         valid_data_src.labels_list, valid_data_src.tok_texts, valid_data_src.terms_true_list

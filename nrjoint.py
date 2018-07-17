@@ -9,7 +9,7 @@ NRJTrainData = namedtuple(
 
 
 class NeuRuleJoint:
-    def __init__(self, n_tags, word_embeddings, hidden_size_lstm=100,
+    def __init__(self, n_tags, word_embeddings, share_W, hidden_size_lstm=100,
                  batch_size=20, lr_method='adam', clip=-1, use_crf=True, model_file=None):
         self.n_tags = n_tags
         self.hidden_size_lstm = hidden_size_lstm
@@ -17,6 +17,7 @@ class NeuRuleJoint:
         self.lr_method = lr_method
         self.clip = clip
         self.saver = None
+        self.share_W = share_W
 
         # self.n_words, self.dim_word = word_embeddings.shape
         self.use_crf = use_crf
@@ -78,7 +79,10 @@ class NeuRuleJoint:
             nsteps = tf.shape(self.lstm_output)[1]
             output = tf.reshape(self.lstm_output, [-1, 2 * self.hidden_size_lstm])
             # pred = tf.matmul(output, self.W_tar) + self.b_tar
-            pred = tf.matmul(output, self.W_tar + self.W_src) + self.b_tar
+            if self.share_W:
+                pred = tf.matmul(output, self.W_tar + self.W_src) + self.b_tar
+            else:
+                pred = tf.matmul(output, self.W_tar) + self.b_tar
             self.logits_tar = tf.reshape(pred, [-1, nsteps, self.n_tags])
 
     def __add_pred_op(self):
@@ -97,7 +101,9 @@ class NeuRuleJoint:
             with tf.variable_scope("crf-tar"):
                 log_likelihood, self.trans_params_tar = tf.contrib.crf.crf_log_likelihood(
                         self.logits_tar, self.labels_tar, self.sequence_lengths)
-                self.loss_tar = tf.reduce_mean(-log_likelihood) + 0.01 * tf.nn.l2_loss(self.W_tar)
+                self.loss_tar = tf.reduce_mean(-log_likelihood)
+                if self.share_W:
+                    self.loss_tar += 0.01 * tf.nn.l2_loss(self.W_tar)
         else:
             assert False
             # losses = tf.nn.sparse_softmax_cross_entropy_with_logits(
