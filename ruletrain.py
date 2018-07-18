@@ -4,6 +4,7 @@ import config
 from collections import namedtuple
 from models.lstmcrf import LSTMCRF
 from models.nrcomb import NeuRuleComb
+from models.nrdoublejoint import NeuRuleDoubleJoint
 from nrjoint import NeuRuleJoint, NRJTrainData
 from utils import utils
 import tensorflow as tf
@@ -92,10 +93,9 @@ def __get_data_semeval(vocab, n_train):
     return train_data, valid_data
 
 
-def __get_data_amazon(vocab):
+def __get_data_amazon(vocab, true_terms_file):
     tok_texts_file = config.AMAZON_TOK_TEXTS_FILE
-    terms_true_file = config.AMAZON_TERMS_TRUE_FILE
-    terms_true_list = utils.load_json_objs(terms_true_file)
+    terms_true_list = utils.load_json_objs(true_terms_file)
     tok_texts = utils.read_lines(tok_texts_file)
     assert len(terms_true_list) == len(tok_texts)
 
@@ -131,7 +131,7 @@ def __train():
     print('loading data ...')
     with open(config.SE14_LAPTOP_GLOVE_WORD_VEC_FILE, 'rb') as f:
         vocab, word_vecs_matrix = pickle.load(f)
-    train_data, valid_data = __get_data_semeval(vocab)
+    train_data, valid_data = __get_data_semeval(vocab, -1)
     # train_data, valid_data = __get_data_amazon(vocab)
     # model_file = 'd:/data/amazon/model/lstmcrfrule.ckpt'
     model_file = config.LAPTOP_RULE_MODEL_FILE
@@ -181,13 +181,15 @@ def __train_neurule_comb():
 
 
 def __train_neurule_joint():
-    n_train = 1000
+    # n_train = 1000
+    n_train = -1
 
     print('loading data ...')
     with open(config.SE14_LAPTOP_GLOVE_WORD_VEC_FILE, 'rb') as f:
         vocab, word_vecs_matrix = pickle.load(f)
     train_data_tar, valid_data_tar = __get_data_semeval(vocab, n_train)
-    train_data_src, valid_data_src = __get_data_amazon(vocab)
+    train_data_src, valid_data_src = __get_data_amazon(vocab, config.AMAZON_TERMS_TRUE1_FILE)
+    # train_data_src, valid_data_src = __get_data_amazon(vocab, config.AMAZON_TERMS_TRUE2_FILE)
     # model_file = 'd:/data/amazon/model/lstmcrfrule.ckpt'
     rule_model_file = config.LAPTOP_RULE_MODEL_FILE
     save_model_file = None
@@ -195,7 +197,7 @@ def __train_neurule_joint():
     n_tags = 3
     batch_size = 20
     hidden_size_lstm = 100
-    n_epochs = 100
+    n_epochs = 500
     share_W = False
     nrc = NeuRuleJoint(n_tags, word_vecs_matrix, share_W, model_file=None)
     nrj_train_data_src = NRJTrainData(
@@ -209,6 +211,41 @@ def __train_neurule_joint():
     nrc.train(nrj_train_data_src, nrj_train_data_tar, vocab, n_epochs=n_epochs)
 
 
+def __train_neurule_double_joint():
+    # n_train = 1000
+    n_train = -1
+
+    print('loading data ...')
+    with open(config.SE14_LAPTOP_GLOVE_WORD_VEC_FILE, 'rb') as f:
+        vocab, word_vecs_matrix = pickle.load(f)
+    train_data_tar, valid_data_tar = __get_data_semeval(vocab, n_train)
+    train_data_src1, valid_data_src1 = __get_data_amazon(vocab, config.AMAZON_TERMS_TRUE1_FILE)
+    train_data_src2, valid_data_src2 = __get_data_amazon(vocab, config.AMAZON_TERMS_TRUE2_FILE)
+    # model_file = 'd:/data/amazon/model/lstmcrfrule.ckpt'
+    rule_model_file = config.LAPTOP_RULE_MODEL_FILE
+    save_model_file = None
+    print('done')
+    n_tags = 3
+    batch_size = 20
+    hidden_size_lstm = 100
+    n_epochs = 500
+    nrdj = NeuRuleDoubleJoint(n_tags, word_vecs_matrix, model_file=None)
+    nrj_train_data_src1 = NRJTrainData(
+        train_data_src1.word_idxs_list, train_data_src1.labels_list, valid_data_src1.word_idxs_list,
+        valid_data_src1.labels_list, valid_data_src1.tok_texts, valid_data_src1.terms_true_list
+    )
+    nrj_train_data_src2 = NRJTrainData(
+        train_data_src2.word_idxs_list, train_data_src2.labels_list, valid_data_src2.word_idxs_list,
+        valid_data_src2.labels_list, valid_data_src2.tok_texts, valid_data_src2.terms_true_list
+    )
+    nrj_train_data_tar = NRJTrainData(
+        train_data_tar.word_idxs_list, train_data_tar.labels_list, valid_data_tar.word_idxs_list,
+        valid_data_tar.labels_list, valid_data_tar.tok_texts, valid_data_tar.terms_true_list
+    )
+    nrdj.train(nrj_train_data_src1, nrj_train_data_src2, nrj_train_data_tar, vocab, n_epochs=n_epochs)
+
+
 # __train()
-__train_neurule_joint()
+# __train_neurule_joint()
+__train_neurule_double_joint()
 # __get_data_amazon(None)

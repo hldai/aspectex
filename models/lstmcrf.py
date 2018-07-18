@@ -237,11 +237,10 @@ class LSTMCRF:
 
     def evaluate(self, word_idxs_list_valid, labels_list_valid, vocab, test_texts, terms_true_list):
         cnt_true, cnt_sys, cnt_hit = 0, 0, 0
-        error_sents, error_terms = list(), list()
+        error_sents, error_terms, error_terms_sys = list(), list(), list()
         correct_sent_idxs = list()
-        sent_idx = 0
-        for word_idxs, labels, text, terms_true in zip(
-                word_idxs_list_valid, labels_list_valid, test_texts, terms_true_list):
+        for sent_idx, (word_idxs, labels, text, terms_true) in enumerate(zip(
+                word_idxs_list_valid, labels_list_valid, test_texts, terms_true_list)):
             terms_sys = set()
             labels_pred, sequence_lengths = self.predict_batch([word_idxs])
             labels_pred = labels_pred[0]
@@ -273,23 +272,25 @@ class LSTMCRF:
             cnt_true += len(terms_true)
             cnt_sys += len(terms_sys)
             if not hit:
-                # error_sents.append(sent)
+                error_sents.append(text)
                 error_terms.append(terms_not_hit)
+                error_terms_sys.append(terms_sys)
             else:
                 correct_sent_idxs.append(sent_idx)
-            sent_idx += 1
-
-        # save_json_objs(error_sents, 'd:/data/aspect/semeval14/error-sents.txt')
-        # with open('d:/data/aspect/semeval14/error-sents.txt', 'w', encoding='utf-8') as fout:
-        #     for sent, terms in zip(error_sents, error_terms):
-        #         fout.write('{}\n{}\n\n'.format(sent['text'], terms))
-        # with open('d:/data/aspect/semeval14/lstmcrf-correct.txt', 'w', encoding='utf-8') as fout:
-        #     fout.write('\n'.join([str(i) for i in correct_sent_idxs]))
 
         p = cnt_hit / cnt_sys
         r = cnt_hit / (cnt_true - 16)
         f1 = 2 * p * r / (p + r)
         print(p, r, f1, cnt_true)
+
+        # save_json_objs(error_sents, 'd:/data/aspect/semeval14/error-sents.txt')
+        with open('d:/data/aspect/semeval14/error-sents.txt', 'w', encoding='utf-8') as fout:
+            for sent, terms, terms_sys in zip(error_sents, error_terms, error_terms_sys):
+                fout.write('{}\n{}\n{}\n\n'.format(sent, terms, terms_sys))
+            print('error written')
+        # with open('d:/data/aspect/semeval14/lstmcrf-correct.txt', 'w', encoding='utf-8') as fout:
+        #     fout.write('\n'.join([str(i) for i in correct_sent_idxs]))
+        #     print('correct sents written.')
         # p, r, f1 = set_evaluate(terms_true, terms_sys)
         # print(p, r, f1)
         return p, r, f1
