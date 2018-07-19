@@ -218,6 +218,8 @@ def __train_neurule_double_joint():
 
     # n_train = 1000
     n_train = -1
+    task = 'pretrain'
+    # task = 'train'
 
     print('loading data ...')
     with open(config.SE14_LAPTOP_GLOVE_WORD_VEC_FILE, 'rb') as f:
@@ -225,8 +227,7 @@ def __train_neurule_double_joint():
     train_data_tar, valid_data_tar = __get_data_semeval(vocab, n_train)
     train_data_src1, valid_data_src1 = __get_data_amazon(vocab, config.AMAZON_TERMS_TRUE1_FILE)
     train_data_src2, valid_data_src2 = __get_data_amazon(vocab, config.AMAZON_TERMS_TRUE2_FILE)
-    # model_file = 'd:/data/amazon/model/lstmcrfrule.ckpt'
-    rule_model_file = config.LAPTOP_NRDJ_RULE_MODEL_FILE
+    rule_model_file = config.LAPTOP_NRDJ_RULE_MODEL_FILE if task == 'train' else None
     # rule_model_file = None
     pretrain_model_file = config.LAPTOP_NRDJ_RULE_MODEL_FILE
     save_model_file = config.LAPTOP_NRDJ_RULE_MODEL_FILE
@@ -257,10 +258,12 @@ def __train_neurule_double_joint():
         valid_data_tar.labels_list, valid_data_tar.tok_texts, valid_data_tar.terms_true_list
     )
 
-    # nrdj.pre_train(nrj_train_data_src1, nrj_train_data_src2, nrj_train_data_tar, vocab, n_epochs=n_epochs, lr=lr,
-    #                save_file=pretrain_model_file)
-    nrdj.train(nrj_train_data_src1, nrj_train_data_src2, nrj_train_data_tar, vocab, train_mode,
-               n_epochs=n_epochs, lr=lr)
+    if task == 'pretrain':
+        nrdj.pre_train(nrj_train_data_src1, nrj_train_data_src2, vocab, n_epochs=n_epochs, lr=lr,
+                       save_file=pretrain_model_file)
+    if task == 'train':
+        nrdj.train(nrj_train_data_src1, nrj_train_data_src2, nrj_train_data_tar, vocab, train_mode,
+                   n_epochs=n_epochs, lr=lr)
 
 
 str_today = datetime.date.today().strftime('%y-%m-%d')
