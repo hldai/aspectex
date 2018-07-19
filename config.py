@@ -1,4 +1,5 @@
 from os.path import join
+from platform import platform
 
 # RAW_WORD_VEC_FILE = 'd:/data/res/GoogleNews-vectors-negative300.bin'
 # GOOGLE_NEWS_WORD_VEC_FILE = 'd:/data/res/GoogleNews-vectors-negative300.txt'
@@ -8,10 +9,9 @@ from os.path import join
 # WORD_VEC_FILE = 'd:/data/res/amazon-electronics-vectors.txt'
 # LIGHT_WORD_VEC_FILE = 'd:/data/res/amazon-electronics-vectors-light.txt'
 
-env = 'windows'
-# env = 'linux'
+env = 'Windows' if platform().startswith('Windows') else 'Linux'
 
-if env == 'windows':
+if env == 'Windows':
     RES_DIR = 'd:/data/res/'
     DATA_DIR = 'd:/data/aspect/'
     AMAZON_DATA_DIR = 'd:/data/amazon'

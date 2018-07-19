@@ -11,7 +11,7 @@ NRJTrainData = namedtuple(
 
 
 class NeuRuleDoubleJoint:
-    def __init__(self, n_tags, word_embeddings, hidden_size_lstm=100,
+    def __init__(self, n_tags, word_embeddings, share_lstm, hidden_size_lstm=100,
                  batch_size=20, lr_method='adam', clip=-1, use_crf=True, model_file=None):
         logging.info('hidden_size_lstm={}, batch_size={}, lr_method={}'.format(
             hidden_size_lstm, batch_size, lr_method))
@@ -22,6 +22,7 @@ class NeuRuleDoubleJoint:
         self.lr_method = lr_method
         self.clip = clip
         self.saver = None
+        self.share_lstm = share_lstm
 
         # self.n_words, self.dim_word = word_embeddings.shape
         self.use_crf = use_crf
@@ -55,23 +56,36 @@ class NeuRuleDoubleJoint:
         self.word_embeddings = tf.nn.dropout(word_embeddings, self.dropout)
 
     def __add_logits_op(self):
-        with tf.variable_scope("bi-lstm-1"):
-            cell_fw = tf.contrib.rnn.LSTMCell(self.hidden_size_lstm)
-            cell_bw = tf.contrib.rnn.LSTMCell(self.hidden_size_lstm)
-            (output_fw, output_bw), _ = tf.nn.bidirectional_dynamic_rnn(
-                    cell_fw, cell_bw, self.word_embeddings,
-                    sequence_length=self.sequence_lengths, dtype=tf.float32)
-            self.lstm_output1 = tf.concat([output_fw, output_bw], axis=-1)
-            self.lstm_output1 = tf.nn.dropout(self.lstm_output1, self.dropout)
+        if self.share_lstm:
+            with tf.variable_scope("bi-lstm"):
+                cell_fw = tf.contrib.rnn.LSTMCell(self.hidden_size_lstm)
+                cell_bw = tf.contrib.rnn.LSTMCell(self.hidden_size_lstm)
+                (output_fw, output_bw), _ = tf.nn.bidirectional_dynamic_rnn(
+                        cell_fw, cell_bw, self.word_embeddings,
+                        sequence_length=self.sequence_lengths, dtype=tf.float32)
+                self.lstm_output = tf.concat([output_fw, output_bw], axis=-1)
+                self.lstm_output = tf.nn.dropout(self.lstm_output, self.dropout)
+                lstm_output1 = lstm_output2 = self.lstm_output
+        else:
+            with tf.variable_scope("bi-lstm-1"):
+                cell_fw = tf.contrib.rnn.LSTMCell(self.hidden_size_lstm)
+                cell_bw = tf.contrib.rnn.LSTMCell(self.hidden_size_lstm)
+                (output_fw, output_bw), _ = tf.nn.bidirectional_dynamic_rnn(
+                        cell_fw, cell_bw, self.word_embeddings,
+                        sequence_length=self.sequence_lengths, dtype=tf.float32)
+                self.lstm_output1 = tf.concat([output_fw, output_bw], axis=-1)
+                self.lstm_output1 = tf.nn.dropout(self.lstm_output1, self.dropout)
+                lstm_output1 = self.lstm_output1
 
-        with tf.variable_scope("bi-lstm-2"):
-            cell_fw = tf.contrib.rnn.LSTMCell(self.hidden_size_lstm)
-            cell_bw = tf.contrib.rnn.LSTMCell(self.hidden_size_lstm)
-            (output_fw, output_bw), _ = tf.nn.bidirectional_dynamic_rnn(
-                    cell_fw, cell_bw, self.word_embeddings,
-                    sequence_length=self.sequence_lengths, dtype=tf.float32)
-            self.lstm_output2 = tf.concat([output_fw, output_bw], axis=-1)
-            self.lstm_output2 = tf.nn.dropout(self.lstm_output2, self.dropout)
+            with tf.variable_scope("bi-lstm-2"):
+                cell_fw = tf.contrib.rnn.LSTMCell(self.hidden_size_lstm)
+                cell_bw = tf.contrib.rnn.LSTMCell(self.hidden_size_lstm)
+                (output_fw, output_bw), _ = tf.nn.bidirectional_dynamic_rnn(
+                        cell_fw, cell_bw, self.word_embeddings,
+                        sequence_length=self.sequence_lengths, dtype=tf.float32)
+                self.lstm_output2 = tf.concat([output_fw, output_bw], axis=-1)
+                self.lstm_output2 = tf.nn.dropout(self.lstm_output2, self.dropout)
+                lstm_output2 = self.lstm_output2
 
         with tf.variable_scope("proj-src1"):
             self.W_src1 = tf.get_variable("W", dtype=tf.float32, shape=[
@@ -79,8 +93,8 @@ class NeuRuleDoubleJoint:
             self.b_src1 = tf.get_variable(
                 "b", shape=[self.n_tags], dtype=tf.float32, initializer=tf.zeros_initializer())
 
-            nsteps = tf.shape(self.lstm_output1)[1]
-            output = tf.reshape(self.lstm_output1, [-1, 2 * self.hidden_size_lstm])
+            nsteps = tf.shape(lstm_output1)[1]
+            output = tf.reshape(lstm_output1, [-1, 2 * self.hidden_size_lstm])
             pred = tf.matmul(output, self.W_src1) + self.b_src1
             self.logits_src1 = tf.reshape(pred, [-1, nsteps, self.n_tags])
 
@@ -90,20 +104,25 @@ class NeuRuleDoubleJoint:
             self.b_src2 = tf.get_variable(
                 "b", shape=[self.n_tags], dtype=tf.float32, initializer=tf.zeros_initializer())
 
-            nsteps = tf.shape(self.lstm_output2)[1]
-            output = tf.reshape(self.lstm_output2, [-1, 2 * self.hidden_size_lstm])
+            nsteps = tf.shape(lstm_output2)[1]
+            output = tf.reshape(lstm_output2, [-1, 2 * self.hidden_size_lstm])
             pred = tf.matmul(output, self.W_src2) + self.b_src2
             self.logits_src2 = tf.reshape(pred, [-1, nsteps, self.n_tags])
 
         with tf.variable_scope("proj-target"):
-            self.W_tar = tf.get_variable("W", dtype=tf.float32, shape=[
-                4 * self.hidden_size_lstm, self.n_tags])
+            input_size = 2 * self.hidden_size_lstm if self.share_lstm else 4 * self.hidden_size_lstm
+
+            self.W_tar = tf.get_variable("W", dtype=tf.float32, shape=[input_size, self.n_tags])
             self.b_tar = tf.get_variable(
                 "b", shape=[self.n_tags], dtype=tf.float32, initializer=tf.zeros_initializer())
 
-            nsteps = tf.shape(self.lstm_output1)[1]
-            output = tf.concat([self.lstm_output1, self.lstm_output2], axis=-1)
-            output = tf.reshape(output, [-1, 4 * self.hidden_size_lstm])
+            nsteps = tf.shape(lstm_output1)[1]
+
+            if self.share_lstm:
+                output = lstm_output1
+            else:
+                output = tf.concat([lstm_output1, lstm_output2], axis=-1)
+            output = tf.reshape(output, [-1, input_size])
             # pred = tf.matmul(output, self.W_tar) + self.b_tar
             pred = tf.matmul(output, self.W_tar) + self.b_tar
             self.logits_tar = tf.reshape(pred, [-1, nsteps, self.n_tags])
@@ -282,8 +301,8 @@ class NeuRuleDoubleJoint:
                             # print('model saved to {}'.format(save_file))
                             logging.info('model saved to {}'.format(save_file))
 
-    def train(self, data_src1: NRJTrainData, data_src2: NRJTrainData, data_tar: NRJTrainData, vocab, n_epochs=10,
-              lr=0.001, dropout=0.5, save_file=None):
+    def train(self, data_src1: NRJTrainData, data_src2: NRJTrainData, data_tar: NRJTrainData, vocab,
+              train_mode, n_epochs=10, lr=0.001, dropout=0.5, save_file=None):
         logging.info('n_epochs={}, lr={}, dropout={}'.format(n_epochs, lr, dropout))
         if save_file is not None and self.saver is None:
             self.saver = tf.train.Saver()
@@ -306,11 +325,19 @@ class NeuRuleDoubleJoint:
                 train_loss_tar = self.__train_batch(
                     data_tar.word_idxs_list_train, data_tar.labels_list_train, i, lr, dropout, False)
                 losses_tar.append(train_loss_tar)
-                if (epoch * n_batches_tar + i) % 2 == 0:
+
+                cond1 = cond2 = False
+                if train_mode == 'interchange':
+                    cond1 = (epoch * n_batches_tar + i) % 2 == 0
+                    cond2 = (epoch * n_batches_tar + i) % 2 == 1
+                elif train_mode == 'all':
+                    cond1 = cond2 = True
+
+                if cond1:
                     train_loss_src1 = self.__train_batch(
                         data_src1.word_idxs_list_train, data_src1.labels_list_train, batch_idx_src1, lr, dropout, True)
                     batch_idx_src1 = batch_idx_src1 + 1 if batch_idx_src1 + 1 < n_batches_src1 else 0
-                if (epoch * n_batches_tar + i) % 2 == 1:
+                if cond2:
                     train_loss_src2 = self.__train_batch(
                         data_src2.word_idxs_list_train, data_src2.labels_list_train, batch_idx_src2, lr, dropout, True)
                     batch_idx_src2 = batch_idx_src2 + 1 if batch_idx_src2 + 1 < n_batches_src2 else 0
@@ -331,18 +358,17 @@ class NeuRuleDoubleJoint:
                     # print('model saved to {}'.format(save_file))
                     logging.info('model saved to {}'.format(save_file))
 
-            p1, r1, f11 = self.evaluate(
-                data_src1.word_idxs_list_valid, data_src1.labels_list_valid, vocab,
-                data_src1.valid_texts, data_src1.terms_true_list, True)
-            # print('src, p={}, r={}, f1={}'.format(p, r, f1))
+            if train_mode != 'target-only':
+                p1, r1, f11 = self.evaluate(
+                    data_src1.word_idxs_list_valid, data_src1.labels_list_valid, vocab,
+                    data_src1.valid_texts, data_src1.terms_true_list, True)
 
-            p2, r2, f12 = self.evaluate(
-                data_src2.word_idxs_list_valid, data_src2.labels_list_valid, vocab,
-                data_src2.valid_texts, data_src2.terms_true_list, True)
-            # print('src, p={}, r={}, f1={}'.format(p, r, f1))
-            logging.info('src1, p={:.4f}, r={:.4f}, f1={:.4f}; src2, p={:.4f}, r={:.4f}, f1={:.4f}'.format(
-                p1, r1, f11, p2, r2, f12
-            ))
+                p2, r2, f12 = self.evaluate(
+                    data_src2.word_idxs_list_valid, data_src2.labels_list_valid, vocab,
+                    data_src2.valid_texts, data_src2.terms_true_list, True)
+                logging.info('src1, p={:.4f}, r={:.4f}, f1={:.4f}; src2, p={:.4f}, r={:.4f}, f1={:.4f}'.format(
+                    p1, r1, f11, p2, r2, f12
+                ))
 
     def predict_batch(self, word_idxs, task):
         fd, sequence_lengths = self.get_feed_dict(word_idxs, task, dropout=1.0)

@@ -227,16 +227,22 @@ def __train_neurule_double_joint():
     train_data_src2, valid_data_src2 = __get_data_amazon(vocab, config.AMAZON_TERMS_TRUE2_FILE)
     # model_file = 'd:/data/amazon/model/lstmcrfrule.ckpt'
     rule_model_file = config.LAPTOP_NRDJ_RULE_MODEL_FILE
-    save_model_file = None
+    # rule_model_file = None
+    pretrain_model_file = config.LAPTOP_NRDJ_RULE_MODEL_FILE
+    save_model_file = config.LAPTOP_NRDJ_RULE_MODEL_FILE
     print('done')
     n_tags = 3
     batch_size = 20
     hidden_size_lstm = 100
     n_epochs = 500
-    lr = 0.01
-    nrdj = NeuRuleDoubleJoint(n_tags, word_vecs_matrix, hidden_size_lstm=hidden_size_lstm,
-                              model_file=None)
+    lr = 0.001
+    share_lstm = False
+    train_mode = 'target-only'
+    nrdj = NeuRuleDoubleJoint(n_tags, word_vecs_matrix, share_lstm, hidden_size_lstm=hidden_size_lstm,
+                              model_file=rule_model_file)
 
+    nrj_train_data_src1 = nrj_train_data_src2 = None
+    # if train_mode != 'target-only':
     nrj_train_data_src1 = NRJTrainData(
         train_data_src1.word_idxs_list, train_data_src1.labels_list, valid_data_src1.word_idxs_list,
         valid_data_src1.labels_list, valid_data_src1.tok_texts, valid_data_src1.terms_true_list
@@ -246,14 +252,15 @@ def __train_neurule_double_joint():
         valid_data_src2.labels_list, valid_data_src2.tok_texts, valid_data_src2.terms_true_list
     )
 
-    nrdj.pre_train(nrj_train_data_src1, nrj_train_data_src2, vocab, n_epochs=n_epochs, lr=lr,
-                   save_file=rule_model_file)
+    nrj_train_data_tar = NRJTrainData(
+        train_data_tar.word_idxs_list, train_data_tar.labels_list, valid_data_tar.word_idxs_list,
+        valid_data_tar.labels_list, valid_data_tar.tok_texts, valid_data_tar.terms_true_list
+    )
 
-    # nrj_train_data_tar = NRJTrainData(
-    #     train_data_tar.word_idxs_list, train_data_tar.labels_list, valid_data_tar.word_idxs_list,
-    #     valid_data_tar.labels_list, valid_data_tar.tok_texts, valid_data_tar.terms_true_list
-    # )
-    # nrdj.train(nrj_train_data_src1, nrj_train_data_src2, nrj_train_data_tar, vocab, n_epochs=n_epochs, lr=lr)
+    # nrdj.pre_train(nrj_train_data_src1, nrj_train_data_src2, nrj_train_data_tar, vocab, n_epochs=n_epochs, lr=lr,
+    #                save_file=pretrain_model_file)
+    nrdj.train(nrj_train_data_src1, nrj_train_data_src2, nrj_train_data_tar, vocab, train_mode,
+               n_epochs=n_epochs, lr=lr)
 
 
 str_today = datetime.date.today().strftime('%y-%m-%d')
