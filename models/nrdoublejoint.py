@@ -1,5 +1,7 @@
 import tensorflow as tf
 from collections import namedtuple
+import logging
+
 import numpy as np
 from utils.utils import pad_sequences
 
@@ -11,6 +13,9 @@ NRJTrainData = namedtuple(
 class NeuRuleDoubleJoint:
     def __init__(self, n_tags, word_embeddings, hidden_size_lstm=100,
                  batch_size=20, lr_method='adam', clip=-1, use_crf=True, model_file=None):
+        logging.info('hidden_size_lstm={}, batch_size={}, lr_method={}'.format(
+            hidden_size_lstm, batch_size, lr_method))
+
         self.n_tags = n_tags
         self.hidden_size_lstm = hidden_size_lstm
         self.batch_size = batch_size
@@ -234,6 +239,7 @@ class NeuRuleDoubleJoint:
 
     def train(self, data_src1: NRJTrainData, data_src2: NRJTrainData, data_tar: NRJTrainData, vocab, n_epochs=10,
               lr=0.001, dropout=0.5, save_file=None):
+        logging.info('n_epochs={}, lr={}, dropout={}'.format(n_epochs, lr, dropout))
         if save_file is not None and self.saver is None:
             self.saver = tf.train.Saver()
 
@@ -255,34 +261,43 @@ class NeuRuleDoubleJoint:
                 train_loss_tar = self.__train_batch(
                     data_tar.word_idxs_list_train, data_tar.labels_list_train, i, lr, dropout, False)
                 losses_tar.append(train_loss_tar)
-                train_loss_src1 = self.__train_batch(
-                    data_src1.word_idxs_list_train, data_src1.labels_list_train, batch_idx_src1, lr, dropout, True)
-                batch_idx_src1 = batch_idx_src1 + 1 if batch_idx_src1 + 1 < n_batches_src1 else 0
-                train_loss_src2 = self.__train_batch(
-                    data_src2.word_idxs_list_train, data_src2.labels_list_train, batch_idx_src2, lr, dropout, True)
-                batch_idx_src2 = batch_idx_src2 + 1 if batch_idx_src2 + 1 < n_batches_src2 else 0
-            print('iter {}, loss={}'.format(epoch, sum(losses_tar)))
+                if (epoch * n_batches_tar + i) % 2 == 0:
+                    train_loss_src1 = self.__train_batch(
+                        data_src1.word_idxs_list_train, data_src1.labels_list_train, batch_idx_src1, lr, dropout, True)
+                    batch_idx_src1 = batch_idx_src1 + 1 if batch_idx_src1 + 1 < n_batches_src1 else 0
+                if (epoch * n_batches_tar + i) % 2 == 1:
+                    train_loss_src2 = self.__train_batch(
+                        data_src2.word_idxs_list_train, data_src2.labels_list_train, batch_idx_src2, lr, dropout, True)
+                    batch_idx_src2 = batch_idx_src2 + 1 if batch_idx_src2 + 1 < n_batches_src2 else 0
+            loss_tar = sum(losses_tar)
 
             # metrics = self.run_evaluate(dev)
             p, r, f1 = self.evaluate(
                 data_tar.word_idxs_list_valid, data_tar.labels_list_valid, vocab,
                 data_tar.valid_texts, data_tar.terms_true_list, False)
-            print('p={}, r={}, f1={}, best_f1={}'.format(p, r, f1, best_f1))
+            # print('iter {}, loss={:.4f}, p={:.4f}, r={:.4f}, f1={:.4f}, best_f1={:.4f}'.format(
+            #     epoch, loss_tar, p, r, f1, best_f1))
+            logging.info('iter {}, loss={:.4f}, p={:.4f}, r={:.4f}, f1={:.4f}, best_f1={:.4f}'.format(
+                epoch, loss_tar, p, r, f1, best_f1))
             if f1 > best_f1:
                 best_f1 = f1
                 if self.saver is not None:
                     self.saver.save(self.sess, save_file)
-                    print('model saved to {}'.format(save_file))
+                    # print('model saved to {}'.format(save_file))
+                    logging.info('model saved to {}'.format(save_file))
 
-            p, r, f1 = self.evaluate(
+            p1, r1, f11 = self.evaluate(
                 data_src1.word_idxs_list_valid, data_src1.labels_list_valid, vocab,
                 data_src1.valid_texts, data_src1.terms_true_list, True)
-            print('src, p={}, r={}, f1={}'.format(p, r, f1))
+            # print('src, p={}, r={}, f1={}'.format(p, r, f1))
 
-            p, r, f1 = self.evaluate(
+            p2, r2, f12 = self.evaluate(
                 data_src2.word_idxs_list_valid, data_src2.labels_list_valid, vocab,
                 data_src2.valid_texts, data_src2.terms_true_list, True)
-            print('src, p={}, r={}, f1={}'.format(p, r, f1))
+            # print('src, p={}, r={}, f1={}'.format(p, r, f1))
+            logging.info('src1, p={:.4f}, r={:.4f}, f1={:.4f}; src2, p={:.4f}, r={:.4f}, f1={:.4f}'.format(
+                p1, r1, f11, p2, r2, f12
+            ))
 
     def predict_batch(self, word_idxs, task):
         fd, sequence_lengths = self.get_feed_dict(word_idxs, task, dropout=1.0)

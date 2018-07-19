@@ -75,3 +75,5 @@ def restore_model():
 
 # create_model()
 # restore_model()
+v = 0.003472
+print('{:.4f}'.format(v))

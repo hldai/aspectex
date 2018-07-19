@@ -1,12 +1,14 @@
 import numpy as np
 import pickle
 import config
+import datetime
 from collections import namedtuple
 from models.lstmcrf import LSTMCRF
 from models.nrcomb import NeuRuleComb
 from models.nrdoublejoint import NeuRuleDoubleJoint
-from nrjoint import NeuRuleJoint, NRJTrainData
+from models.nrjoint import NeuRuleJoint, NRJTrainData
 from utils import utils
+from utils.loggingutils import init_logging
 import tensorflow as tf
 
 
@@ -212,6 +214,8 @@ def __train_neurule_joint():
 
 
 def __train_neurule_double_joint():
+    init_logging('log/nrdj-{}.log'.format(str_today), mode='a', to_stdout=True)
+
     # n_train = 1000
     n_train = -1
 
@@ -229,6 +233,7 @@ def __train_neurule_double_joint():
     batch_size = 20
     hidden_size_lstm = 100
     n_epochs = 500
+    lr = 0.01
     nrdj = NeuRuleDoubleJoint(n_tags, word_vecs_matrix, hidden_size_lstm=hidden_size_lstm,
                               model_file=None)
     nrj_train_data_src1 = NRJTrainData(
@@ -243,9 +248,10 @@ def __train_neurule_double_joint():
         train_data_tar.word_idxs_list, train_data_tar.labels_list, valid_data_tar.word_idxs_list,
         valid_data_tar.labels_list, valid_data_tar.tok_texts, valid_data_tar.terms_true_list
     )
-    nrdj.train(nrj_train_data_src1, nrj_train_data_src2, nrj_train_data_tar, vocab, n_epochs=n_epochs)
+    nrdj.train(nrj_train_data_src1, nrj_train_data_src2, nrj_train_data_tar, vocab, n_epochs=n_epochs, lr=lr)
 
 
+str_today = datetime.date.today().strftime('%y-%m-%d')
 # __train()
 # __train_neurule_joint()
 __train_neurule_double_joint()
