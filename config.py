@@ -63,3 +63,4 @@ AMAZON_TOK_TEXTS_FILE = join(AMAZON_DATA_DIR, 'laptops-reivews-sent-tok-text.txt
 AMAZON_TERMS_TRUE1_FILE = join(AMAZON_DATA_DIR, 'laptops-rule-result1.txt')
 AMAZON_TERMS_TRUE2_FILE = join(AMAZON_DATA_DIR, 'laptops-rule-result2.txt')
 LAPTOP_RULE_MODEL_FILE = join(DATA_DIR_SE14, 'tf-model/laptop-rule.ckpl')
+LAPTOP_NRDJ_RULE_MODEL_FILE = join(DATA_DIR_SE14, 'tf-model/laptop-nrdj-rule.ckpl')

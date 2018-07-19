@@ -237,6 +237,51 @@ class NeuRuleDoubleJoint:
                 [self.train_op_tar, self.loss_tar], feed_dict=feed_dict)
         return train_loss
 
+    def pre_train(self, data_src1: NRJTrainData, data_src2: NRJTrainData, vocab, n_epochs,
+                  lr=0.001, dropout=0.5, save_file=None):
+        logging.info('pretrain, n_epochs={}, lr={}, dropout={}'.format(n_epochs, lr, dropout))
+        if save_file is not None and self.saver is None:
+            self.saver = tf.train.Saver()
+
+        n_train_src1 = len(data_src1.word_idxs_list_train)
+        n_batches_src1 = (n_train_src1 + self.batch_size - 1) // self.batch_size
+
+        n_train_src2 = len(data_src2.word_idxs_list_train)
+        n_batches_src2 = (n_train_src2 + self.batch_size - 1) // self.batch_size
+
+        best_f1 = 0
+        batch_idx_src1, batch_idx_src2 = 0, 0
+        for epoch in range(n_epochs):
+            # losses_src, losses_seg_src = list(), list()
+            for i in range(n_batches_src1):
+                train_loss_src1 = self.__train_batch(
+                    data_src1.word_idxs_list_train, data_src1.labels_list_train, batch_idx_src1, lr, dropout, True)
+                batch_idx_src1 = batch_idx_src1 + 1 if batch_idx_src1 + 1 < n_batches_src1 else 0
+                train_loss_src2 = self.__train_batch(
+                    data_src2.word_idxs_list_train, data_src2.labels_list_train, batch_idx_src2, lr, dropout, True)
+                batch_idx_src2 = batch_idx_src2 + 1 if batch_idx_src2 + 1 < n_batches_src2 else 0
+
+                if (i + 1) % 100 == 0:
+                    p1, r1, f11 = self.evaluate(
+                        data_src1.word_idxs_list_valid, data_src1.labels_list_valid, vocab,
+                        data_src1.valid_texts, data_src1.terms_true_list, True)
+                    # print('src, p={}, r={}, f1={}'.format(p, r, f1))
+
+                    p2, r2, f12 = self.evaluate(
+                        data_src2.word_idxs_list_valid, data_src2.labels_list_valid, vocab,
+                        data_src2.valid_texts, data_src2.terms_true_list, True)
+                    # print('src, p={}, r={}, f1={}'.format(p, r, f1))
+                    logging.info('src1, p={:.4f}, r={:.4f}, f1={:.4f}; src2, p={:.4f}, r={:.4f}, f1={:.4f}'.format(
+                        p1, r1, f11, p2, r2, f12
+                    ))
+
+                    if f11 + f12 > best_f1:
+                        best_f1 = f11 + f12
+                        if self.saver is not None:
+                            self.saver.save(self.sess, save_file)
+                            # print('model saved to {}'.format(save_file))
+                            logging.info('model saved to {}'.format(save_file))
+
     def train(self, data_src1: NRJTrainData, data_src2: NRJTrainData, data_tar: NRJTrainData, vocab, n_epochs=10,
               lr=0.001, dropout=0.5, save_file=None):
         logging.info('n_epochs={}, lr={}, dropout={}'.format(n_epochs, lr, dropout))
