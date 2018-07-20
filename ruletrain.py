@@ -31,7 +31,7 @@ def __find_sub_words_seq(words, sub_words):
 
 
 # TODO some of the aspect_terms are not found
-def __label_sentence(words, aspect_terms):
+def __label_sentence(words, aspect_terms, opinion_terms=None):
     x = np.zeros(len(words), np.int32)
     for term in aspect_terms:
         term_words = term.lower().split(' ')
@@ -44,6 +44,19 @@ def __label_sentence(words, aspect_terms):
         x[pbeg] = 1
         for p in range(pbeg + 1, pbeg + len(term_words)):
             x[p] = 2
+
+    if opinion_terms is None:
+        return x
+
+    for term in opinion_terms:
+        term_words = term.lower().split(' ')
+        pbeg = __find_sub_words_seq(words, term_words)
+        if pbeg == -1:
+            continue
+        x[pbeg] = 3
+        for p in range(pbeg + 1, pbeg + len(term_words)):
+            x[p] = 4
+
     return x
 
 
@@ -55,7 +68,7 @@ def __get_word_idx_sequence(words_list, vocab):
     return seq_list
 
 
-def __data_from_sents_file(filename, tok_text_file, vocab):
+def __data_from_sents_file(filename, tok_text_file, vocab, label_opinions):
     sents = utils.load_json_objs(filename)
     texts = utils.read_lines(tok_text_file)
 
@@ -67,7 +80,8 @@ def __data_from_sents_file(filename, tok_text_file, vocab):
     for sent_idx, (sent, sent_words) in enumerate(zip(sents, words_list)):
         aspect_objs = sent.get('terms', None)
         aspect_terms = [t['term'] for t in aspect_objs] if aspect_objs is not None else list()
-        x = __label_sentence(sent_words, aspect_terms)
+        opinion_terms = sent.get('opinions', list())
+        x = __label_sentence(sent_words, aspect_terms, opinion_terms)
         labels_list.append(x)
 
     word_idxs_list = __get_word_idx_sequence(words_list, vocab)
@@ -75,15 +89,15 @@ def __data_from_sents_file(filename, tok_text_file, vocab):
     return labels_list, word_idxs_list
 
 
-def __get_data_semeval(vocab, n_train):
+def __get_data_semeval(vocab, n_train, label_opinions):
     labels_list_train, word_idxs_list_train = __data_from_sents_file(
-        config.SE14_LAPTOP_TRAIN_SENTS_FILE, config.SE14_LAPTOP_TRAIN_TOK_TEXTS_FILE, vocab)
+        config.SE14_LAPTOP_TRAIN_SENTS_FILE, config.SE14_LAPTOP_TRAIN_TOK_TEXTS_FILE, vocab, label_opinions)
     if n_train > -1:
         labels_list_train = labels_list_train[:n_train]
         word_idxs_list_train = word_idxs_list_train[:n_train]
 
     labels_list_test, word_idxs_list_test = __data_from_sents_file(
-        config.SE14_LAPTOP_TEST_SENTS_FILE, config.SE14_LAPTOP_TEST_TOK_TEXTS_FILE, vocab)
+        config.SE14_LAPTOP_TEST_SENTS_FILE, config.SE14_LAPTOP_TEST_TOK_TEXTS_FILE, vocab, label_opinions)
     sents_test = utils.load_json_objs(config.SE14_LAPTOP_TEST_SENTS_FILE)
     terms_true_list_test = list()
     for sent in sents_test:
@@ -249,13 +263,21 @@ def __train_neurule_double_joint():
 
     # n_train = 1000
     n_train = -1
-    task = 'pretrain'
-    # task = 'train'
+    # task = 'pretrain'
+    task = 'train'
+    label_opinions = True
+    n_tags = 5 if label_opinions else 3
+    batch_size = 20
+    hidden_size_lstm = 100
+    n_epochs = 500
+    lr = 0.001
+    share_lstm = False
+    train_mode = 'target-only'
 
     print('loading data ...')
     with open(config.SE14_LAPTOP_GLOVE_WORD_VEC_FILE, 'rb') as f:
         vocab, word_vecs_matrix = pickle.load(f)
-    train_data_tar, valid_data_tar = __get_data_semeval(vocab, n_train)
+    train_data_tar, valid_data_tar = __get_data_semeval(vocab, n_train, label_opinions)
     # train_data_src1, valid_data_src1 = __get_data_amazon(vocab, config.AMAZON_TERMS_TRUE1_FILE)
     # train_data_src1, valid_data_src1 = __get_data_amazon(vocab, config.AMAZON_TERMS_TRUE3_FILE)
     train_data_src1, valid_data_src1 = __get_data_amazon(vocab, config.AMAZON_TERMS_TRUE4_FILE)
@@ -265,14 +287,9 @@ def __train_neurule_double_joint():
     pretrain_model_file = config.LAPTOP_NRDJ_RULE_MODEL_FILE
     save_model_file = config.LAPTOP_NRDJ_RULE_MODEL_FILE
     print('done')
-    n_tags = 3
-    batch_size = 20
-    hidden_size_lstm = 100
-    n_epochs = 500
-    lr = 0.001
-    share_lstm = False
-    train_mode = 'target-only'
-    nrdj = NeuRuleDoubleJoint(n_tags, word_vecs_matrix, share_lstm, hidden_size_lstm=hidden_size_lstm,
+
+    nrdj = NeuRuleDoubleJoint(n_tags, word_vecs_matrix, share_lstm,
+                              hidden_size_lstm=hidden_size_lstm,
                               model_file=rule_model_file)
 
     nrj_train_data_src1 = nrj_train_data_src2 = None
