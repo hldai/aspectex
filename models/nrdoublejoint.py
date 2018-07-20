@@ -16,6 +16,7 @@ class NeuRuleDoubleJoint:
         logging.info('hidden_size_lstm={}, batch_size={}, lr_method={}'.format(
             hidden_size_lstm, batch_size, lr_method))
 
+        self.n_tags_src = 3
         self.n_tags = n_tags
         self.hidden_size_lstm = hidden_size_lstm
         self.batch_size = batch_size
@@ -89,25 +90,25 @@ class NeuRuleDoubleJoint:
 
         with tf.variable_scope("proj-src1"):
             self.W_src1 = tf.get_variable("W", dtype=tf.float32, shape=[
-                2 * self.hidden_size_lstm, self.n_tags])
+                2 * self.hidden_size_lstm, self.n_tags_src])
             self.b_src1 = tf.get_variable(
-                "b", shape=[self.n_tags], dtype=tf.float32, initializer=tf.zeros_initializer())
+                "b", shape=[self.n_tags_src], dtype=tf.float32, initializer=tf.zeros_initializer())
 
             nsteps = tf.shape(lstm_output1)[1]
             output = tf.reshape(lstm_output1, [-1, 2 * self.hidden_size_lstm])
             pred = tf.matmul(output, self.W_src1) + self.b_src1
-            self.logits_src1 = tf.reshape(pred, [-1, nsteps, self.n_tags])
+            self.logits_src1 = tf.reshape(pred, [-1, nsteps, self.n_tags_src])
 
         with tf.variable_scope("proj-src2"):
             self.W_src2 = tf.get_variable("W", dtype=tf.float32, shape=[
-                2 * self.hidden_size_lstm, self.n_tags])
+                2 * self.hidden_size_lstm, 3])
             self.b_src2 = tf.get_variable(
-                "b", shape=[self.n_tags], dtype=tf.float32, initializer=tf.zeros_initializer())
+                "b", shape=[self.n_tags_src], dtype=tf.float32, initializer=tf.zeros_initializer())
 
             nsteps = tf.shape(lstm_output2)[1]
             output = tf.reshape(lstm_output2, [-1, 2 * self.hidden_size_lstm])
             pred = tf.matmul(output, self.W_src2) + self.b_src2
-            self.logits_src2 = tf.reshape(pred, [-1, nsteps, self.n_tags])
+            self.logits_src2 = tf.reshape(pred, [-1, nsteps, self.n_tags_src])
 
         with tf.variable_scope("proj-target"):
             input_size = 2 * self.hidden_size_lstm if self.share_lstm else 4 * self.hidden_size_lstm
