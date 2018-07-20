@@ -285,9 +285,10 @@ class LSTMCRF:
             else:
                 correct_sent_idxs.append(sent_idx)
 
-        p = cnt_hit / cnt_sys
+        p = cnt_hit / (cnt_sys + 1e-5)
         r = cnt_hit / (cnt_true - 16)
-        f1 = 2 * p * r / (p + r)
+        # r = cnt_hit / cnt_true
+        f1 = 2 * p * r / (p + r + 1e-5)
         # print(p, r, f1, cnt_true)
 
         # save_json_objs(error_sents, 'd:/data/aspect/semeval14/error-sents.txt')

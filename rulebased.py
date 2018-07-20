@@ -146,8 +146,8 @@ def __rule1(dep_tags, pos_tags, opinion_terms, nouns_filter):
         idep, wdep = dep
         if wdep in nouns_filter:
             continue
-        # if wgov not in opinion_terms:
-        #     continue
+        if wgov not in opinion_terms:
+            continue
 
         # print(rel, wgov, wdep)
         # phrase = __get_phrase(dep_tags, pos_tags, idep)
@@ -427,6 +427,22 @@ def __evaluate(terms_sys_list, sents, dep_tags_list, pos_tags_list):
     return correct_sent_idxs
 
 
+def __opinion_rule1(dep_tags, pos_tags):
+    words = [dep_tag[2][1] for dep_tag in dep_tags]
+    assert len(words) == len(pos_tags)
+    # print(words)
+    # print(pos_tags)
+
+    opinion_terms = list()
+    for i, w in enumerate(words):
+        pos = pos_tags[i]
+        if pos in {'JJ', 'RB'} and w not in {"n't", 'not', 'so', 'also'}:
+            opinion_terms.append(w)
+    # print(' '.join(words))
+    # print(noun_phrases)
+    return opinion_terms
+
+
 def __rule_insight(opinion_terms_file, filter_nouns_file, dep_tags_file, pos_tags_file,
                    sent_text_file, dst_result_file=None, sents_file=None):
     # print(terms_train)
@@ -459,14 +475,18 @@ def __rule_insight(opinion_terms_file, filter_nouns_file, dep_tags_file, pos_tag
         # aspect_terms.update(aspect_terms_new)
         # aspect_terms_new = __rule3(dep_tags, pos_tags, opinion_terms, nouns_filter)
         # aspect_terms.update(aspect_terms_new)
-        aspect_terms_new = __rule4(dep_tags, pos_tags, sent_text, opinion_terms, nouns_filter, terms_train)
-        aspect_terms.update(aspect_terms_new)
+        # aspect_terms_new = __rule4(dep_tags, pos_tags, sent_text, opinion_terms, nouns_filter, terms_train)
+        # aspect_terms.update(aspect_terms_new)
         # aspect_terms_new = __rule6(dep_tags, pos_tags, opinion_terms, nouns_filter)
         # aspect_terms.update(aspect_terms_new)
         # aspect_terms_new = __rule5(dep_tags, pos_tags, opinion_terms, nouns_filter, aspect_terms)
         # aspect_terms.update(aspect_terms_new)
         # aspect_terms_new = __rec_rule1(dep_tags, pos_tags, nouns_filter, opinion_terms)
         # aspect_terms.update(aspect_terms_new)
+        aspect_terms_new = __opinion_rule1(dep_tags, pos_tags)
+        aspect_terms.update(aspect_terms_new)
+        # if sent_idx > 10:
+        #     exit()
 
         terms_sys_tmp = list(aspect_terms)
         terms_sys_tmp.sort(key=lambda x: len(x))
@@ -542,7 +562,7 @@ filter_nouns_file = 'd:/data/aspect/semeval14/nouns-filter.txt'
 
 dep_tags_file = 'd:/data/amazon/laptops-rule-dep.txt'
 pos_tags_file = 'd:/data/amazon/laptops-rule-pos.txt'
-result_file = 'd:/data/amazon/laptops-rule-result3.txt'
+result_file = 'd:/data/amazon/laptops-rule-result4.txt'
 sent_texts_file = 'd:/data/amazon/laptops-reivews-sent-text.txt'
 sents_file = None
 
