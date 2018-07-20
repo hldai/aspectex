@@ -9,7 +9,7 @@ NRJTrainData = namedtuple(
 
 
 class NeuRuleJoint:
-    def __init__(self, n_tags, word_embeddings, share_W, hidden_size_lstm=100,
+    def __init__(self, n_tags, word_embeddings, share_W=False, hidden_size_lstm=100,
                  batch_size=20, lr_method='adam', clip=-1, use_crf=True, model_file=None):
         self.n_tags = n_tags
         self.hidden_size_lstm = hidden_size_lstm

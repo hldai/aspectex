@@ -1,4 +1,5 @@
 import tensorflow as tf
+import logging
 from utils.utils import pad_sequences, save_json_objs
 
 
@@ -199,24 +200,29 @@ class LSTMCRF:
                 losses_seg.append(train_loss)
 
                 if (i + 1) % (5000 // self.batch_size) == 0:
-                    print('iter {}, batch {}, loss={}'.format(epoch, i, sum(losses_seg)))
+                    loss_val = sum(losses_seg)
                     p, r, f1 = self.evaluate(word_idxs_list_valid, labels_list_valid, vocab,
                                              valid_texts, terms_true_list)
+                    logging.info('iter={}, loss={:.4f}, p={:.4f}, r={:.4f}, f1={:.4f}'.format(
+                        epoch, loss_val, p, r, f1))
                     losses_seg = list()
 
                     if f1 > best_f1:
                         best_f1 = f1
                         if self.saver is not None:
                             self.saver.save(self.sess, save_file)
-                            print('model saved to {}'.format(save_file))
-            print('iter {}, loss={}'.format(epoch, sum(losses)))
+                            # print('model saved to {}'.format(save_file))
+                            logging.info('model saved to {}'.format(save_file))
+            # print('iter {}, loss={}'.format(epoch, sum(losses)))
             # metrics = self.run_evaluate(dev)
+            loss_val = sum(losses)
             p, r, f1 = self.evaluate(word_idxs_list_valid, labels_list_valid, vocab, valid_texts, terms_true_list)
+            logging.info('iter={}, loss={:.4f}, p={:.4f}, r={:.4f}, f1={:.4f}'.format(epoch, loss_val, p, r, f1))
             if f1 > best_f1:
                 best_f1 = f1
                 if self.saver is not None:
                     self.saver.save(self.sess, save_file)
-                    print('model saved to {}'.format(save_file))
+                    logging.info('model saved to {}'.format(save_file))
 
     def predict_batch(self, word_idxs):
         fd, sequence_lengths = self.get_feed_dict(word_idxs, dropout=1.0)
@@ -281,13 +287,13 @@ class LSTMCRF:
         p = cnt_hit / cnt_sys
         r = cnt_hit / (cnt_true - 16)
         f1 = 2 * p * r / (p + r)
-        print(p, r, f1, cnt_true)
+        # print(p, r, f1, cnt_true)
 
         # save_json_objs(error_sents, 'd:/data/aspect/semeval14/error-sents.txt')
-        with open('d:/data/aspect/semeval14/error-sents.txt', 'w', encoding='utf-8') as fout:
-            for sent, terms, terms_sys in zip(error_sents, error_terms, error_terms_sys):
-                fout.write('{}\n{}\n{}\n\n'.format(sent, terms, terms_sys))
-            print('error written')
+        # with open('d:/data/aspect/semeval14/error-sents.txt', 'w', encoding='utf-8') as fout:
+        #     for sent, terms, terms_sys in zip(error_sents, error_terms, error_terms_sys):
+        #         fout.write('{}\n{}\n{}\n\n'.format(sent, terms, terms_sys))
+        #     print('error written')
         # with open('d:/data/aspect/semeval14/lstmcrf-correct.txt', 'w', encoding='utf-8') as fout:
         #     fout.write('\n'.join([str(i) for i in correct_sent_idxs]))
         #     print('correct sents written.')

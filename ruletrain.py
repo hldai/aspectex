@@ -130,19 +130,41 @@ def __get_data_amazon(vocab, true_terms_file):
 
 
 def __train():
+    init_logging('log/nr-{}.log'.format(str_today), mode='a', to_stdout=True)
+
+    task = 'pretrain'
+    # task = 'train'
+    rule_id = 1
+    n_tags = 3
+    hidden_size_lstm = 100
+
+    if rule_id == 1:
+        rule_true_terms_file = config.AMAZON_TERMS_TRUE1_FILE
+        rule_model_file = config.LAPTOP_RULE_MODEL1_FILE
+    else:
+        rule_true_terms_file = config.AMAZON_TERMS_TRUE2_FILE
+        rule_model_file = config.LAPTOP_RULE_MODEL2_FILE
+
     print('loading data ...')
     with open(config.SE14_LAPTOP_GLOVE_WORD_VEC_FILE, 'rb') as f:
         vocab, word_vecs_matrix = pickle.load(f)
-    train_data, valid_data = __get_data_semeval(vocab, -1)
-    # train_data, valid_data = __get_data_amazon(vocab)
-    # model_file = 'd:/data/amazon/model/lstmcrfrule.ckpt'
-    model_file = config.LAPTOP_RULE_MODEL_FILE
-    save_model_file = None
+
+    if task == 'train':
+        load_model_file = rule_model_file
+        save_model_file = None
+        train_data, valid_data = __get_data_semeval(vocab, -1)
+    else:
+        load_model_file = None
+        save_model_file = rule_model_file
+        train_data, valid_data = __get_data_amazon(vocab, rule_true_terms_file)
+
+    # train_data, valid_data = __get_data_semeval(vocab, -1)
+    # train_data, valid_data = __get_data_amazon(vocab, config.AMAZON_TERMS_TRUE1_FILE)
+    # train_data, valid_data = __get_data_amazon(vocab, config.AMAZON_TERMS_TRUE2_FILE)
     print('done')
-    n_tags = 3
-    hidden_size_lstm = 100
+
     # lstmcrf = LSTMCRF(n_tags, word_vecs_matrix, hidden_size_lstm=hidden_size_lstm)
-    lstmcrf = LSTMCRF(n_tags, word_vecs_matrix, hidden_size_lstm=hidden_size_lstm, model_file=model_file)
+    lstmcrf = LSTMCRF(n_tags, word_vecs_matrix, hidden_size_lstm=hidden_size_lstm, model_file=load_model_file)
     lstmcrf.train(train_data.word_idxs_list, train_data.labels_list, valid_data.word_idxs_list,
                   valid_data.labels_list, vocab, valid_data.tok_texts, valid_data.terms_true_list,
                   n_epochs=100, save_file=save_model_file)
@@ -154,8 +176,7 @@ def __train_neurule_comb():
         vocab, word_vecs_matrix = pickle.load(f)
     train_data, valid_data = __get_data_semeval(vocab)
     # train_data, valid_data = __get_data_amazon(vocab)
-    # model_file = 'd:/data/amazon/model/lstmcrfrule.ckpt'
-    rule_model_file = config.LAPTOP_RULE_MODEL_FILE
+    rule_model_file = config.LAPTOP_RULE_MODEL1_FILE
     save_model_file = None
     print('done')
     n_tags = 3
@@ -186,30 +207,33 @@ def __train_neurule_joint():
     # n_train = 1000
     n_train = -1
 
-    print('loading data ...')
-    with open(config.SE14_LAPTOP_GLOVE_WORD_VEC_FILE, 'rb') as f:
-        vocab, word_vecs_matrix = pickle.load(f)
-    train_data_tar, valid_data_tar = __get_data_semeval(vocab, n_train)
-    train_data_src, valid_data_src = __get_data_amazon(vocab, config.AMAZON_TERMS_TRUE1_FILE)
-    # train_data_src, valid_data_src = __get_data_amazon(vocab, config.AMAZON_TERMS_TRUE2_FILE)
     # model_file = 'd:/data/amazon/model/lstmcrfrule.ckpt'
-    rule_model_file = config.LAPTOP_RULE_MODEL_FILE
+    rule_model_file = config.LAPTOP_RULE_MODEL2_FILE
     save_model_file = None
     print('done')
     n_tags = 3
     batch_size = 20
     hidden_size_lstm = 100
     n_epochs = 500
-    share_W = False
-    nrc = NeuRuleJoint(n_tags, word_vecs_matrix, share_W, hidden_size_lstm=hidden_size_lstm, model_file=None)
+
+    print('loading data ...')
+    with open(config.SE14_LAPTOP_GLOVE_WORD_VEC_FILE, 'rb') as f:
+        vocab, word_vecs_matrix = pickle.load(f)
+
+    # train_data_src, valid_data_src = __get_data_amazon(vocab, config.AMAZON_TERMS_TRUE1_FILE)
+    train_data_src, valid_data_src = __get_data_amazon(vocab, config.AMAZON_TERMS_TRUE2_FILE)
     nrj_train_data_src = NRJTrainData(
         train_data_src.word_idxs_list, train_data_src.labels_list, valid_data_src.word_idxs_list,
         valid_data_src.labels_list, valid_data_src.tok_texts, valid_data_src.terms_true_list
     )
+
+    train_data_tar, valid_data_tar = __get_data_semeval(vocab, n_train)
     nrj_train_data_tar = NRJTrainData(
         train_data_tar.word_idxs_list, train_data_tar.labels_list, valid_data_tar.word_idxs_list,
         valid_data_tar.labels_list, valid_data_tar.tok_texts, valid_data_tar.terms_true_list
     )
+
+    nrc = NeuRuleJoint(n_tags, word_vecs_matrix, hidden_size_lstm=hidden_size_lstm, model_file=None)
     nrc.train(nrj_train_data_src, nrj_train_data_tar, vocab, n_epochs=n_epochs)
 
 
@@ -267,7 +291,7 @@ def __train_neurule_double_joint():
 
 
 str_today = datetime.date.today().strftime('%y-%m-%d')
-# __train()
+__train()
 # __train_neurule_joint()
-__train_neurule_double_joint()
+# __train_neurule_double_joint()
 # __get_data_amazon(None)
