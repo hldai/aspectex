@@ -203,8 +203,8 @@ class LSTMCRF:
                     loss_val = sum(losses_seg)
                     p, r, f1 = self.evaluate(word_idxs_list_valid, labels_list_valid, vocab,
                                              valid_texts, terms_true_list)
-                    logging.info('iter={}, loss={:.4f}, p={:.4f}, r={:.4f}, f1={:.4f}'.format(
-                        epoch, loss_val, p, r, f1))
+                    logging.info('iter={}, loss={:.4f}, p={:.4f}, r={:.4f}, f1={:.4f}, best_f1={:.4f}'.format(
+                        epoch, loss_val, p, r, f1, best_f1))
                     losses_seg = list()
 
                     if f1 > best_f1:
@@ -217,7 +217,8 @@ class LSTMCRF:
             # metrics = self.run_evaluate(dev)
             loss_val = sum(losses)
             p, r, f1 = self.evaluate(word_idxs_list_valid, labels_list_valid, vocab, valid_texts, terms_true_list)
-            logging.info('iter={}, loss={:.4f}, p={:.4f}, r={:.4f}, f1={:.4f}'.format(epoch, loss_val, p, r, f1))
+            logging.info('iter={}, loss={:.4f}, p={:.4f}, r={:.4f}, f1={:.4f}, best_f1={:.4f}'.format(
+                epoch, loss_val, p, r, f1, best_f1))
             if f1 > best_f1:
                 best_f1 = f1
                 if self.saver is not None:

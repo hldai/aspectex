@@ -132,18 +132,22 @@ def __get_data_amazon(vocab, true_terms_file):
 def __train():
     init_logging('log/nr-{}.log'.format(str_today), mode='a', to_stdout=True)
 
-    task = 'pretrain'
-    # task = 'train'
-    rule_id = 1
+    # task = 'pretrain'
+    task = 'train'
+    rule_id = 3
     n_tags = 3
     hidden_size_lstm = 100
+    n_epochs = 200
 
     if rule_id == 1:
         rule_true_terms_file = config.AMAZON_TERMS_TRUE1_FILE
         rule_model_file = config.LAPTOP_RULE_MODEL1_FILE
-    else:
+    elif rule_id == 2:
         rule_true_terms_file = config.AMAZON_TERMS_TRUE2_FILE
         rule_model_file = config.LAPTOP_RULE_MODEL2_FILE
+    else:
+        rule_true_terms_file = config.AMAZON_TERMS_TRUE3_FILE
+        rule_model_file = config.LAPTOP_RULE_MODEL3_FILE
 
     print('loading data ...')
     with open(config.SE14_LAPTOP_GLOVE_WORD_VEC_FILE, 'rb') as f:
@@ -167,7 +171,7 @@ def __train():
     lstmcrf = LSTMCRF(n_tags, word_vecs_matrix, hidden_size_lstm=hidden_size_lstm, model_file=load_model_file)
     lstmcrf.train(train_data.word_idxs_list, train_data.labels_list, valid_data.word_idxs_list,
                   valid_data.labels_list, vocab, valid_data.tok_texts, valid_data.terms_true_list,
-                  n_epochs=100, save_file=save_model_file)
+                  n_epochs=n_epochs, save_file=save_model_file)
 
 
 def __train_neurule_comb():

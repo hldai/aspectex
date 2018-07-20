@@ -459,14 +459,14 @@ def __rule_insight(opinion_terms_file, filter_nouns_file, dep_tags_file, pos_tag
         # aspect_terms.update(aspect_terms_new)
         # aspect_terms_new = __rule3(dep_tags, pos_tags, opinion_terms, nouns_filter)
         # aspect_terms.update(aspect_terms_new)
-        # aspect_terms_new = __rule4(dep_tags, pos_tags, sent_text, opinion_terms, nouns_filter, terms_train)
-        # aspect_terms.update(aspect_terms_new)
+        aspect_terms_new = __rule4(dep_tags, pos_tags, sent_text, opinion_terms, nouns_filter, terms_train)
+        aspect_terms.update(aspect_terms_new)
         # aspect_terms_new = __rule6(dep_tags, pos_tags, opinion_terms, nouns_filter)
         # aspect_terms.update(aspect_terms_new)
         # aspect_terms_new = __rule5(dep_tags, pos_tags, opinion_terms, nouns_filter, aspect_terms)
         # aspect_terms.update(aspect_terms_new)
-        aspect_terms_new = __rec_rule1(dep_tags, pos_tags, nouns_filter, opinion_terms)
-        aspect_terms.update(aspect_terms_new)
+        # aspect_terms_new = __rec_rule1(dep_tags, pos_tags, nouns_filter, opinion_terms)
+        # aspect_terms.update(aspect_terms_new)
 
         terms_sys_tmp = list(aspect_terms)
         terms_sys_tmp.sort(key=lambda x: len(x))
@@ -528,11 +528,11 @@ def __differ():
 opinion_terms_file = 'd:/data/aspect/semeval14/opinion-terms.txt'
 filter_nouns_file = 'd:/data/aspect/semeval14/nouns-filter.txt'
 
-dep_tags_file = 'd:/data/aspect/semeval14/laptops-test-rule-dep.txt'
-pos_tags_file = 'd:/data/aspect/semeval14/laptops-test-rule-pos.txt'
-result_file = 'd:/data/aspect/semeval14/laptops-test-rule-result.txt'
-sent_texts_file = 'd:/data/aspect/semeval14/laptops_test_texts.txt'
-sents_file = config.SE14_LAPTOP_TEST_SENTS_FILE
+# dep_tags_file = 'd:/data/aspect/semeval14/laptops-test-rule-dep.txt'
+# pos_tags_file = 'd:/data/aspect/semeval14/laptops-test-rule-pos.txt'
+# result_file = 'd:/data/aspect/semeval14/laptops-test-rule-result.txt'
+# sent_texts_file = 'd:/data/aspect/semeval14/laptops_test_texts.txt'
+# sents_file = config.SE14_LAPTOP_TEST_SENTS_FILE
 
 # dep_tags_file = 'd:/data/aspect/semeval14/laptops-train-rule-dep.txt'
 # pos_tags_file = 'd:/data/aspect/semeval14/laptops-train-rule-pos.txt'
@@ -540,11 +540,11 @@ sents_file = config.SE14_LAPTOP_TEST_SENTS_FILE
 # sent_texts_file = 'd:/data/aspect/semeval14/laptops_train_texts.txt'
 # sents_file = config.SE14_LAPTOP_TRAIN_SENTS_FILE
 
-# dep_tags_file = 'd:/data/amazon/laptops-rule-dep.txt'
-# pos_tags_file = 'd:/data/amazon/laptops-rule-pos.txt'
-# result_file = 'd:/data/amazon/laptops-rule-result1.txt'
-# sent_texts_file = 'd:/data/amazon/laptops-reivews-sent-text.txt'
-# sents_file = None
+dep_tags_file = 'd:/data/amazon/laptops-rule-dep.txt'
+pos_tags_file = 'd:/data/amazon/laptops-rule-pos.txt'
+result_file = 'd:/data/amazon/laptops-rule-result3.txt'
+sent_texts_file = 'd:/data/amazon/laptops-reivews-sent-text.txt'
+sents_file = None
 
 __rule_insight(opinion_terms_file, filter_nouns_file, dep_tags_file,
                pos_tags_file, sent_texts_file, dst_result_file=result_file, sents_file=sents_file)
