@@ -253,7 +253,8 @@ def __train_neurule_double_joint():
     with open(config.SE14_LAPTOP_GLOVE_WORD_VEC_FILE, 'rb') as f:
         vocab, word_vecs_matrix = pickle.load(f)
     train_data_tar, valid_data_tar = __get_data_semeval(vocab, n_train)
-    train_data_src1, valid_data_src1 = __get_data_amazon(vocab, config.AMAZON_TERMS_TRUE1_FILE)
+    # train_data_src1, valid_data_src1 = __get_data_amazon(vocab, config.AMAZON_TERMS_TRUE1_FILE)
+    train_data_src1, valid_data_src1 = __get_data_amazon(vocab, config.AMAZON_TERMS_TRUE3_FILE)
     train_data_src2, valid_data_src2 = __get_data_amazon(vocab, config.AMAZON_TERMS_TRUE2_FILE)
     rule_model_file = config.LAPTOP_NRDJ_RULE_MODEL_FILE if task == 'train' else None
     # rule_model_file = None
@@ -295,7 +296,7 @@ def __train_neurule_double_joint():
 
 
 str_today = datetime.date.today().strftime('%y-%m-%d')
-__train()
+# __train()
 # __train_neurule_joint()
-# __train_neurule_double_joint()
+__train_neurule_double_joint()
 # __get_data_amazon(None)

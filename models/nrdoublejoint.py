@@ -274,22 +274,21 @@ class NeuRuleDoubleJoint:
             # losses_src, losses_seg_src = list(), list()
             for i in range(n_batches_src1):
                 train_loss_src1 = self.__train_batch(
-                    data_src1.word_idxs_list_train, data_src1.labels_list_train, batch_idx_src1, lr, dropout, True)
+                    data_src1.word_idxs_list_train, data_src1.labels_list_train, batch_idx_src1, lr, dropout, 'src1')
                 batch_idx_src1 = batch_idx_src1 + 1 if batch_idx_src1 + 1 < n_batches_src1 else 0
                 train_loss_src2 = self.__train_batch(
-                    data_src2.word_idxs_list_train, data_src2.labels_list_train, batch_idx_src2, lr, dropout, True)
+                    data_src2.word_idxs_list_train, data_src2.labels_list_train, batch_idx_src2, lr, dropout, 'src2')
                 batch_idx_src2 = batch_idx_src2 + 1 if batch_idx_src2 + 1 < n_batches_src2 else 0
 
                 if (i + 1) % 100 == 0:
                     p1, r1, f11 = self.evaluate(
                         data_src1.word_idxs_list_valid, data_src1.labels_list_valid, vocab,
-                        data_src1.valid_texts, data_src1.terms_true_list, True)
-                    # print('src, p={}, r={}, f1={}'.format(p, r, f1))
+                        data_src1.valid_texts, data_src1.terms_true_list, 'src1')
 
                     p2, r2, f12 = self.evaluate(
                         data_src2.word_idxs_list_valid, data_src2.labels_list_valid, vocab,
-                        data_src2.valid_texts, data_src2.terms_true_list, True)
-                    # print('src, p={}, r={}, f1={}'.format(p, r, f1))
+                        data_src2.valid_texts, data_src2.terms_true_list, 'src2')
+
                     logging.info('src1, p={:.4f}, r={:.4f}, f1={:.4f}; src2, p={:.4f}, r={:.4f}, f1={:.4f}'.format(
                         p1, r1, f11, p2, r2, f12
                     ))
@@ -323,7 +322,7 @@ class NeuRuleDoubleJoint:
             losses_tar, losses_seg_tar = list(), list()
             for i in range(n_batches_tar):
                 train_loss_tar = self.__train_batch(
-                    data_tar.word_idxs_list_train, data_tar.labels_list_train, i, lr, dropout, False)
+                    data_tar.word_idxs_list_train, data_tar.labels_list_train, i, lr, dropout, 'tar')
                 losses_tar.append(train_loss_tar)
 
                 cond1 = cond2 = False
@@ -335,11 +334,15 @@ class NeuRuleDoubleJoint:
 
                 if cond1:
                     train_loss_src1 = self.__train_batch(
-                        data_src1.word_idxs_list_train, data_src1.labels_list_train, batch_idx_src1, lr, dropout, True)
+                        data_src1.word_idxs_list_train, data_src1.labels_list_train, batch_idx_src1,
+                        lr, dropout, 'src1'
+                    )
                     batch_idx_src1 = batch_idx_src1 + 1 if batch_idx_src1 + 1 < n_batches_src1 else 0
                 if cond2:
                     train_loss_src2 = self.__train_batch(
-                        data_src2.word_idxs_list_train, data_src2.labels_list_train, batch_idx_src2, lr, dropout, True)
+                        data_src2.word_idxs_list_train, data_src2.labels_list_train, batch_idx_src2,
+                        lr, dropout, 'src2'
+                    )
                     batch_idx_src2 = batch_idx_src2 + 1 if batch_idx_src2 + 1 < n_batches_src2 else 0
             loss_tar = sum(losses_tar)
 
@@ -361,11 +364,11 @@ class NeuRuleDoubleJoint:
             if train_mode != 'target-only':
                 p1, r1, f11 = self.evaluate(
                     data_src1.word_idxs_list_valid, data_src1.labels_list_valid, vocab,
-                    data_src1.valid_texts, data_src1.terms_true_list, True)
+                    data_src1.valid_texts, data_src1.terms_true_list, 'src1')
 
                 p2, r2, f12 = self.evaluate(
                     data_src2.word_idxs_list_valid, data_src2.labels_list_valid, vocab,
-                    data_src2.valid_texts, data_src2.terms_true_list, True)
+                    data_src2.valid_texts, data_src2.terms_true_list, 'src2')
                 logging.info('src1, p={:.4f}, r={:.4f}, f1={:.4f}; src2, p={:.4f}, r={:.4f}, f1={:.4f}'.format(
                     p1, r1, f11, p2, r2, f12
                 ))
