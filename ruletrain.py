@@ -148,7 +148,7 @@ def __train():
 
     # task = 'pretrain'
     task = 'train'
-    rule_id = 4
+    rule_id = 2
     n_tags = 3
     hidden_size_lstm = 100
     n_epochs = 200
@@ -162,7 +162,7 @@ def __train():
     elif rule_id == 3:
         rule_true_terms_file = config.AMAZON_TERMS_TRUE3_FILE
         rule_model_file = config.LAPTOP_RULE_MODEL3_FILE
-    elif rule_id == 4:
+    else:
         rule_true_terms_file = config.AMAZON_TERMS_TRUE4_FILE
         rule_model_file = config.LAPTOP_RULE_MODEL4_FILE
 
@@ -173,7 +173,7 @@ def __train():
     if task == 'train':
         load_model_file = rule_model_file
         save_model_file = None
-        train_data, valid_data = __get_data_semeval(vocab, -1)
+        train_data, valid_data = __get_data_semeval(vocab, -1, False)
     else:
         load_model_file = None
         save_model_file = rule_model_file
@@ -317,7 +317,7 @@ def __train_neurule_double_joint():
 
 
 str_today = datetime.date.today().strftime('%y-%m-%d')
-# __train()
+__train()
 # __train_neurule_joint()
-__train_neurule_double_joint()
+# __train_neurule_double_joint()
 # __get_data_amazon(None)
