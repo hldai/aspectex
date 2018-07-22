@@ -1,6 +1,7 @@
 import tensorflow as tf
 import logging
 from utils.utils import pad_sequences, save_json_objs
+from utils.modelutils import evaluate_ao_extraction
 
 
 class LSTMCRF:
@@ -178,7 +179,8 @@ class LSTMCRF:
         return hidden_vecs_batch_list
 
     def train(self, word_idxs_list_train, labels_list_train, word_idxs_list_valid, labels_list_valid,
-              vocab, valid_texts, terms_true_list, n_epochs=10, lr=0.001, dropout=0.5, save_file=None):
+              vocab, valid_texts, aspects_true_list, opinions_true_list,
+              n_epochs=10, lr=0.001, dropout=0.5, save_file=None):
         if save_file is not None and self.saver is None:
             self.saver = tf.train.Saver()
 
@@ -201,14 +203,24 @@ class LSTMCRF:
 
                 if (i + 1) % (5000 // self.batch_size) == 0:
                     loss_val = sum(losses_seg)
-                    p, r, f1 = self.evaluate(word_idxs_list_valid, labels_list_valid, vocab,
-                                             valid_texts, terms_true_list)
-                    logging.info('iter={}, loss={:.4f}, p={:.4f}, r={:.4f}, f1={:.4f}, best_f1={:.4f}'.format(
-                        epoch, loss_val, p, r, f1, best_f1))
+                    pred_label_seq_list = self.predict_all(word_idxs_list_valid)
+                    tmp_result = evaluate_ao_extraction(
+                        labels_list_valid, pred_label_seq_list, valid_texts, aspects_true_list, opinions_true_list
+                    )
+                    if opinions_true_list is None:
+                        a_p, a_r, a_f1 = tmp_result
+                        o_p, o_r, o_f1 = 0, 0, 0
+                    else:
+                        a_p, a_r, a_f1, o_p, o_r, o_f1 = tmp_result
+                    # p, r, f1 = self.evaluate(word_idxs_list_valid, labels_list_valid, vocab,
+                    #                          valid_texts, aspects_true_list)
+                    logging.info('iter={}, loss={:.4f}, p={:.4f}, r={:.4f}, f1={:.4f}, best_f1={:.4f}; '
+                                 'p={:.4f}, r={:.4f}, f1={:.4f}'.format(
+                        epoch, loss_val, a_p, a_r, a_f1, best_f1, o_p, o_r, o_f1))
                     losses_seg = list()
 
-                    if f1 > best_f1:
-                        best_f1 = f1
+                    if a_f1 > best_f1:
+                        best_f1 = a_f1
                         if self.saver is not None:
                             self.saver.save(self.sess, save_file)
                             # print('model saved to {}'.format(save_file))
@@ -216,17 +228,34 @@ class LSTMCRF:
             # print('iter {}, loss={}'.format(epoch, sum(losses)))
             # metrics = self.run_evaluate(dev)
             loss_val = sum(losses)
-            p, r, f1 = self.evaluate(word_idxs_list_valid, labels_list_valid, vocab, valid_texts, terms_true_list)
-            logging.info('iter={}, loss={:.4f}, p={:.4f}, r={:.4f}, f1={:.4f}, best_f1={:.4f}'.format(
-                epoch, loss_val, p, r, f1, best_f1))
-            if f1 > best_f1:
-                best_f1 = f1
+            pred_label_seq_list = self.predict_all(word_idxs_list_valid)
+            tmp_result = evaluate_ao_extraction(
+                labels_list_valid, pred_label_seq_list, valid_texts, aspects_true_list, opinions_true_list
+            )
+            if opinions_true_list is None:
+                a_p, a_r, a_f1 = tmp_result
+                o_p, o_r, o_f1 = 0, 0, 0
+            else:
+                a_p, a_r, a_f1, o_p, o_r, o_f1 = tmp_result
+            # p, r, f1 = self.evaluate(word_idxs_list_valid, labels_list_valid, vocab, valid_texts, aspects_true_list)
+            logging.info('iter={}, loss={:.4f}, p={:.4f}, r={:.4f}, f1={:.4f}, best_f1={:.4f}; '
+                         'p={:.4f}, r={:.4f}, f1={:.4f}'.format(
+                epoch, loss_val, a_p, a_r, a_f1, best_f1, o_p, o_r, o_f1))
+            if a_f1 > best_f1:
+                best_f1 = a_f1
                 if self.saver is not None:
                     self.saver.save(self.sess, save_file)
                     logging.info('model saved to {}'.format(save_file))
 
-    def predict_batch(self, word_idxs):
-        fd, sequence_lengths = self.get_feed_dict(word_idxs, dropout=1.0)
+    def predict_all(self, word_idxs_list):
+        label_seq_list = list()
+        for word_idxs in word_idxs_list:
+            label_seq, lens = self.predict_batch([word_idxs])
+            label_seq_list.append(label_seq[0])
+        return label_seq_list
+
+    def predict_batch(self, word_idxs_list):
+        fd, sequence_lengths = self.get_feed_dict(word_idxs_list, dropout=1.0)
 
         # get tag scores and transition params of CRF
         viterbi_sequences = []

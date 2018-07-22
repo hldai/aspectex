@@ -3,14 +3,14 @@ from collections import namedtuple
 import logging
 
 import numpy as np
-from utils.utils import pad_sequences
-
-NRJTrainData = namedtuple(
-    "TrainData", ['word_idxs_list_train', 'labels_list_train', 'word_idxs_list_valid', 'labels_list_valid',
-                  'valid_texts', 'terms_true_list'])
+from utils import utils
 
 
 class NeuRuleDoubleJoint:
+    TrainData = namedtuple(
+        "TrainData", ['word_idxs_list_train', 'labels_list_train', 'word_idxs_list_valid', 'labels_list_valid',
+                      'valid_texts', 'aspects_true_list', 'opinions_true_list'])
+
     def __init__(self, n_tags, word_embeddings, share_lstm, hidden_size_lstm=100,
                  batch_size=20, lr_method='adam', clip=-1, use_crf=True, model_file=None):
         logging.info('hidden_size_lstm={}, batch_size={}, lr_method={}'.format(
@@ -217,7 +217,7 @@ class NeuRuleDoubleJoint:
 
     def get_feed_dict(self, word_idx_seqs, task, label_seqs=None, lr=None, dropout=None):
         word_idx_seqs = [list(word_idxs) for word_idxs in word_idx_seqs]
-        word_ids, sequence_lengths = pad_sequences(word_idx_seqs, 0)
+        word_ids, sequence_lengths = utils.pad_sequences(word_idx_seqs, 0)
 
         # build feed dictionary
         feed = {
@@ -227,7 +227,7 @@ class NeuRuleDoubleJoint:
 
         if label_seqs is not None:
             label_seqs = [list(labels) for labels in label_seqs]
-            labels, _ = pad_sequences(label_seqs, 0)
+            labels, _ = utils.pad_sequences(label_seqs, 0)
             if task == 'src1':
                 feed[self.labels_src1] = labels
             elif task == 'src2':
@@ -257,7 +257,7 @@ class NeuRuleDoubleJoint:
                 [self.train_op_tar, self.loss_tar], feed_dict=feed_dict)
         return train_loss
 
-    def pre_train(self, data_src1: NRJTrainData, data_src2: NRJTrainData, vocab, n_epochs,
+    def pre_train(self, data_src1: TrainData, data_src2: TrainData, vocab, n_epochs,
                   lr=0.001, dropout=0.5, save_file=None):
         logging.info('pretrain, n_epochs={}, lr={}, dropout={}'.format(n_epochs, lr, dropout))
         if save_file is not None and self.saver is None:
@@ -283,12 +283,12 @@ class NeuRuleDoubleJoint:
 
                 if (i + 1) % 100 == 0:
                     p1, r1, f11 = self.evaluate(
-                        data_src1.word_idxs_list_valid, data_src1.labels_list_valid, vocab,
-                        data_src1.valid_texts, data_src1.terms_true_list, 'src1')
+                        data_src1.word_idxs_list_valid, data_src1.labels_list_valid,
+                        data_src1.valid_texts, data_src1.aspects_true_list, 'src1')
 
                     p2, r2, f12 = self.evaluate(
-                        data_src2.word_idxs_list_valid, data_src2.labels_list_valid, vocab,
-                        data_src2.valid_texts, data_src2.terms_true_list, 'src2')
+                        data_src2.word_idxs_list_valid, data_src2.labels_list_valid,
+                        data_src2.valid_texts, data_src2.aspects_true_list, 'src2')
 
                     logging.info('src1, p={:.4f}, r={:.4f}, f1={:.4f}; src2, p={:.4f}, r={:.4f}, f1={:.4f}'.format(
                         p1, r1, f11, p2, r2, f12
@@ -301,7 +301,7 @@ class NeuRuleDoubleJoint:
                             # print('model saved to {}'.format(save_file))
                             logging.info('model saved to {}'.format(save_file))
 
-    def train(self, data_src1: NRJTrainData, data_src2: NRJTrainData, data_tar: NRJTrainData, vocab,
+    def train(self, data_src1: TrainData, data_src2: TrainData, data_tar: TrainData, vocab,
               train_mode, n_epochs=10, lr=0.001, dropout=0.5, save_file=None):
         logging.info('n_epochs={}, lr={}, dropout={}'.format(n_epochs, lr, dropout))
         if save_file is not None and self.saver is None:
@@ -348,15 +348,16 @@ class NeuRuleDoubleJoint:
             loss_tar = sum(losses_tar)
 
             # metrics = self.run_evaluate(dev)
-            p, r, f1 = self.evaluate(
-                data_tar.word_idxs_list_valid, data_tar.labels_list_valid, vocab,
-                data_tar.valid_texts, data_tar.terms_true_list, False)
+            aspect_p, aspect_r, aspect_f1, opinion_p, opinion_r, opinion_f1 = self.evaluate(
+                data_tar.word_idxs_list_valid, data_tar.labels_list_valid,
+                data_tar.valid_texts, data_tar.aspects_true_list, 'tar', data_tar.opinions_true_list)
             # print('iter {}, loss={:.4f}, p={:.4f}, r={:.4f}, f1={:.4f}, best_f1={:.4f}'.format(
             #     epoch, loss_tar, p, r, f1, best_f1))
-            logging.info('iter {}, loss={:.4f}, p={:.4f}, r={:.4f}, f1={:.4f}, best_f1={:.4f}'.format(
-                epoch, loss_tar, p, r, f1, best_f1))
-            if f1 > best_f1:
-                best_f1 = f1
+            logging.info('iter {}, loss={:.4f}, p={:.4f}, r={:.4f}, f1={:.4f}, best_f1={:.4f},'
+                         ' p={:.4f}, r={:.4f}, f1={:.4f}'.format(
+                epoch, loss_tar, aspect_p, aspect_r, aspect_f1, best_f1, opinion_p, opinion_r, opinion_f1))
+            if aspect_f1 > best_f1:
+                best_f1 = aspect_f1
                 if self.saver is not None:
                     self.saver.save(self.sess, save_file)
                     # print('model saved to {}'.format(save_file))
@@ -364,12 +365,12 @@ class NeuRuleDoubleJoint:
 
             if train_mode != 'target-only':
                 p1, r1, f11 = self.evaluate(
-                    data_src1.word_idxs_list_valid, data_src1.labels_list_valid, vocab,
-                    data_src1.valid_texts, data_src1.terms_true_list, 'src1')
+                    data_src1.word_idxs_list_valid, data_src1.labels_list_valid,
+                    data_src1.valid_texts, data_src1.aspects_true_list, 'src1')
 
                 p2, r2, f12 = self.evaluate(
-                    data_src2.word_idxs_list_valid, data_src2.labels_list_valid, vocab,
-                    data_src2.valid_texts, data_src2.terms_true_list, 'src2')
+                    data_src2.word_idxs_list_valid, data_src2.labels_list_valid,
+                    data_src2.valid_texts, data_src2.aspects_true_list, 'src2')
                 logging.info('src1, p={:.4f}, r={:.4f}, f1={:.4f}; src2, p={:.4f}, r={:.4f}, f1={:.4f}'.format(
                     p1, r1, f11, p2, r2, f12
                 ))
@@ -401,47 +402,56 @@ class NeuRuleDoubleJoint:
 
         return viterbi_sequences, sequence_lengths
 
-    def evaluate(self, word_idxs_list_valid, labels_list_valid, vocab, test_texts, terms_true_list, for_src):
-        cnt_true, cnt_sys, cnt_hit = 0, 0, 0
+    def get_terms_from_label_list(self, labels, tok_text, label_beg, label_in):
+        terms = set()
+        words = tok_text.split(' ')
+        # print(labels_pred)
+        # print(len(words), len(labels_pred))
+        assert len(words) == len(labels)
+
+        p = 0
+        while p < len(words):
+            yi = labels[p]
+            if yi == label_beg:
+                pright = p
+                while pright + 1 < len(words) and labels[pright + 1] == label_in:
+                    pright += 1
+                terms.add(' '.join(words[p: pright + 1]))
+                p = pright + 1
+            else:
+                p += 1
+        return terms
+
+    def evaluate(self, word_idxs_list_valid, labels_list_valid, test_texts, terms_true_list, task,
+                 opinions_ture_list=None):
+        aspect_true_cnt, aspect_sys_cnt, aspect_hit_cnt = 0, 0, 0
+        opinion_true_cnt, opinion_sys_cnt, opinion_hit_cnt = 0, 0, 0
         error_sents, error_terms = list(), list()
         correct_sent_idxs = list()
         for sent_idx, (word_idxs, labels, text, terms_true) in enumerate(zip(
                 word_idxs_list_valid, labels_list_valid, test_texts, terms_true_list)):
-            terms_sys = set()
-            labels_pred, sequence_lengths = self.predict_batch([word_idxs], for_src)
+            labels_pred, sequence_lengths = self.predict_batch([word_idxs], task)
             labels_pred = labels_pred[0]
-            words = text.split(' ')
-            # print(labels_pred)
-            # print(len(words), len(labels_pred))
-            assert len(words) == len(labels_pred)
 
-            p = 0
-            while p < len(words):
-                yi = labels_pred[p]
-                if yi == 1:
-                    pright = p
-                    while pright + 1 < len(words) and labels_pred[pright + 1] == 2:
-                        pright += 1
-                    terms_sys.add(' '.join(words[p: pright + 1]))
-                    p = pright + 1
-                else:
-                    p += 1
+            aspect_terms_sys = self.get_terms_from_label_list(labels_pred, text, 1, 2)
 
-            hit = True
-            terms_not_hit = set()
-            for t in terms_true:
-                if t in terms_sys:
-                    cnt_hit += 1
-                else:
-                    hit = False
-                    terms_not_hit.add(t)
-            cnt_true += len(terms_true)
-            cnt_sys += len(terms_sys)
-            if not hit:
-                # error_sents.append(sent)
-                error_terms.append(terms_not_hit)
-            else:
+            new_hit_cnt = utils.count_hit(terms_true, aspect_terms_sys)
+            aspect_true_cnt += len(terms_true)
+            aspect_sys_cnt += len(aspect_terms_sys)
+            aspect_hit_cnt += new_hit_cnt
+            if new_hit_cnt == aspect_true_cnt:
                 correct_sent_idxs.append(sent_idx)
+
+            if opinions_ture_list is None:
+                continue
+
+            opinion_terms_sys = self.get_terms_from_label_list(labels_pred, text, 3, 4)
+            opinion_terms_true = opinions_ture_list[sent_idx]
+
+            new_hit_cnt = utils.count_hit(opinion_terms_true, opinion_terms_sys)
+            opinion_hit_cnt += new_hit_cnt
+            opinion_true_cnt += len(opinion_terms_true)
+            opinion_sys_cnt += len(opinion_terms_sys)
 
         # save_json_objs(error_sents, 'd:/data/aspect/semeval14/error-sents.txt')
         # with open('d:/data/aspect/semeval14/error-sents.txt', 'w', encoding='utf-8') as fout:
@@ -451,10 +461,9 @@ class NeuRuleDoubleJoint:
         # with open('d:/data/aspect/semeval14/lstmcrf-correct.txt', 'w', encoding='utf-8') as fout:
         #     fout.write('\n'.join([str(i) for i in correct_sent_idxs]))
 
-        p = cnt_hit / cnt_sys
-        r = cnt_hit / (cnt_true - 16)
-        f1 = 2 * p * r / (p + r)
-        # print(p, r, f1, cnt_true)
-        # p, r, f1 = set_evaluate(terms_true, terms_sys)
-        # print(p, r, f1)
-        return p, r, f1
+        aspect_p, aspect_r, aspect_f1 = utils.prf1(aspect_true_cnt - 16, aspect_sys_cnt, aspect_hit_cnt)
+        if opinions_ture_list is None:
+            return aspect_p, aspect_r, aspect_f1
+
+        opinion_p, opinion_r, opinion_f1 = utils.prf1(opinion_true_cnt, opinion_sys_cnt, opinion_hit_cnt)
+        return aspect_p, aspect_r, aspect_f1, opinion_p, opinion_r, opinion_f1

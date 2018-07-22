@@ -13,7 +13,8 @@ import tensorflow as tf
 
 
 TrainData = namedtuple("TrainData", ["labels_list", "word_idxs_list"])
-ValidData = namedtuple("TestData", ["labels_list", "word_idxs_list", "tok_texts", "terms_true_list"])
+ValidData = namedtuple("TestData", [
+    "labels_list", "word_idxs_list", "tok_texts", "aspects_true_list", "opinions_true_list"])
 
 
 def __find_sub_words_seq(words, sub_words):
@@ -80,7 +81,8 @@ def __data_from_sents_file(filename, tok_text_file, vocab, label_opinions):
     for sent_idx, (sent, sent_words) in enumerate(zip(sents, words_list)):
         aspect_objs = sent.get('terms', None)
         aspect_terms = [t['term'] for t in aspect_objs] if aspect_objs is not None else list()
-        opinion_terms = sent.get('opinions', list())
+
+        opinion_terms = sent.get('opinions', list()) if label_opinions else None
         x = __label_sentence(sent_words, aspect_terms, opinion_terms)
         labels_list.append(x)
 
@@ -99,13 +101,16 @@ def __get_data_semeval(vocab, n_train, label_opinions):
     labels_list_test, word_idxs_list_test = __data_from_sents_file(
         config.SE14_LAPTOP_TEST_SENTS_FILE, config.SE14_LAPTOP_TEST_TOK_TEXTS_FILE, vocab, label_opinions)
     sents_test = utils.load_json_objs(config.SE14_LAPTOP_TEST_SENTS_FILE)
-    terms_true_list_test = list()
+    aspect_terms_true_list_test = list()
+    opinion_terms_true_list_test = list()
     for sent in sents_test:
-        terms_true_list_test.append([t['term'].lower() for t in sent['terms']] if 'terms' in sent else list())
+        aspect_terms_true_list_test.append([t['term'].lower() for t in sent['terms']] if 'terms' in sent else list())
+        opinion_terms_true_list_test.append(sent.get('opinions', list()))
     test_texts = utils.read_lines(config.SE14_LAPTOP_TEST_TOK_TEXTS_FILE)
 
     train_data = TrainData(labels_list_train, word_idxs_list_train)
-    valid_data = ValidData(labels_list_test, word_idxs_list_test, test_texts, terms_true_list_test)
+    valid_data = ValidData(labels_list_test, word_idxs_list_test, test_texts, aspect_terms_true_list_test,
+                           opinion_terms_true_list_test)
     return train_data, valid_data
 
 
@@ -138,20 +143,22 @@ def __get_data_amazon(vocab, true_terms_file):
     word_idx_seq_list_valid = [word_idx_seq_list[idx] for idx in idxs_valid]
     tok_texts_valid = [tok_texts[idx] for idx in idxs_valid]
     terms_true_list_valid = [terms_true_list[idx] for idx in idxs_valid]
-    valid_data = ValidData(label_seq_list_valid, word_idx_seq_list_valid, tok_texts_valid, terms_true_list_valid)
+    valid_data = ValidData(label_seq_list_valid, word_idx_seq_list_valid, tok_texts_valid, terms_true_list_valid, None)
 
     return train_data, valid_data
 
 
-def __train():
+def __train_lstmcrf():
     init_logging('log/nr-{}.log'.format(str_today), mode='a', to_stdout=True)
 
     # task = 'pretrain'
     task = 'train'
     rule_id = 2
-    n_tags = 3
     hidden_size_lstm = 100
     n_epochs = 200
+    pred_opinions = True
+    n_tags = 5 if pred_opinions else 3
+    load_pretrained_model = False
 
     if rule_id == 1:
         rule_true_terms_file = config.AMAZON_TERMS_TRUE1_FILE
@@ -173,11 +180,14 @@ def __train():
     if task == 'train':
         load_model_file = rule_model_file
         save_model_file = None
-        train_data, valid_data = __get_data_semeval(vocab, -1, False)
+        train_data, valid_data = __get_data_semeval(vocab, -1, pred_opinions)
     else:
         load_model_file = None
         save_model_file = rule_model_file
         train_data, valid_data = __get_data_amazon(vocab, rule_true_terms_file)
+
+    if not load_pretrained_model:
+        load_model_file = None
 
     # train_data, valid_data = __get_data_semeval(vocab, -1)
     # train_data, valid_data = __get_data_amazon(vocab, config.AMAZON_TERMS_TRUE1_FILE)
@@ -187,7 +197,8 @@ def __train():
     # lstmcrf = LSTMCRF(n_tags, word_vecs_matrix, hidden_size_lstm=hidden_size_lstm)
     lstmcrf = LSTMCRF(n_tags, word_vecs_matrix, hidden_size_lstm=hidden_size_lstm, model_file=load_model_file)
     lstmcrf.train(train_data.word_idxs_list, train_data.labels_list, valid_data.word_idxs_list,
-                  valid_data.labels_list, vocab, valid_data.tok_texts, valid_data.terms_true_list,
+                  valid_data.labels_list, vocab, valid_data.tok_texts, valid_data.aspects_true_list,
+                  valid_data.opinions_true_list,
                   n_epochs=n_epochs, save_file=save_model_file)
 
 
@@ -269,7 +280,7 @@ def __train_neurule_double_joint():
     n_tags = 5 if label_opinions else 3
     batch_size = 20
     hidden_size_lstm = 100
-    n_epochs = 500
+    n_epochs = 200
     lr = 0.001
     share_lstm = False
     train_mode = 'target-only'
@@ -294,18 +305,19 @@ def __train_neurule_double_joint():
 
     nrj_train_data_src1 = nrj_train_data_src2 = None
     # if train_mode != 'target-only':
-    nrj_train_data_src1 = NRJTrainData(
+    nrj_train_data_src1 = NeuRuleDoubleJoint.TrainData(
         train_data_src1.word_idxs_list, train_data_src1.labels_list, valid_data_src1.word_idxs_list,
-        valid_data_src1.labels_list, valid_data_src1.tok_texts, valid_data_src1.terms_true_list
+        valid_data_src1.labels_list, valid_data_src1.tok_texts, valid_data_src1.aspects_true_list, None
     )
-    nrj_train_data_src2 = NRJTrainData(
+    nrj_train_data_src2 = NeuRuleDoubleJoint.TrainData(
         train_data_src2.word_idxs_list, train_data_src2.labels_list, valid_data_src2.word_idxs_list,
-        valid_data_src2.labels_list, valid_data_src2.tok_texts, valid_data_src2.terms_true_list
+        valid_data_src2.labels_list, valid_data_src2.tok_texts, valid_data_src2.aspects_true_list, None
     )
 
-    nrj_train_data_tar = NRJTrainData(
+    nrj_train_data_tar = NeuRuleDoubleJoint.TrainData(
         train_data_tar.word_idxs_list, train_data_tar.labels_list, valid_data_tar.word_idxs_list,
-        valid_data_tar.labels_list, valid_data_tar.tok_texts, valid_data_tar.terms_true_list
+        valid_data_tar.labels_list, valid_data_tar.tok_texts, valid_data_tar.aspects_true_list,
+        valid_data_tar.opinions_true_list
     )
 
     if task == 'pretrain':
@@ -317,7 +329,7 @@ def __train_neurule_double_joint():
 
 
 str_today = datetime.date.today().strftime('%y-%m-%d')
-__train()
+# __train_lstmcrf()
 # __train_neurule_joint()
-# __train_neurule_double_joint()
+__train_neurule_double_joint()
 # __get_data_amazon(None)

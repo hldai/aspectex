@@ -2,6 +2,21 @@ import json
 import numpy as np
 
 
+def prf1(n_true, n_sys, n_hit):
+    p = n_hit / (n_sys + 1e-6)
+    r = n_hit / (n_true + 1e-6)
+    f1 = 2 * p * r / (p + r + 1e-6)
+    return p, r, f1
+
+
+def count_hit(vals_true, vals_pred):
+    cnt_hit = 0
+    for v in vals_true:
+        if v in vals_pred:
+            cnt_hit += 1
+    return cnt_hit
+
+
 def set_evaluate(set_true, set_pred):
     if not set_pred:
         return 0, 0, 0
