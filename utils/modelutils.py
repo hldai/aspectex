@@ -42,21 +42,27 @@ def evaluate_ao_extraction(true_labels_list, pred_labels_list, test_texts, aspec
     opinion_true_cnt, opinion_sys_cnt, opinion_hit_cnt = 0, 0, 0
     error_sents, error_terms = list(), list()
     correct_sent_idxs = list()
-    for sent_idx, (true_labels, pred_labels, text, aspects_true) in enumerate(zip(
-            true_labels_list, pred_labels_list, test_texts, aspects_true_list)):
-        aspect_terms_sys = get_terms_from_label_list(pred_labels, text, 1, 2)
+    if aspects_true_list is not None:
+        aspect_label_beg, aspect_label_in, opinion_label_beg, opinion_label_in = 1, 2, 3, 4
+    else:
+        aspect_label_beg, aspect_label_in, opinion_label_beg, opinion_label_in = 3, 4, 1, 2
+    for sent_idx, (true_labels, pred_labels, text) in enumerate(zip(
+            true_labels_list, pred_labels_list, test_texts)):
+        if aspects_true_list is not None:
+            aspects_true = aspects_true_list[sent_idx]
+            aspect_terms_sys = get_terms_from_label_list(pred_labels, text, aspect_label_beg, aspect_label_in)
 
-        new_hit_cnt = count_hit(aspects_true, aspect_terms_sys)
-        aspect_true_cnt += len(aspects_true)
-        aspect_sys_cnt += len(aspect_terms_sys)
-        aspect_hit_cnt += new_hit_cnt
-        if new_hit_cnt == aspect_true_cnt:
-            correct_sent_idxs.append(sent_idx)
+            new_hit_cnt = count_hit(aspects_true, aspect_terms_sys)
+            aspect_true_cnt += len(aspects_true)
+            aspect_sys_cnt += len(aspect_terms_sys)
+            aspect_hit_cnt += new_hit_cnt
+            if new_hit_cnt == aspect_true_cnt:
+                correct_sent_idxs.append(sent_idx)
 
         if opinions_ture_list is None:
             continue
 
-        opinion_terms_sys = get_terms_from_label_list(pred_labels, text, 3, 4)
+        opinion_terms_sys = get_terms_from_label_list(pred_labels, text, opinion_label_beg, opinion_label_in)
         opinion_terms_true = opinions_ture_list[sent_idx]
 
         new_hit_cnt = count_hit(opinion_terms_true, opinion_terms_sys)
@@ -72,9 +78,10 @@ def evaluate_ao_extraction(true_labels_list, pred_labels_list, test_texts, aspec
     # with open('d:/data/aspect/semeval14/lstmcrf-correct.txt', 'w', encoding='utf-8') as fout:
     #     fout.write('\n'.join([str(i) for i in correct_sent_idxs]))
 
-    aspect_p, aspect_r, aspect_f1 = prf1(aspect_true_cnt - 16, aspect_sys_cnt, aspect_hit_cnt)
-    if opinions_ture_list is None:
-        return aspect_p, aspect_r, aspect_f1
+    aspect_p, aspect_r, aspect_f1, opinion_p, opinion_r, opinion_f1 = 0, 0, 0, 0, 0, 0
+    if aspects_true_list is not None:
+        aspect_p, aspect_r, aspect_f1 = prf1(aspect_true_cnt, aspect_sys_cnt, aspect_hit_cnt)
 
-    opinion_p, opinion_r, opinion_f1 = prf1(opinion_true_cnt, opinion_sys_cnt, opinion_hit_cnt)
+    if opinions_ture_list is not None:
+        opinion_p, opinion_r, opinion_f1 = prf1(opinion_true_cnt, opinion_sys_cnt, opinion_hit_cnt)
     return aspect_p, aspect_r, aspect_f1, opinion_p, opinion_r, opinion_f1

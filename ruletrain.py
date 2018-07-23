@@ -31,10 +31,8 @@ def __find_sub_words_seq(words, sub_words):
     return -1
 
 
-# TODO some of the aspect_terms are not found
-def __label_sentence(words, aspect_terms, opinion_terms=None):
-    x = np.zeros(len(words), np.int32)
-    for term in aspect_terms:
+def __label_words_with_terms(words, terms, label_val_beg, label_val_in, x):
+    for term in terms:
         term_words = term.lower().split(' ')
         pbeg = __find_sub_words_seq(words, term_words)
         if pbeg == -1:
@@ -42,22 +40,24 @@ def __label_sentence(words, aspect_terms, opinion_terms=None):
             # print(words)
             # print()
             continue
-        x[pbeg] = 1
+        x[pbeg] = label_val_beg
         for p in range(pbeg + 1, pbeg + len(term_words)):
-            x[p] = 2
+            x[p] = label_val_in
+
+
+# TODO some of the aspect_terms are not found
+def __label_sentence(words, aspect_terms=None, opinion_terms=None):
+    label_val_beg, label_val_in = 1, 2
+
+    x = np.zeros(len(words), np.int32)
+    if aspect_terms is not None:
+        __label_words_with_terms(words, aspect_terms, label_val_beg, label_val_in, x)
+        label_val_beg, label_val_in = 3, 4
 
     if opinion_terms is None:
         return x
 
-    for term in opinion_terms:
-        term_words = term.lower().split(' ')
-        pbeg = __find_sub_words_seq(words, term_words)
-        if pbeg == -1:
-            continue
-        x[pbeg] = 3
-        for p in range(pbeg + 1, pbeg + len(term_words)):
-            x[p] = 4
-
+    __label_words_with_terms(words, opinion_terms, label_val_beg, label_val_in, x)
     return x
 
 
@@ -69,7 +69,7 @@ def __get_word_idx_sequence(words_list, vocab):
     return seq_list
 
 
-def __data_from_sents_file(filename, tok_text_file, vocab, label_opinions):
+def __data_from_sents_file(filename, tok_text_file, vocab, task):
     sents = utils.load_json_objs(filename)
     texts = utils.read_lines(tok_text_file)
 
@@ -79,10 +79,14 @@ def __data_from_sents_file(filename, tok_text_file, vocab, label_opinions):
 
     labels_list = list()
     for sent_idx, (sent, sent_words) in enumerate(zip(sents, words_list)):
-        aspect_objs = sent.get('terms', None)
-        aspect_terms = [t['term'] for t in aspect_objs] if aspect_objs is not None else list()
+        aspect_terms, opinion_terms = None, None
+        if task != 'opinion':
+            aspect_objs = sent.get('terms', None)
+            aspect_terms = [t['term'] for t in aspect_objs] if aspect_objs is not None else list()
 
-        opinion_terms = sent.get('opinions', list()) if label_opinions else None
+        if task != 'aspect':
+            opinion_terms = sent.get('opinions', list())
+
         x = __label_sentence(sent_words, aspect_terms, opinion_terms)
         labels_list.append(x)
 
@@ -91,21 +95,24 @@ def __data_from_sents_file(filename, tok_text_file, vocab, label_opinions):
     return labels_list, word_idxs_list
 
 
-def __get_data_semeval(vocab, n_train, label_opinions):
+def __get_data_semeval(vocab, n_train, task):
     labels_list_train, word_idxs_list_train = __data_from_sents_file(
-        config.SE14_LAPTOP_TRAIN_SENTS_FILE, config.SE14_LAPTOP_TRAIN_TOK_TEXTS_FILE, vocab, label_opinions)
+        config.SE14_LAPTOP_TRAIN_SENTS_FILE, config.SE14_LAPTOP_TRAIN_TOK_TEXTS_FILE, vocab, task)
     if n_train > -1:
         labels_list_train = labels_list_train[:n_train]
         word_idxs_list_train = word_idxs_list_train[:n_train]
 
     labels_list_test, word_idxs_list_test = __data_from_sents_file(
-        config.SE14_LAPTOP_TEST_SENTS_FILE, config.SE14_LAPTOP_TEST_TOK_TEXTS_FILE, vocab, label_opinions)
+        config.SE14_LAPTOP_TEST_SENTS_FILE, config.SE14_LAPTOP_TEST_TOK_TEXTS_FILE, vocab, task)
     sents_test = utils.load_json_objs(config.SE14_LAPTOP_TEST_SENTS_FILE)
-    aspect_terms_true_list_test = list()
-    opinion_terms_true_list_test = list()
+    aspect_terms_true_list_test = list() if task != 'opinion' else None
+    opinion_terms_true_list_test = list() if task != 'aspect' else None
     for sent in sents_test:
-        aspect_terms_true_list_test.append([t['term'].lower() for t in sent['terms']] if 'terms' in sent else list())
-        opinion_terms_true_list_test.append(sent.get('opinions', list()))
+        if aspect_terms_true_list_test is not None:
+            aspect_terms_true_list_test.append(
+                [t['term'].lower() for t in sent['terms']] if 'terms' in sent else list())
+        if opinion_terms_true_list_test is not None:
+            opinion_terms_true_list_test.append(sent.get('opinions', list()))
     test_texts = utils.read_lines(config.SE14_LAPTOP_TEST_TOK_TEXTS_FILE)
 
     train_data = TrainData(labels_list_train, word_idxs_list_train)
@@ -153,7 +160,8 @@ def __train_lstmcrf():
 
     # task = 'pretrain'
     task = 'train'
-    rule_id = 2
+    label_task = 'opinion'
+    rule_id = 4
     hidden_size_lstm = 100
     n_epochs = 200
     pred_opinions = True
@@ -180,7 +188,7 @@ def __train_lstmcrf():
     if task == 'train':
         load_model_file = rule_model_file
         save_model_file = None
-        train_data, valid_data = __get_data_semeval(vocab, -1, pred_opinions)
+        train_data, valid_data = __get_data_semeval(vocab, -1, label_task)
     else:
         load_model_file = None
         save_model_file = rule_model_file
@@ -274,8 +282,8 @@ def __train_neurule_double_joint():
 
     # n_train = 1000
     n_train = -1
-    # task = 'pretrain'
-    task = 'train'
+    task = 'pretrain'
+    # task = 'train'
     label_opinions = True
     n_tags = 5 if label_opinions else 3
     batch_size = 20
@@ -329,7 +337,7 @@ def __train_neurule_double_joint():
 
 
 str_today = datetime.date.today().strftime('%y-%m-%d')
-# __train_lstmcrf()
+__train_lstmcrf()
 # __train_neurule_joint()
-__train_neurule_double_joint()
+# __train_neurule_double_joint()
 # __get_data_amazon(None)
