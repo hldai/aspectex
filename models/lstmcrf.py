@@ -187,7 +187,7 @@ class LSTMCRF:
         n_train = len(word_idxs_list_train)
         n_batches = (n_train + self.batch_size - 1) // self.batch_size
 
-        best_f1 = 0
+        best_f1_a, best_f1_o = 0, 0
         for epoch in range(n_epochs):
             losses, losses_seg = list(), list()
             for i in range(n_batches):
@@ -207,24 +207,22 @@ class LSTMCRF:
                     tmp_result = evaluate_ao_extraction(
                         labels_list_valid, pred_label_seq_list, valid_texts, aspects_true_list, opinions_true_list
                     )
-                    if opinions_true_list is None:
-                        a_p, a_r, a_f1 = tmp_result
-                        o_p, o_r, o_f1 = 0, 0, 0
-                    else:
-                        a_p, a_r, a_f1, o_p, o_r, o_f1 = tmp_result
+                    a_p, a_r, a_f1, o_p, o_r, o_f1 = tmp_result
                     # p, r, f1 = self.evaluate(word_idxs_list_valid, labels_list_valid, vocab,
                     #                          valid_texts, aspects_true_list)
                     logging.info('iter={}, loss={:.4f}, p={:.4f}, r={:.4f}, f1={:.4f}, best_f1={:.4f}; '
-                                 'p={:.4f}, r={:.4f}, f1={:.4f}'.format(
-                        epoch, loss_val, a_p, a_r, a_f1, best_f1, o_p, o_r, o_f1))
+                                 'p={:.4f}, r={:.4f}, f1={:.4f}, best_f1={:.4f}'.format(
+                        epoch, loss_val, a_p, a_r, a_f1, best_f1_a, o_p, o_r, o_f1, best_f1_o))
                     losses_seg = list()
 
-                    if a_f1 > best_f1:
+                    if a_f1 > best_f1_a:
                         best_f1 = a_f1
                         if self.saver is not None:
                             self.saver.save(self.sess, save_file)
                             # print('model saved to {}'.format(save_file))
                             logging.info('model saved to {}'.format(save_file))
+                    if o_f1 > best_f1_o:
+                        best_f1_o = o_f1
             # print('iter {}, loss={}'.format(epoch, sum(losses)))
             # metrics = self.run_evaluate(dev)
             loss_val = sum(losses)
@@ -239,13 +237,15 @@ class LSTMCRF:
                 a_p, a_r, a_f1, o_p, o_r, o_f1 = tmp_result
             # p, r, f1 = self.evaluate(word_idxs_list_valid, labels_list_valid, vocab, valid_texts, aspects_true_list)
             logging.info('iter={}, loss={:.4f}, p={:.4f}, r={:.4f}, f1={:.4f}, best_f1={:.4f}; '
-                         'p={:.4f}, r={:.4f}, f1={:.4f}'.format(
-                epoch, loss_val, a_p, a_r, a_f1, best_f1, o_p, o_r, o_f1))
-            if a_f1 > best_f1:
-                best_f1 = a_f1
+                         'p={:.4f}, r={:.4f}, f1={:.4f}, best_f1={:.4f}'.format(
+                epoch, loss_val, a_p, a_r, a_f1, best_f1_a, o_p, o_r, o_f1, best_f1_o))
+            if a_f1 > best_f1_a:
+                best_f1_a = a_f1
                 if self.saver is not None:
                     self.saver.save(self.sess, save_file)
                     logging.info('model saved to {}'.format(save_file))
+            if o_f1 > best_f1_o:
+                best_f1_o = o_f1
 
     def predict_all(self, word_idxs_list):
         label_seq_list = list()
@@ -270,64 +270,3 @@ class LSTMCRF:
             viterbi_sequences += [viterbi_seq]
 
         return viterbi_sequences, sequence_lengths
-
-    def evaluate(self, word_idxs_list_valid, labels_list_valid, vocab, test_texts, terms_true_list):
-        cnt_true, cnt_sys, cnt_hit = 0, 0, 0
-        error_sents, error_terms, error_terms_sys = list(), list(), list()
-        correct_sent_idxs = list()
-        for sent_idx, (word_idxs, labels, text, terms_true) in enumerate(zip(
-                word_idxs_list_valid, labels_list_valid, test_texts, terms_true_list)):
-            terms_sys = set()
-            labels_pred, sequence_lengths = self.predict_batch([word_idxs])
-            labels_pred = labels_pred[0]
-            words = text.split(' ')
-            # print(labels_pred)
-            # print(len(words), len(labels_pred))
-            assert len(words) == len(labels_pred)
-
-            p = 0
-            while p < len(words):
-                yi = labels_pred[p]
-                if yi == 1:
-                    pright = p
-                    while pright + 1 < len(words) and labels_pred[pright + 1] == 2:
-                        pright += 1
-                    terms_sys.add(' '.join(words[p: pright + 1]))
-                    p = pright + 1
-                else:
-                    p += 1
-
-            hit = True
-            terms_not_hit = set()
-            for t in terms_true:
-                if t in terms_sys:
-                    cnt_hit += 1
-                else:
-                    hit = False
-                    terms_not_hit.add(t)
-            cnt_true += len(terms_true)
-            cnt_sys += len(terms_sys)
-            if not hit:
-                error_sents.append(text)
-                error_terms.append(terms_not_hit)
-                error_terms_sys.append(terms_sys)
-            else:
-                correct_sent_idxs.append(sent_idx)
-
-        p = cnt_hit / (cnt_sys + 1e-5)
-        r = cnt_hit / (cnt_true - 16)
-        # r = cnt_hit / cnt_true
-        f1 = 2 * p * r / (p + r + 1e-5)
-        # print(p, r, f1, cnt_true)
-
-        # save_json_objs(error_sents, 'd:/data/aspect/semeval14/error-sents.txt')
-        # with open('d:/data/aspect/semeval14/error-sents.txt', 'w', encoding='utf-8') as fout:
-        #     for sent, terms, terms_sys in zip(error_sents, error_terms, error_terms_sys):
-        #         fout.write('{}\n{}\n{}\n\n'.format(sent, terms, terms_sys))
-        #     print('error written')
-        # with open('d:/data/aspect/semeval14/lstmcrf-correct.txt', 'w', encoding='utf-8') as fout:
-        #     fout.write('\n'.join([str(i) for i in correct_sent_idxs]))
-        #     print('correct sents written.')
-        # p, r, f1 = set_evaluate(terms_true, terms_sys)
-        # print(p, r, f1)
-        return p, r, f1

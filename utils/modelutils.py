@@ -70,6 +70,12 @@ def evaluate_ao_extraction(true_labels_list, pred_labels_list, test_texts, aspec
         opinion_true_cnt += len(opinion_terms_true)
         opinion_sys_cnt += len(opinion_terms_sys)
 
+        # if new_hit_cnt < len(opinion_terms_true):
+        #     print(text)
+        #     print(opinion_terms_true)
+        #     print(opinion_terms_sys)
+        #     print()
+
     # save_json_objs(error_sents, 'd:/data/aspect/semeval14/error-sents.txt')
     # with open('d:/data/aspect/semeval14/error-sents.txt', 'w', encoding='utf-8') as fout:
     #     for sent, terms in zip(error_sents, error_terms):
