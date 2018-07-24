@@ -1,4 +1,5 @@
 from utils.utils import prf1, count_hit
+import logging
 
 
 def filter_empty_dep_trees(trees):
@@ -37,10 +38,10 @@ def get_terms_from_label_list(labels, tok_text, label_beg, label_in):
 
 
 def evaluate_ao_extraction(true_labels_list, pred_labels_list, test_texts, aspects_true_list,
-                           opinions_ture_list=None):
+                           opinions_ture_list=None, error_file=None):
     aspect_true_cnt, aspect_sys_cnt, aspect_hit_cnt = 0, 0, 0
     opinion_true_cnt, opinion_sys_cnt, opinion_hit_cnt = 0, 0, 0
-    error_sents, error_terms = list(), list()
+    error_sents, error_terms_true, error_terms_sys = list(), list(), list()
     correct_sent_idxs = list()
     if aspects_true_list is not None:
         aspect_label_beg, aspect_label_in, opinion_label_beg, opinion_label_in = 1, 2, 3, 4
@@ -70,17 +71,17 @@ def evaluate_ao_extraction(true_labels_list, pred_labels_list, test_texts, aspec
         opinion_true_cnt += len(opinion_terms_true)
         opinion_sys_cnt += len(opinion_terms_sys)
 
-        # if new_hit_cnt < len(opinion_terms_true):
-        #     print(text)
-        #     print(opinion_terms_true)
-        #     print(opinion_terms_sys)
-        #     print()
+        if new_hit_cnt < len(opinion_terms_true):
+            error_sents.append(text)
+            error_terms_true.append(opinion_terms_true)
+            error_terms_sys.append(opinion_terms_sys)
 
     # save_json_objs(error_sents, 'd:/data/aspect/semeval14/error-sents.txt')
-    # with open('d:/data/aspect/semeval14/error-sents.txt', 'w', encoding='utf-8') as fout:
-    #     for sent, terms in zip(error_sents, error_terms):
-            # terms_true = [t['term'].lower() for t in sent['terms']] if 'terms' in sent else list()
-            # fout.write('{}\n{}\n\n'.format(sent['text'], terms))
+    if error_file is not None:
+        with open(error_file, 'w', encoding='utf-8') as fout:
+            for sent, terms_true, terms_sys in zip(error_sents, error_terms_true, error_terms_sys):
+                fout.write('{}\n{}\n{}\n\n'.format(sent, terms_true, terms_sys))
+        logging.info('error written to {}'.format(error_file))
     # with open('d:/data/aspect/semeval14/lstmcrf-correct.txt', 'w', encoding='utf-8') as fout:
     #     fout.write('\n'.join([str(i) for i in correct_sent_idxs]))
 

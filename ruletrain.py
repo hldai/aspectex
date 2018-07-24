@@ -165,15 +165,22 @@ def __get_data_amazon(vocab, true_terms_file, task):
 def __train_lstmcrf():
     init_logging('log/nr-{}.log'.format(str_today), mode='a', to_stdout=True)
 
-    # task = 'pretrain'
-    task = 'train'
-    label_task = 'opinion'
-    rule_id = 4
+    task = 'pretrain'
+    # task = 'train'
+    # label_task_pretrain = 'opinion'
+    label_task_pretrain = 'aspect'
+    label_task_train = 'both'
+    rule_id = 2
     hidden_size_lstm = 100
     n_epochs = 50
-    pred_opinions = True
-    n_tags = 5 if pred_opinions else 3
-    load_pretrained_model = False
+    n_tags = 3
+    if label_task_pretrain == 'both' or label_task_train == 'both':
+        n_tags = 5
+    # n_tags = 5 if label_task == 'both' else 3
+    # load_pretrained_model = False
+    load_pretrained_model = True
+    error_file = 'd:/data/aspect/semeval14/error-sents.txt' if task == 'train' else None
+    # error_file = None
 
     if rule_id == 1:
         rule_true_terms_file = config.AMAZON_TERMS_TRUE1_FILE
@@ -195,11 +202,11 @@ def __train_lstmcrf():
     if task == 'train':
         load_model_file = rule_model_file
         save_model_file = None
-        train_data, valid_data = __get_data_semeval(vocab, -1, label_task)
+        train_data, valid_data = __get_data_semeval(vocab, -1, label_task_train)
     else:
         load_model_file = None
         save_model_file = rule_model_file
-        train_data, valid_data = __get_data_amazon(vocab, rule_true_terms_file, label_task)
+        train_data, valid_data = __get_data_amazon(vocab, rule_true_terms_file, label_task_pretrain)
 
     if not load_pretrained_model:
         load_model_file = None
@@ -215,7 +222,7 @@ def __train_lstmcrf():
     lstmcrf.train(train_data.word_idxs_list, train_data.labels_list, valid_data.word_idxs_list,
                   valid_data.labels_list, vocab, valid_data.tok_texts, valid_data.aspects_true_list,
                   valid_data.opinions_true_list,
-                  n_epochs=n_epochs, save_file=save_model_file)
+                  n_epochs=n_epochs, save_file=save_model_file, error_file=error_file)
 
 
 def __train_neurule_comb():
@@ -290,10 +297,11 @@ def __train_neurule_double_joint():
 
     # n_train = 1000
     n_train = -1
-    task = 'pretrain'
-    # task = 'train'
+    # task = 'pretrain'
+    task = 'train'
     label_opinions = True
     n_tags = 5 if label_opinions else 3
+    # n_tags = 5 if task == 'train' else 3
     batch_size = 20
     hidden_size_lstm = 100
     n_epochs = 200
@@ -307,8 +315,8 @@ def __train_neurule_double_joint():
     train_data_tar, valid_data_tar = __get_data_semeval(vocab, n_train, label_opinions)
     # train_data_src1, valid_data_src1 = __get_data_amazon(vocab, config.AMAZON_TERMS_TRUE1_FILE)
     # train_data_src1, valid_data_src1 = __get_data_amazon(vocab, config.AMAZON_TERMS_TRUE3_FILE)
-    train_data_src1, valid_data_src1 = __get_data_amazon(vocab, config.AMAZON_TERMS_TRUE4_FILE)
-    train_data_src2, valid_data_src2 = __get_data_amazon(vocab, config.AMAZON_TERMS_TRUE2_FILE)
+    train_data_src1, valid_data_src1 = __get_data_amazon(vocab, config.AMAZON_TERMS_TRUE2_FILE, 'aspect')
+    train_data_src2, valid_data_src2 = __get_data_amazon(vocab, config.AMAZON_TERMS_TRUE4_FILE, 'opinion')
     rule_model_file = config.LAPTOP_NRDJ_RULE_MODEL_FILE if task == 'train' else None
     # rule_model_file = None
     pretrain_model_file = config.LAPTOP_NRDJ_RULE_MODEL_FILE
@@ -327,7 +335,8 @@ def __train_neurule_double_joint():
     )
     nrj_train_data_src2 = NeuRuleDoubleJoint.TrainData(
         train_data_src2.word_idxs_list, train_data_src2.labels_list, valid_data_src2.word_idxs_list,
-        valid_data_src2.labels_list, valid_data_src2.tok_texts, valid_data_src2.aspects_true_list, None
+        valid_data_src2.labels_list, valid_data_src2.tok_texts, None,
+        valid_data_src2.opinions_true_list
     )
 
     nrj_train_data_tar = NeuRuleDoubleJoint.TrainData(

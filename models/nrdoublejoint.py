@@ -288,7 +288,7 @@ class NeuRuleDoubleJoint:
 
                     p2, r2, f12 = self.evaluate(
                         data_src2.word_idxs_list_valid, data_src2.labels_list_valid,
-                        data_src2.valid_texts, data_src2.aspects_true_list, 'src2')
+                        data_src2.valid_texts, data_src2.opinions_true_list, 'src2')
 
                     logging.info('src1, p={:.4f}, r={:.4f}, f1={:.4f}; src2, p={:.4f}, r={:.4f}, f1={:.4f}'.format(
                         p1, r1, f11, p2, r2, f12
@@ -316,7 +316,7 @@ class NeuRuleDoubleJoint:
         n_train_tar = len(data_tar.word_idxs_list_train)
         n_batches_tar = (n_train_tar + self.batch_size - 1) // self.batch_size
 
-        best_f1 = 0
+        best_f1_a, best_f1_o, best_f1 = 0, 0, 0
         batch_idx_src1, batch_idx_src2 = 0, 0
         for epoch in range(n_epochs):
             # losses_src, losses_seg_src = list(), list()
@@ -354,10 +354,16 @@ class NeuRuleDoubleJoint:
             # print('iter {}, loss={:.4f}, p={:.4f}, r={:.4f}, f1={:.4f}, best_f1={:.4f}'.format(
             #     epoch, loss_tar, p, r, f1, best_f1))
             logging.info('iter {}, loss={:.4f}, p={:.4f}, r={:.4f}, f1={:.4f}, best_f1={:.4f},'
-                         ' p={:.4f}, r={:.4f}, f1={:.4f}'.format(
-                epoch, loss_tar, aspect_p, aspect_r, aspect_f1, best_f1, opinion_p, opinion_r, opinion_f1))
-            if aspect_f1 > best_f1:
-                best_f1 = aspect_f1
+                         ' p={:.4f}, r={:.4f}, f1={:.4f}, best_f1={:.4f}'.format(
+                epoch, loss_tar, aspect_p, aspect_r, aspect_f1, best_f1_a, opinion_p, opinion_r,
+                opinion_f1, best_f1_o))
+
+            if aspect_f1 > best_f1_a:
+                best_f1_a = aspect_f1
+            if opinion_f1 > best_f1_o:
+                best_f1_o = opinion_f1
+            if aspect_f1 + opinion_f1 > best_f1:
+                best_f1 = aspect_f1 + opinion_f1
                 if self.saver is not None:
                     self.saver.save(self.sess, save_file)
                     # print('model saved to {}'.format(save_file))
@@ -461,7 +467,7 @@ class NeuRuleDoubleJoint:
         # with open('d:/data/aspect/semeval14/lstmcrf-correct.txt', 'w', encoding='utf-8') as fout:
         #     fout.write('\n'.join([str(i) for i in correct_sent_idxs]))
 
-        aspect_p, aspect_r, aspect_f1 = utils.prf1(aspect_true_cnt - 16, aspect_sys_cnt, aspect_hit_cnt)
+        aspect_p, aspect_r, aspect_f1 = utils.prf1(aspect_true_cnt, aspect_sys_cnt, aspect_hit_cnt)
         if opinions_ture_list is None:
             return aspect_p, aspect_r, aspect_f1
 

@@ -180,14 +180,14 @@ class LSTMCRF:
 
     def train(self, word_idxs_list_train, labels_list_train, word_idxs_list_valid, labels_list_valid,
               vocab, valid_texts, aspects_true_list, opinions_true_list,
-              n_epochs=10, lr=0.001, dropout=0.5, save_file=None):
+              n_epochs=10, lr=0.001, dropout=0.5, save_file=None, error_file=None):
         if save_file is not None and self.saver is None:
             self.saver = tf.train.Saver()
 
         n_train = len(word_idxs_list_train)
         n_batches = (n_train + self.batch_size - 1) // self.batch_size
 
-        best_f1_a, best_f1_o = 0, 0
+        best_f1_a, best_f1_o, best_f1_sum = 0, 0, 0
         for epoch in range(n_epochs):
             losses, losses_seg = list(), list()
             for i in range(n_batches):
@@ -205,7 +205,8 @@ class LSTMCRF:
                     loss_val = sum(losses_seg)
                     pred_label_seq_list = self.predict_all(word_idxs_list_valid)
                     tmp_result = evaluate_ao_extraction(
-                        labels_list_valid, pred_label_seq_list, valid_texts, aspects_true_list, opinions_true_list
+                        labels_list_valid, pred_label_seq_list, valid_texts, aspects_true_list, opinions_true_list,
+                        error_file
                     )
                     a_p, a_r, a_f1, o_p, o_r, o_f1 = tmp_result
                     # p, r, f1 = self.evaluate(word_idxs_list_valid, labels_list_valid, vocab,
@@ -215,12 +216,14 @@ class LSTMCRF:
                         epoch, loss_val, a_p, a_r, a_f1, best_f1_a, o_p, o_r, o_f1, best_f1_o))
                     losses_seg = list()
 
-                    if a_f1 > best_f1_a:
-                        best_f1 = a_f1
+                    if a_f1 + o_f1 > best_f1_sum:
+                        best_f1_sum = a_f1 + o_f1
                         if self.saver is not None:
                             self.saver.save(self.sess, save_file)
                             # print('model saved to {}'.format(save_file))
                             logging.info('model saved to {}'.format(save_file))
+                    if a_f1 > best_f1_a:
+                        best_f1_a = a_f1
                     if o_f1 > best_f1_o:
                         best_f1_o = o_f1
             # print('iter {}, loss={}'.format(epoch, sum(losses)))
@@ -228,22 +231,24 @@ class LSTMCRF:
             loss_val = sum(losses)
             pred_label_seq_list = self.predict_all(word_idxs_list_valid)
             tmp_result = evaluate_ao_extraction(
-                labels_list_valid, pred_label_seq_list, valid_texts, aspects_true_list, opinions_true_list
+                labels_list_valid, pred_label_seq_list, valid_texts, aspects_true_list, opinions_true_list, error_file
             )
-            if opinions_true_list is None:
-                a_p, a_r, a_f1 = tmp_result
-                o_p, o_r, o_f1 = 0, 0, 0
-            else:
-                a_p, a_r, a_f1, o_p, o_r, o_f1 = tmp_result
+            # if opinions_true_list is None:
+            #     a_p, a_r, a_f1 = tmp_result
+            #     o_p, o_r, o_f1 = 0, 0, 0
+            # else:
+            a_p, a_r, a_f1, o_p, o_r, o_f1 = tmp_result
             # p, r, f1 = self.evaluate(word_idxs_list_valid, labels_list_valid, vocab, valid_texts, aspects_true_list)
             logging.info('iter={}, loss={:.4f}, p={:.4f}, r={:.4f}, f1={:.4f}, best_f1={:.4f}; '
                          'p={:.4f}, r={:.4f}, f1={:.4f}, best_f1={:.4f}'.format(
                 epoch, loss_val, a_p, a_r, a_f1, best_f1_a, o_p, o_r, o_f1, best_f1_o))
-            if a_f1 > best_f1_a:
-                best_f1_a = a_f1
+            if a_f1 + o_f1 > best_f1_sum:
+                best_f1_sum = a_f1 + o_f1
                 if self.saver is not None:
                     self.saver.save(self.sess, save_file)
                     logging.info('model saved to {}'.format(save_file))
+                if a_f1 > best_f1_a:
+                    best_f1_a = a_f1
             if o_f1 > best_f1_o:
                 best_f1_o = o_f1
 
