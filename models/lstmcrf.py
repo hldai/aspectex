@@ -6,7 +6,7 @@ from utils.modelutils import evaluate_ao_extraction
 
 class LSTMCRF:
     def __init__(self, n_tags, word_embeddings, hidden_size_lstm=300, batch_size=20, train_word_embeddings=False,
-                 lr_method='adam', clip=-1, use_crf=True, model_file=None):
+                 lr_method='adam', clip=-1, use_crf=True, manual_feat_len=-1, model_file=None):
         self.n_tags = n_tags
         self.vals_word_embeddings = word_embeddings
         self.hidden_size_lstm = hidden_size_lstm
@@ -14,6 +14,7 @@ class LSTMCRF:
         self.lr_method = lr_method
         self.clip = clip
         self.saver = None
+        self.manual_feat_len = manual_feat_len
 
         self.n_words, self.dim_word = word_embeddings.shape
         self.use_crf = use_crf
@@ -23,6 +24,9 @@ class LSTMCRF:
         self.labels = tf.placeholder(tf.int32, shape=[None, None], name='labels')
         self.dropout = tf.placeholder(dtype=tf.float32, shape=[], name="dropout")
         self.lr = tf.placeholder(dtype=tf.float32, shape=[], name="lr")
+        self.manual_feat = None
+        if manual_feat_len > 0:
+            self.manual_feat = tf.placeholder(dtype=tf.float32, shape=[None, None, None], name='manual_feat')
 
         self.__add_word_embedding_op(train_word_embeddings)
         self.__add_logits_op()
@@ -62,10 +66,13 @@ class LSTMCRF:
         with tf.variable_scope("bi-lstm"):
             cell_fw = tf.contrib.rnn.LSTMCell(self.hidden_size_lstm)
             cell_bw = tf.contrib.rnn.LSTMCell(self.hidden_size_lstm)
-            (output_fw, output_bw), _ = tf.nn.bidirectional_dynamic_rnn(
+            # shape of self.output_fw: (batch_size, sequence_len, self.hidden_size_lstm)
+            (self.output_fw, self.output_bw), _ = tf.nn.bidirectional_dynamic_rnn(
                     cell_fw, cell_bw, self.word_embeddings,
                     sequence_length=self.sequence_lengths, dtype=tf.float32)
-            self.lstm_output = tf.concat([output_fw, output_bw], axis=-1)
+            self.lstm_output = tf.concat([self.output_fw, self.output_bw], axis=-1)
+            if self.manual_feat is not None:
+                self.lstm_output = tf.concat([self.lstm_output, self.manual_feat], axis=-1)
             self.lstm_output = tf.nn.dropout(self.lstm_output, self.dropout)
 
         with tf.variable_scope("proj"):
@@ -143,10 +150,9 @@ class LSTMCRF:
             tf.train.Saver().restore(self.sess, model_file)
 
     def get_W_b(self):
-        W_val, b_val = self.sess.run([self.W, self.b])
-        return W_val, b_val
+        return self.sess.run([self.W, self.b])
 
-    def get_feed_dict(self, word_idx_seqs, label_seqs=None, lr=None, dropout=None):
+    def get_feed_dict(self, word_idx_seqs, label_seqs=None, lr=None, dropout=None, manual_feat=None):
         word_idx_seqs = [list(word_idxs) for word_idxs in word_idx_seqs]
         word_ids, sequence_lengths = pad_sequences(word_idx_seqs, 0)
 
@@ -160,6 +166,9 @@ class LSTMCRF:
             label_seqs = [list(labels) for labels in label_seqs]
             labels, _ = pad_sequences(label_seqs, 0)
             feed[self.labels] = labels
+
+        if self.manual_feat is not None:
+            feed[self.manual_feat] = manual_feat
 
         feed[self.lr] = lr
         feed[self.dropout] = dropout
