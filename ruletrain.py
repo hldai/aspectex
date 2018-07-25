@@ -122,6 +122,44 @@ def __get_data_semeval(vocab, n_train, task):
     return train_data, valid_data
 
 
+def __get_data_amazon_ao(vocab, aspect_terms_file, opinion_terms_file, tok_texts_file):
+    aspect_terms_list = utils.load_json_objs(aspect_terms_file)
+    opinion_terms_list = utils.load_json_objs(opinion_terms_file)
+    tok_texts = utils.read_lines(tok_texts_file)
+    assert len(aspect_terms_list) == len(tok_texts)
+    assert len(opinion_terms_list) == len(tok_texts)
+
+    word_idx_dict = {w: i + 1 for i, w in enumerate(vocab)}
+
+    label_seq_list = list()
+    word_idx_seq_list = list()
+    for aspect_terms, opinion_terms, tok_text in zip(aspect_terms_list, opinion_terms_list, tok_texts):
+        words = tok_text.split(' ')
+        label_seq = __label_sentence(words, aspect_terms, opinion_terms)
+        label_seq_list.append(label_seq)
+        word_idx_seq_list.append([word_idx_dict.get(w, 0) for w in words])
+
+    np.random.seed(3719)
+    perm = np.random.permutation(len(label_seq_list))
+    n_train = len(label_seq_list) - 2000
+    idxs_train, idxs_valid = perm[:n_train], perm[n_train:]
+
+    label_seq_list_train = [label_seq_list[idx] for idx in idxs_train]
+    word_idx_seq_list_train = [word_idx_seq_list[idx] for idx in idxs_train]
+    train_data = TrainData(label_seq_list_train, word_idx_seq_list_train)
+
+    label_seq_list_valid = [label_seq_list[idx] for idx in idxs_valid]
+    word_idx_seq_list_valid = [word_idx_seq_list[idx] for idx in idxs_valid]
+    tok_texts_valid = [tok_texts[idx] for idx in idxs_valid]
+
+    aspects_list_valid = [aspect_terms_list[idx] for idx in idxs_valid]
+    opinions_list_valid = [opinion_terms_list[idx] for idx in idxs_valid]
+    valid_data = ValidData(label_seq_list_valid, word_idx_seq_list_valid, tok_texts_valid,
+                           aspects_list_valid, opinions_list_valid)
+
+    return train_data, valid_data
+
+
 def __get_data_amazon(vocab, true_terms_file, task):
     tok_texts_file = config.AMAZON_TOK_TEXTS_FILE
     terms_true_list = utils.load_json_objs(true_terms_file)
@@ -165,14 +203,15 @@ def __get_data_amazon(vocab, true_terms_file, task):
 def __train_lstmcrf():
     init_logging('log/nr-{}.log'.format(str_today), mode='a', to_stdout=True)
 
-    task = 'pretrain'
-    # task = 'train'
+    # task = 'pretrain'
+    task = 'train'
     # label_task_pretrain = 'opinion'
-    label_task_pretrain = 'aspect'
+    # label_task_pretrain = 'aspect'
+    label_task_pretrain = 'both'
     label_task_train = 'both'
     rule_id = 2
     hidden_size_lstm = 100
-    n_epochs = 50
+    n_epochs = 200
     n_tags = 3
     if label_task_pretrain == 'both' or label_task_train == 'both':
         n_tags = 5
@@ -182,18 +221,22 @@ def __train_lstmcrf():
     error_file = 'd:/data/aspect/semeval14/error-sents.txt' if task == 'train' else None
     # error_file = None
 
-    if rule_id == 1:
-        rule_true_terms_file = config.AMAZON_TERMS_TRUE1_FILE
-        rule_model_file = config.LAPTOP_RULE_MODEL1_FILE
-    elif rule_id == 2:
-        rule_true_terms_file = config.AMAZON_TERMS_TRUE2_FILE
-        rule_model_file = config.LAPTOP_RULE_MODEL2_FILE
-    elif rule_id == 3:
-        rule_true_terms_file = config.AMAZON_TERMS_TRUE3_FILE
-        rule_model_file = config.LAPTOP_RULE_MODEL3_FILE
-    else:
-        rule_true_terms_file = config.AMAZON_TERMS_TRUE4_FILE
-        rule_model_file = config.LAPTOP_RULE_MODEL4_FILE
+    aspect_terms_file = config.AMAZON_TERMS_TRUE2_FILE
+    opinion_terms_file = config.AMAZON_TERMS_TRUE4_FILE
+    rule_model_file = config.LAPTOP_RULE_MODEL2_FILE
+
+    # if rule_id == 1:
+    #     rule_true_terms_file = config.AMAZON_TERMS_TRUE1_FILE
+    #     rule_model_file = config.LAPTOP_RULE_MODEL1_FILE
+    # elif rule_id == 2:
+    #     rule_true_terms_file = config.AMAZON_TERMS_TRUE2_FILE
+    #     rule_model_file = config.LAPTOP_RULE_MODEL2_FILE
+    # elif rule_id == 3:
+    #     rule_true_terms_file = config.AMAZON_TERMS_TRUE3_FILE
+    #     rule_model_file = config.LAPTOP_RULE_MODEL3_FILE
+    # else:
+    #     rule_true_terms_file = config.AMAZON_TERMS_TRUE4_FILE
+    #     rule_model_file = config.LAPTOP_RULE_MODEL4_FILE
 
     print('loading data ...')
     with open(config.SE14_LAPTOP_GLOVE_WORD_VEC_FILE, 'rb') as f:
@@ -206,7 +249,13 @@ def __train_lstmcrf():
     else:
         load_model_file = None
         save_model_file = rule_model_file
-        train_data, valid_data = __get_data_amazon(vocab, rule_true_terms_file, label_task_pretrain)
+        if label_task_pretrain == 'both':
+            train_data, valid_data = __get_data_amazon_ao(
+                vocab, aspect_terms_file, opinion_terms_file, config.AMAZON_TOK_TEXTS_FILE)
+        elif label_task_pretrain == 'aspect':
+            train_data, valid_data = __get_data_amazon(vocab, aspect_terms_file, label_task_pretrain)
+        else:
+            train_data, valid_data = __get_data_amazon(vocab, opinion_terms_file, label_task_pretrain)
 
     if not load_pretrained_model:
         load_model_file = None

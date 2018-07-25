@@ -247,8 +247,8 @@ class LSTMCRF:
                 if self.saver is not None:
                     self.saver.save(self.sess, save_file)
                     logging.info('model saved to {}'.format(save_file))
-                if a_f1 > best_f1_a:
-                    best_f1_a = a_f1
+            if a_f1 > best_f1_a:
+                best_f1_a = a_f1
             if o_f1 > best_f1_o:
                 best_f1_o = o_f1
 
