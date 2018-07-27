@@ -299,6 +299,7 @@ def __rule_insight(opinion_term_dict_file, filter_nouns_file, dep_tags_file, pos
     # print(terms_train)
     print('loading data ...')
     aspect_terms_train = __load_terms_in_train()
+    # print(aspect_terms_train)
     opinion_terms = utils.read_lines(opinion_term_dict_file)
     opinion_terms = set(opinion_terms)
     nouns_filter = utils.read_lines(filter_nouns_file)
@@ -318,24 +319,23 @@ def __rule_insight(opinion_term_dict_file, filter_nouns_file, dep_tags_file, pos
         pos_tags = pos_tags_list[sent_idx]
         assert len(dep_tags) == len(pos_tags)
 
-        aspect_terms, opinion_terms = set(), set()
+        aspect_terms = set()
         # aspect_terms_new = rules.rule1(dep_tags, pos_tags, opinion_terms, nouns_filter)
         # aspect_terms.update(aspect_terms_new)
         # aspect_terms_new = rules.rule2(dep_tags, pos_tags, opinion_terms, nouns_filter)
         # aspect_terms.update(aspect_terms_new)
         # aspect_terms_new = rules.rule3(dep_tags, pos_tags, opinion_terms, nouns_filter)
         # aspect_terms.update(aspect_terms_new)
-        # aspect_terms_new = rules.rule4(dep_tags, pos_tags, sent_text, opinion_terms, nouns_filter, terms_train)
-        # aspect_terms.update(aspect_terms_new)
+        aspect_terms_new = rules.rule4(dep_tags, pos_tags, sent_text, opinion_terms, nouns_filter,
+                                       aspect_terms_train)
+        aspect_terms.update(aspect_terms_new)
         # aspect_terms_new = rules.rule5(dep_tags, pos_tags, opinion_terms, nouns_filter)
         # aspect_terms.update(aspect_terms_new)
         # aspect_terms_new = rules.conj_rule(dep_tags, pos_tags, opinion_terms, nouns_filter, aspect_terms)
         # aspect_terms.update(aspect_terms_new)
-        # aspect_terms_new = rules.rec_rule1(dep_tags, pos_tags, nouns_filter, opinion_terms)
-        # aspect_terms.update(aspect_terms_new)
+        aspect_terms_new = rules.rec_rule1(dep_tags, pos_tags, nouns_filter, opinion_terms)
+        aspect_terms.update(aspect_terms_new)
 
-        # aspect_terms_new = __opinion_rule1(dep_tags, pos_tags)
-        # aspect_terms.update(aspect_terms_new)
         # if sent_idx > 10:
         #     exit()
 
@@ -358,7 +358,11 @@ def __rule_insight(opinion_term_dict_file, filter_nouns_file, dep_tags_file, pos
 
     if sents_file is not None:
         sents = utils.load_json_objs(sents_file)
-        correct_sent_idxs = __evaluate(aspects_sys_list, sents, dep_tags_list, pos_tags_list)
+        aspect_terms_true = list()
+        for sent in sents:
+            aspect_terms_true.append([t['term'] for t in sent.get('terms', list())])
+        sent_texts = [sent['text'] for sent in sents]
+        correct_sent_idxs = __evaluate(aspects_sys_list, aspect_terms_true, dep_tags_list, pos_tags_list, sent_texts)
         with open('d:/data/aspect/semeval14/rules-correct.txt', 'w', encoding='utf-8') as fout:
             fout.write('\n'.join([str(i) for i in correct_sent_idxs]))
 
@@ -391,27 +395,27 @@ filter_nouns_file = 'd:/data/aspect/semeval14/nouns-filter.txt'
 
 # dep_tags_file = 'd:/data/aspect/semeval14/laptops-test-rule-dep.txt'
 # pos_tags_file = 'd:/data/aspect/semeval14/laptops-test-rule-pos.txt'
-# result_file = 'd:/data/aspect/semeval14/laptops-test-rule-result.txt'
+# result_file = 'd:/data/aspect/semeval14/laptops-test-aspect-rule-result.txt'
 # sent_texts_file = 'd:/data/aspect/semeval14/laptops_test_texts.txt'
 # sents_file = config.SE14_LAPTOP_TEST_SENTS_FILE
 
-# dep_tags_file = 'd:/data/aspect/semeval14/laptops-train-rule-dep.txt'
-# pos_tags_file = 'd:/data/aspect/semeval14/laptops-train-rule-pos.txt'
-# result_file = 'd:/data/aspect/semeval14/laptops-train-rule-result.txt'
-# sent_texts_file = 'd:/data/aspect/semeval14/laptops_train_texts.txt'
-# sents_file = config.SE14_LAPTOP_TRAIN_SENTS_FILE
+dep_tags_file = 'd:/data/aspect/semeval14/laptops-train-rule-dep.txt'
+pos_tags_file = 'd:/data/aspect/semeval14/laptops-train-rule-pos.txt'
+result_file = 'd:/data/aspect/semeval14/laptops-train-aspect-rule-result.txt'
+sent_texts_file = 'd:/data/aspect/semeval14/laptops_train_texts.txt'
+sents_file = config.SE14_LAPTOP_TRAIN_SENTS_FILE
 
-dep_tags_file = 'd:/data/amazon/laptops-rule-dep.txt'
-pos_tags_file = 'd:/data/amazon/laptops-rule-pos.txt'
-result_file = 'd:/data/amazon/laptops-opinion-rule-result.txt'
-sent_texts_file = 'd:/data/amazon/laptops-reivews-sent-text.txt'
-sents_file = None
+# dep_tags_file = 'd:/data/amazon/laptops-rule-dep.txt'
+# pos_tags_file = 'd:/data/amazon/laptops-rule-pos.txt'
+# result_file = 'd:/data/amazon/laptops-opinion-rule-result.txt'
+# sent_texts_file = 'd:/data/amazon/laptops-reivews-sent-text.txt'
+# sents_file = None
 
-# __rule_insight(opinion_terms_file, filter_nouns_file, dep_tags_file,
-#                pos_tags_file, sent_texts_file, dst_result_file=result_file, sents_file=sents_file)
+__rule_insight(opinion_terms_file, filter_nouns_file, dep_tags_file,
+               pos_tags_file, sent_texts_file, dst_result_file=result_file, sents_file=sents_file)
 
-terms_vocab = __load_opinion_terms_in_train()
-__opinion_rule_insight(dep_tags_file, pos_tags_file, sent_texts_file, terms_vocab,
-                       dst_result_file=result_file, sents_file=sents_file)
+# terms_vocab = __load_opinion_terms_in_train()
+# __opinion_rule_insight(dep_tags_file, pos_tags_file, sent_texts_file, terms_vocab,
+#                        dst_result_file=result_file, sents_file=sents_file)
 
 # __differ()
