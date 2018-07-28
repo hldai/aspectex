@@ -31,14 +31,30 @@ def set_evaluate(set_true, set_pred):
     return p, r, f1
 
 
-def pad_sequences(sequences, pad_token):
+def get_max_len(sequences):
     max_len = 0
     for s in sequences:
         max_len = max(max_len, len(s))
+    return max_len
+
+
+def pad_sequences(sequences, pad_token):
+    max_len = get_max_len(sequences)
 
     padded_seqs, seq_lens = list(), list()
     for seq in sequences:
         padded_seq = seq + [pad_token for _ in range(max_len - len(seq))]
+        padded_seqs.append(padded_seq)
+        seq_lens.append(len(seq))
+    return padded_seqs, seq_lens
+
+
+def pad_feat_sequence(sequences, feat_dim):
+    max_len = get_max_len(sequences)
+    padded_seqs, seq_lens = list(), list()
+    for seq in sequences:
+        padded_seq = np.zeros([max_len, feat_dim], np.float32)
+        padded_seq[:len(seq), :] = seq
         padded_seqs.append(padded_seq)
         seq_lens.append(len(seq))
     return padded_seqs, seq_lens

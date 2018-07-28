@@ -1,12 +1,12 @@
 import tensorflow as tf
 import logging
-from utils.utils import pad_sequences, save_json_objs
+from utils.utils import pad_sequences, pad_feat_sequence
 from utils.modelutils import evaluate_ao_extraction
 
 
 class LSTMCRF:
     def __init__(self, n_tags, word_embeddings, hidden_size_lstm=300, batch_size=20, train_word_embeddings=False,
-                 lr_method='adam', clip=-1, use_crf=True, manual_feat_len=-1, model_file=None):
+                 lr_method='adam', clip=-1, use_crf=True, manual_feat_len=0, model_file=None):
         self.n_tags = n_tags
         self.vals_word_embeddings = word_embeddings
         self.hidden_size_lstm = hidden_size_lstm
@@ -71,19 +71,23 @@ class LSTMCRF:
                     cell_fw, cell_bw, self.word_embeddings,
                     sequence_length=self.sequence_lengths, dtype=tf.float32)
             self.lstm_output = tf.concat([self.output_fw, self.output_bw], axis=-1)
-            if self.manual_feat is not None:
-                self.lstm_output = tf.concat([self.lstm_output, self.manual_feat], axis=-1)
+            # if self.manual_feat is not None:
+            #     self.lstm_output = tf.concat([self.lstm_output, self.manual_feat], axis=-1)
             self.lstm_output = tf.nn.dropout(self.lstm_output, self.dropout)
 
         with tf.variable_scope("proj"):
-            self.W = tf.get_variable("W", dtype=tf.float32, shape=[
-                2 * self.hidden_size_lstm, self.n_tags])
+            dim_tmp = 2 * self.hidden_size_lstm + self.manual_feat_len
+            self.W = tf.get_variable("W", dtype=tf.float32, shape=[dim_tmp, self.n_tags])
 
             self.b = tf.get_variable(
                 "b", shape=[self.n_tags], dtype=tf.float32, initializer=tf.zeros_initializer())
 
             nsteps = tf.shape(self.lstm_output)[1]
-            output = tf.reshape(self.lstm_output, [-1, 2 * self.hidden_size_lstm])
+            if self.manual_feat is not None:
+                output = tf.concat([self.lstm_output, self.manual_feat], axis=-1)
+            else:
+                output = self.lstm_output
+            output = tf.reshape(output, [-1, dim_tmp])
             pred = tf.matmul(output, self.W) + self.b
             self.logits = tf.reshape(pred, [-1, nsteps, self.n_tags])
 
@@ -156,6 +160,7 @@ class LSTMCRF:
         word_idx_seqs = [list(word_idxs) for word_idxs in word_idx_seqs]
         word_ids, sequence_lengths = pad_sequences(word_idx_seqs, 0)
 
+        # print(len(word_ids))
         # build feed dictionary
         feed = {
             self.word_idxs: word_ids,
@@ -168,6 +173,7 @@ class LSTMCRF:
             feed[self.labels] = labels
 
         if self.manual_feat is not None:
+            manual_feat, lens = pad_feat_sequence(manual_feat, manual_feat[0].shape[1])
             feed[self.manual_feat] = manual_feat
 
         feed[self.lr] = lr
@@ -187,8 +193,79 @@ class LSTMCRF:
             hidden_vecs_batch_list.append(hidden_vecs_batch)
         return hidden_vecs_batch_list
 
+    def __train_epoch(self, epoch, n_batches, word_idxs_list_train, labels_list_train, word_idxs_list_valid,
+                      labels_list_valid, valid_texts, aspects_true_list, opinions_true_list,
+                      lr, dropout, best_f1_a, best_f1_o, best_f1_sum,
+                      train_feat_list=None, valid_feat_list=None,
+                      error_file=None, save_model_file=None):
+        losses, losses_seg = list(), list()
+        for i in range(n_batches):
+            word_idxs_list_batch = word_idxs_list_train[i * self.batch_size: (i + 1) * self.batch_size]
+            feat_list_batch = train_feat_list[i * self.batch_size: (i + 1) * self.batch_size]
+            labels_list_batch = labels_list_train[i * self.batch_size: (i + 1) * self.batch_size]
+            feed_dict, _ = self.get_feed_dict(word_idxs_list_batch, labels_list_batch, lr, dropout, feat_list_batch)
+            # _, train_loss = self.sess.run(
+            #     [self.train_op, self.loss], feed_dict=feed_dict)
+            _, train_loss, lstm_output = self.sess.run(
+                [self.train_op, self.loss, self.lstm_output], feed_dict=feed_dict)
+            losses.append(train_loss)
+            losses_seg.append(train_loss)
+
+            if (i + 1) % (5000 // self.batch_size) == 0:
+                loss_val = sum(losses_seg)
+                pred_label_seq_list = self.predict_all(word_idxs_list_valid, valid_feat_list)
+                tmp_result = evaluate_ao_extraction(
+                    labels_list_valid, pred_label_seq_list, valid_texts, aspects_true_list, opinions_true_list,
+                    error_file
+                )
+                a_p, a_r, a_f1, o_p, o_r, o_f1 = tmp_result
+                # p, r, f1 = self.evaluate(word_idxs_list_valid, labels_list_valid, vocab,
+                #                          valid_texts, aspects_true_list)
+                logging.info('iter={}, loss={:.4f}, p={:.4f}, r={:.4f}, f1={:.4f}, best_f1={:.4f}; '
+                             'p={:.4f}, r={:.4f}, f1={:.4f}, best_f1={:.4f}'.format(
+                    epoch, loss_val, a_p, a_r, a_f1, best_f1_a, o_p, o_r, o_f1, best_f1_o))
+                losses_seg = list()
+
+                if a_f1 + o_f1 > best_f1_sum:
+                    best_f1_sum = a_f1 + o_f1
+                    if self.saver is not None:
+                        self.saver.save(self.sess, save_model_file)
+                        # print('model saved to {}'.format(save_file))
+                        logging.info('model saved to {}'.format(save_model_file))
+                if a_f1 > best_f1_a:
+                    best_f1_a = a_f1
+                if o_f1 > best_f1_o:
+                    best_f1_o = o_f1
+        # print('iter {}, loss={}'.format(epoch, sum(losses)))
+        # metrics = self.run_evaluate(dev)
+        loss_val = sum(losses)
+        pred_label_seq_list = self.predict_all(word_idxs_list_valid, valid_feat_list)
+        tmp_result = evaluate_ao_extraction(
+            labels_list_valid, pred_label_seq_list, valid_texts, aspects_true_list, opinions_true_list, error_file
+        )
+        # if opinions_true_list is None:
+        #     a_p, a_r, a_f1 = tmp_result
+        #     o_p, o_r, o_f1 = 0, 0, 0
+        # else:
+        a_p, a_r, a_f1, o_p, o_r, o_f1 = tmp_result
+        # p, r, f1 = self.evaluate(word_idxs_list_valid, labels_list_valid, vocab, valid_texts, aspects_true_list)
+        logging.info('iter={}, loss={:.4f}, p={:.4f}, r={:.4f}, f1={:.4f}, best_f1={:.4f}; '
+                     'p={:.4f}, r={:.4f}, f1={:.4f}, best_f1={:.4f}'.format(
+            epoch, loss_val, a_p, a_r, a_f1, best_f1_a, o_p, o_r, o_f1, best_f1_o))
+        if a_f1 + o_f1 > best_f1_sum:
+            best_f1_sum = a_f1 + o_f1
+            if self.saver is not None:
+                self.saver.save(self.sess, save_model_file)
+                logging.info('model saved to {}'.format(save_model_file))
+        if a_f1 > best_f1_a:
+            best_f1_a = a_f1
+        if o_f1 > best_f1_o:
+            best_f1_o = o_f1
+
+        return best_f1_a, best_f1_o, best_f1_sum
+
     def train(self, word_idxs_list_train, labels_list_train, word_idxs_list_valid, labels_list_valid,
-              vocab, valid_texts, aspects_true_list, opinions_true_list,
+              vocab, valid_texts, aspects_true_list, opinions_true_list, train_feat_list=None, valid_feat_list=None,
               n_epochs=10, lr=0.001, dropout=0.5, save_file=None, error_file=None):
         if save_file is not None and self.saver is None:
             self.saver = tf.train.Saver()
@@ -198,78 +275,83 @@ class LSTMCRF:
 
         best_f1_a, best_f1_o, best_f1_sum = 0, 0, 0
         for epoch in range(n_epochs):
-            losses, losses_seg = list(), list()
-            for i in range(n_batches):
-                word_idxs_list_batch = word_idxs_list_train[i * self.batch_size: (i + 1) * self.batch_size]
-                labels_list_batch = labels_list_train[i * self.batch_size: (i + 1) * self.batch_size]
-                feed_dict, _ = self.get_feed_dict(word_idxs_list_batch, labels_list_batch, lr, dropout)
-                # _, train_loss = self.sess.run(
-                #     [self.train_op, self.loss], feed_dict=feed_dict)
-                _, train_loss, lstm_output = self.sess.run(
-                    [self.train_op, self.loss, self.lstm_output], feed_dict=feed_dict)
-                losses.append(train_loss)
-                losses_seg.append(train_loss)
+            best_f1_a, best_f1_o, best_f1_sum = self.__train_epoch(
+                epoch, n_batches, word_idxs_list_train, labels_list_train, word_idxs_list_valid, labels_list_valid,
+                valid_texts, aspects_true_list, opinions_true_list, lr, dropout,
+                best_f1_a, best_f1_o, best_f1_sum, train_feat_list=train_feat_list, valid_feat_list=valid_feat_list,
+                error_file=error_file)
+            # losses, losses_seg = list(), list()
+            # for i in range(n_batches):
+            #     word_idxs_list_batch = word_idxs_list_train[i * self.batch_size: (i + 1) * self.batch_size]
+            #     labels_list_batch = labels_list_train[i * self.batch_size: (i + 1) * self.batch_size]
+            #     feed_dict, _ = self.get_feed_dict(word_idxs_list_batch, labels_list_batch, lr, dropout)
+            #     # _, train_loss = self.sess.run(
+            #     #     [self.train_op, self.loss], feed_dict=feed_dict)
+            #     _, train_loss, lstm_output = self.sess.run(
+            #         [self.train_op, self.loss, self.lstm_output], feed_dict=feed_dict)
+            #     losses.append(train_loss)
+            #     losses_seg.append(train_loss)
+            #
+            #     if (i + 1) % (5000 // self.batch_size) == 0:
+            #         loss_val = sum(losses_seg)
+            #         pred_label_seq_list = self.predict_all(word_idxs_list_valid)
+            #         tmp_result = evaluate_ao_extraction(
+            #             labels_list_valid, pred_label_seq_list, valid_texts, aspects_true_list, opinions_true_list,
+            #             error_file
+            #         )
+            #         a_p, a_r, a_f1, o_p, o_r, o_f1 = tmp_result
+            #         # p, r, f1 = self.evaluate(word_idxs_list_valid, labels_list_valid, vocab,
+            #         #                          valid_texts, aspects_true_list)
+            #         logging.info('iter={}, loss={:.4f}, p={:.4f}, r={:.4f}, f1={:.4f}, best_f1={:.4f}; '
+            #                      'p={:.4f}, r={:.4f}, f1={:.4f}, best_f1={:.4f}'.format(
+            #             epoch, loss_val, a_p, a_r, a_f1, best_f1_a, o_p, o_r, o_f1, best_f1_o))
+            #         losses_seg = list()
+            #
+            #         if a_f1 + o_f1 > best_f1_sum:
+            #             best_f1_sum = a_f1 + o_f1
+            #             if self.saver is not None:
+            #                 self.saver.save(self.sess, save_file)
+            #                 # print('model saved to {}'.format(save_file))
+            #                 logging.info('model saved to {}'.format(save_file))
+            #         if a_f1 > best_f1_a:
+            #             best_f1_a = a_f1
+            #         if o_f1 > best_f1_o:
+            #             best_f1_o = o_f1
+            # # print('iter {}, loss={}'.format(epoch, sum(losses)))
+            # # metrics = self.run_evaluate(dev)
+            # loss_val = sum(losses)
+            # pred_label_seq_list = self.predict_all(word_idxs_list_valid)
+            # tmp_result = evaluate_ao_extraction(
+            #     labels_list_valid, pred_label_seq_list, valid_texts, aspects_true_list, opinions_true_list, error_file
+            # )
+            # # if opinions_true_list is None:
+            # #     a_p, a_r, a_f1 = tmp_result
+            # #     o_p, o_r, o_f1 = 0, 0, 0
+            # # else:
+            # a_p, a_r, a_f1, o_p, o_r, o_f1 = tmp_result
+            # # p, r, f1 = self.evaluate(word_idxs_list_valid, labels_list_valid, vocab, valid_texts, aspects_true_list)
+            # logging.info('iter={}, loss={:.4f}, p={:.4f}, r={:.4f}, f1={:.4f}, best_f1={:.4f}; '
+            #              'p={:.4f}, r={:.4f}, f1={:.4f}, best_f1={:.4f}'.format(
+            #     epoch, loss_val, a_p, a_r, a_f1, best_f1_a, o_p, o_r, o_f1, best_f1_o))
+            # if a_f1 + o_f1 > best_f1_sum:
+            #     best_f1_sum = a_f1 + o_f1
+            #     if self.saver is not None:
+            #         self.saver.save(self.sess, save_file)
+            #         logging.info('model saved to {}'.format(save_file))
+            # if a_f1 > best_f1_a:
+            #     best_f1_a = a_f1
+            # if o_f1 > best_f1_o:
+            #     best_f1_o = o_f1
 
-                if (i + 1) % (5000 // self.batch_size) == 0:
-                    loss_val = sum(losses_seg)
-                    pred_label_seq_list = self.predict_all(word_idxs_list_valid)
-                    tmp_result = evaluate_ao_extraction(
-                        labels_list_valid, pred_label_seq_list, valid_texts, aspects_true_list, opinions_true_list,
-                        error_file
-                    )
-                    a_p, a_r, a_f1, o_p, o_r, o_f1 = tmp_result
-                    # p, r, f1 = self.evaluate(word_idxs_list_valid, labels_list_valid, vocab,
-                    #                          valid_texts, aspects_true_list)
-                    logging.info('iter={}, loss={:.4f}, p={:.4f}, r={:.4f}, f1={:.4f}, best_f1={:.4f}; '
-                                 'p={:.4f}, r={:.4f}, f1={:.4f}, best_f1={:.4f}'.format(
-                        epoch, loss_val, a_p, a_r, a_f1, best_f1_a, o_p, o_r, o_f1, best_f1_o))
-                    losses_seg = list()
-
-                    if a_f1 + o_f1 > best_f1_sum:
-                        best_f1_sum = a_f1 + o_f1
-                        if self.saver is not None:
-                            self.saver.save(self.sess, save_file)
-                            # print('model saved to {}'.format(save_file))
-                            logging.info('model saved to {}'.format(save_file))
-                    if a_f1 > best_f1_a:
-                        best_f1_a = a_f1
-                    if o_f1 > best_f1_o:
-                        best_f1_o = o_f1
-            # print('iter {}, loss={}'.format(epoch, sum(losses)))
-            # metrics = self.run_evaluate(dev)
-            loss_val = sum(losses)
-            pred_label_seq_list = self.predict_all(word_idxs_list_valid)
-            tmp_result = evaluate_ao_extraction(
-                labels_list_valid, pred_label_seq_list, valid_texts, aspects_true_list, opinions_true_list, error_file
-            )
-            # if opinions_true_list is None:
-            #     a_p, a_r, a_f1 = tmp_result
-            #     o_p, o_r, o_f1 = 0, 0, 0
-            # else:
-            a_p, a_r, a_f1, o_p, o_r, o_f1 = tmp_result
-            # p, r, f1 = self.evaluate(word_idxs_list_valid, labels_list_valid, vocab, valid_texts, aspects_true_list)
-            logging.info('iter={}, loss={:.4f}, p={:.4f}, r={:.4f}, f1={:.4f}, best_f1={:.4f}; '
-                         'p={:.4f}, r={:.4f}, f1={:.4f}, best_f1={:.4f}'.format(
-                epoch, loss_val, a_p, a_r, a_f1, best_f1_a, o_p, o_r, o_f1, best_f1_o))
-            if a_f1 + o_f1 > best_f1_sum:
-                best_f1_sum = a_f1 + o_f1
-                if self.saver is not None:
-                    self.saver.save(self.sess, save_file)
-                    logging.info('model saved to {}'.format(save_file))
-            if a_f1 > best_f1_a:
-                best_f1_a = a_f1
-            if o_f1 > best_f1_o:
-                best_f1_o = o_f1
-
-    def predict_all(self, word_idxs_list):
+    def predict_all(self, word_idxs_list, feat_list):
         label_seq_list = list()
-        for word_idxs in word_idxs_list:
-            label_seq, lens = self.predict_batch([word_idxs])
+        for word_idxs, feat_seq in zip(word_idxs_list, feat_list):
+            label_seq, lens = self.predict_batch([word_idxs], [feat_seq])
             label_seq_list.append(label_seq[0])
         return label_seq_list
 
-    def predict_batch(self, word_idxs_list):
-        fd, sequence_lengths = self.get_feed_dict(word_idxs_list, dropout=1.0)
+    def predict_batch(self, word_idxs_list, feat_list):
+        fd, sequence_lengths = self.get_feed_dict(word_idxs_list, dropout=1.0, manual_feat=feat_list)
 
         # get tag scores and transition params of CRF
         viterbi_sequences = []

@@ -252,6 +252,15 @@ def __train_lstmcrf_manual_feat():
         config.SE14_LAPTOP_TEST_TOK_TEXTS_FILE, valid_opinion_rule_result_file)
     valid_feat_list = __merge_feat_list(valid_aspect_feat_list, valid_opinion_feat_list)
 
+    manual_feat_len = train_feat_list[0].shape[1]
+    print('manual feat len: {}'.format(manual_feat_len))
+    lstmcrf = LSTMCRF(n_tags, word_vecs_matrix, hidden_size_lstm=hidden_size_lstm, manual_feat_len=manual_feat_len)
+    # print(valid_data.aspects_true_list)
+    lstmcrf.train(train_data.word_idxs_list, train_data.labels_list, valid_data.word_idxs_list,
+                  valid_data.labels_list, vocab, valid_data.tok_texts, valid_data.aspects_true_list,
+                  valid_data.opinions_true_list, train_feat_list=train_feat_list, valid_feat_list=valid_feat_list,
+                  n_epochs=n_epochs)
+
 
 def __train_lstmcrf():
     init_logging('log/nr-{}.log'.format(str_today), mode='a', to_stdout=True)
