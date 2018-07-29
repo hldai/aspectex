@@ -215,23 +215,34 @@ def __trim_word_vecs_file(text_files, origin_word_vec_file, dst_word_vec_file):
         pickle.dump((vocab, word_vec_matrix), fout, protocol=pickle.HIGHEST_PROTOCOL)
 
 
-test_file_xml = 'd:/data/aspect/semeval14/Laptops_Test_Gold.xml'
-test_file_json = 'd:/data/aspect/semeval14/Laptops_Test_Gold.json'
-train_file_xml = 'd:/data/aspect/semeval14/Laptops_Train.xml'
-train_file_json = 'd:/data/aspect/semeval14/Laptops_Train.json'
+def __split_training_set():
+    pass
+
+
+# test_file_json = 'd:/data/aspect/semeval14/Laptops_Test_Gold.json'
+# train_file_xml = 'd:/data/aspect/semeval14/Laptops_Train.xml'
+# train_file_json = 'd:/data/aspect/semeval14/Laptops_Train.json'
 
 # __process_hl04()
 # __rncrf_sample_to_json()
-# __sem_eval_to_json(test_file_xml, test_file_json)
-# __sem_eval_to_json(train_file_xml, train_file_json)
-# __process_raw_sem_eval_data(config.SE14_LAPTOP_TRAIN_SENTS_XML_FILE, config.SE14_LAPTOP_TRAIN_OPINIONS_FILE,
+
+# __process_raw_sem_eval_data(config.SE14_LAPTOP_TRAIN_XML_FILE, config.SE14_LAPTOP_TRAIN_OPINIONS_FILE,
 #                             config.SE14_LAPTOP_TRAIN_SENTS_FILE, config.SE14_LAPTOP_TRAIN_SENT_TEXTS_FILE)
-# __process_raw_sem_eval_data(config.SE14_LAPTOP_TEST_SENTS_XML_FILE, config.SE14_LAPTOP_TEST_OPINIONS_FILE,
+# __process_raw_sem_eval_data(config.SE14_LAPTOP_TEST_XML_FILE, config.SE14_LAPTOP_TEST_OPINIONS_FILE,
 #                             config.SE14_LAPTOP_TEST_SENTS_FILE, config.SE14_LAPTOP_TEST_SENT_TEXTS_FILE)
 # __gen_judge_train_data()
-
 
 # __trim_word_vecs_file(
 #     [config.SE14_LAPTOP_TRAIN_TOK_TEXTS_FILE, config.SE14_LAPTOP_TEST_TOK_TEXTS_FILE],
 #     config.GLOVE_WORD_VEC_FILE, config.SE14_LAPTOP_GLOVE_WORD_VEC_FILE
+# )
+
+# __process_raw_sem_eval_data(config.SE14_REST_TRAIN_XML_FILE, config.SE14_REST_TRAIN_OPINIONS_FILE,
+#                             config.SE14_REST_TRAIN_SENTS_FILE, config.SE14_REST_TRAIN_SENT_TEXTS_FILE)
+# __process_raw_sem_eval_data(config.SE14_REST_TEST_XML_FILE, config.SE14_REST_TEST_OPINIONS_FILE,
+#                             config.SE14_REST_TEST_SENTS_FILE, config.SE14_REST_TEST_SENT_TEXTS_FILE)
+
+# __trim_word_vecs_file(
+#     [config.SE14_REST_TRAIN_TOK_TEXTS_FILE, config.SE14_REST_TEST_TOK_TEXTS_FILE],
+#     config.GLOVE_WORD_VEC_FILE, config.SE14_REST_GLOVE_WORD_VEC_FILE
 # )

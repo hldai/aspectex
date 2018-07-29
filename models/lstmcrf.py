@@ -201,7 +201,9 @@ class LSTMCRF:
         losses, losses_seg = list(), list()
         for i in range(n_batches):
             word_idxs_list_batch = word_idxs_list_train[i * self.batch_size: (i + 1) * self.batch_size]
-            feat_list_batch = train_feat_list[i * self.batch_size: (i + 1) * self.batch_size]
+            feat_list_batch = None
+            if train_feat_list is not None:
+                feat_list_batch = train_feat_list[i * self.batch_size: (i + 1) * self.batch_size]
             labels_list_batch = labels_list_train[i * self.batch_size: (i + 1) * self.batch_size]
             feed_dict, _ = self.get_feed_dict(word_idxs_list_batch, labels_list_batch, lr, dropout, feat_list_batch)
             # _, train_loss = self.sess.run(
@@ -345,8 +347,9 @@ class LSTMCRF:
 
     def predict_all(self, word_idxs_list, feat_list):
         label_seq_list = list()
-        for word_idxs, feat_seq in zip(word_idxs_list, feat_list):
-            label_seq, lens = self.predict_batch([word_idxs], [feat_seq])
+        for i, word_idxs in enumerate(word_idxs_list):
+            feat_seq_batch = None if feat_list is None else [feat_list[i]]
+            label_seq, lens = self.predict_batch([word_idxs], feat_seq_batch)
             label_seq_list.append(label_seq[0])
         return label_seq_list
 
