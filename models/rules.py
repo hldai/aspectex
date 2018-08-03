@@ -1,3 +1,6 @@
+NOUN_POS_TAGS = {'NN', 'NNP', 'NNS'}
+
+
 def __get_noun_phrase(dep_tags, pos_tags, base_word_idxs, opinion_terms):
     words = [tup[2][1] for tup in dep_tags]
     phrase_word_idxs = set(base_word_idxs)
@@ -6,7 +9,7 @@ def __get_noun_phrase(dep_tags, pos_tags, base_word_idxs, opinion_terms):
     iright = max(phrase_word_idxs)
     ileft_new, iright_new = ileft, iright
     while ileft_new > 0:
-        if pos_tags[ileft_new - 1] in {'NN', 'NNP', 'NNS'}:
+        if pos_tags[ileft_new - 1] in NOUN_POS_TAGS:
             ileft_new -= 1
         else:
             break
@@ -30,14 +33,18 @@ def rule1(dep_tags, pos_tags, opinion_terms, nouns_filter):
 
         igov, wgov = gov
         idep, wdep = dep
-        if wdep in nouns_filter:
-            continue
+        # if wdep in nouns_filter:
+        #     continue
         if wgov not in opinion_terms:
             continue
 
         # print(rel, wgov, wdep)
         # phrase = __get_phrase(dep_tags, pos_tags, idep)
         phrase = __get_noun_phrase(dep_tags, pos_tags, [idep], opinion_terms)
+
+        if phrase in nouns_filter:
+            continue
+
         # phrase1 = __get_phrase_for_rule1(dep_tags, pos_tags, sent_words, idep, igov)
         # if phrase in terms_true and wgov not in opinion_terms:
         #     print(dep_tup)
@@ -55,33 +62,44 @@ def rule2(dep_tags, pos_tags, opinion_terms, nouns_filter):
 
         igov, wgov = gov
         idep, wdep = dep
-        if wgov in nouns_filter:
-            continue
+        # if wgov in nouns_filter:
+        #     continue
         if wdep not in opinion_terms:
             continue
 
         # print(dep_tup)
         # phrase = __get_phrase(dep_tags, pos_tags, igov)
         phrase = __get_noun_phrase(dep_tags, pos_tags, [igov], opinion_terms)
+        if phrase in nouns_filter:
+            continue
         aspect_terms.add(phrase)
     return aspect_terms
 
 
-def rule3(dep_tags, pos_tags, opinion_terms, nouns_filter):
+def rule3(dep_tags, pos_tags, opinion_terms, nouns_filter, terms_true=None):
     aspect_terms = set()
     for dep_tup in dep_tags:
         rel, gov, dep = dep_tup
-        if rel not in {'dobj', 'xcomp'}:
+        # if rel not in {'dobj', 'xcomp'}:
+        #     continue
+        if rel not in {'dobj'}:
             continue
 
         igov, wgov = gov
         idep, wdep = dep
-        if wdep in nouns_filter:
-            continue
-        # if wdep not in opinion_terms:
+        # if wdep in nouns_filter or pos_tags[idep] not in {'NN', 'NNS', 'NNP'}:
         #     continue
+        if pos_tags[idep] not in NOUN_POS_TAGS:
+            continue
 
         phrase = __get_noun_phrase(dep_tags, pos_tags, [idep], opinion_terms)
+        if phrase in nouns_filter:
+            continue
+        # if phrase in terms_true:
+        #     print('hit', rel, gov, dep)
+        # else:
+        #     print('nnn', rel, gov, dep)
+
         # phrase = __get_phrase(dep_tags, pos_tags, idep)
         hit = False
         for j in range(len(dep_tags)):
@@ -210,12 +228,12 @@ def conj_rule(dep_tags, pos_tags, opinion_terms, nouns_filter, terms_extracted):
         idep, wdep = dep
 
         if __word_in_terms(wgov, terms_extracted) and not __word_in_terms(
-                wdep, terms_extracted) and wdep not in nouns_filter:
+                wdep, terms_extracted) and pos_tags[idep] in NOUN_POS_TAGS and wdep not in nouns_filter:
             phrase = __get_noun_phrase(dep_tags, pos_tags, [idep], opinion_terms)
             # phrase = __get_phrase(dep_tags, pos_tags, idep)
             aspect_terms.add(phrase)
         elif __word_in_terms(wdep, terms_extracted) and not __word_in_terms(
-                wgov, terms_extracted) and wgov not in nouns_filter:
+                wgov, terms_extracted) and pos_tags[igov] in NOUN_POS_TAGS and wgov not in nouns_filter:
             phrase = __get_noun_phrase(dep_tags, pos_tags, [idep], opinion_terms)
             # phrase = __get_phrase(dep_tags, pos_tags, idep)
             aspect_terms.add(phrase)
@@ -223,8 +241,7 @@ def conj_rule(dep_tags, pos_tags, opinion_terms, nouns_filter, terms_extracted):
     return aspect_terms
 
 
-def rec_rule1(dep_tags, pos_tags, nouns_filter, opinion_terms):
-    words = [dep_tag[2][1] for dep_tag in dep_tags]
+def rec_rule1(words, pos_tags, nouns_filter):
     assert len(words) == len(pos_tags)
 
     noun_phrases = list()
@@ -241,7 +258,7 @@ def rec_rule1(dep_tags, pos_tags, nouns_filter, opinion_terms):
         #     pleft -= 1
 
         phrase = ' '.join(words[pleft: pright])
-        if phrase not in nouns_filter:
+        if nouns_filter is None or phrase not in nouns_filter:
             noun_phrases.append(phrase)
         pleft = pright
     # print(' '.join(words))

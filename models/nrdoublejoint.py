@@ -469,7 +469,7 @@ class NeuRuleDoubleJoint:
 
         aspect_p, aspect_r, aspect_f1 = utils.prf1(aspect_true_cnt, aspect_sys_cnt, aspect_hit_cnt)
         if opinions_ture_list is None:
-            return aspect_p, aspect_r, aspect_f1
+            return aspect_p, aspect_r, aspect_f1, 0, 0, 0
 
         opinion_p, opinion_r, opinion_f1 = utils.prf1(opinion_true_cnt, opinion_sys_cnt, opinion_hit_cnt)
         return aspect_p, aspect_r, aspect_f1, opinion_p, opinion_r, opinion_f1

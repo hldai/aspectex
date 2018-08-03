@@ -133,17 +133,17 @@ def __evaluate(terms_sys_list, terms_true_list, dep_tags_list, pos_tags_list, se
         if new_hit_cnt == len(terms_true) and new_hit_cnt == len(terms_sys):
             correct_sent_idxs.append(sent_idx)
         hit_cnt += new_hit_cnt
-        # if len(terms_true) and new_hit_cnt < len(terms_true):
-        #     print(terms_true)
-        #     print(terms_sys)
-        #     print(sent_texts[sent_idx])
-        #     print(pos_tags)
-        #     print(dep_tags)
-        #     print()
+        if len(terms_true) and new_hit_cnt < len(terms_true):
+            print(terms_true)
+            print(terms_sys)
+            print(sent_texts[sent_idx])
+            print(pos_tags)
+            print(dep_tags)
+            print()
 
     # __save_never_hit_terms(sents, terms_sys_list, 'd:/data/aspect/semeval14/tmp.txt')
 
-    print(hit_cnt, true_cnt, sys_cnt)
+    print('hit={}, true={}, sys={}'.format(hit_cnt, true_cnt, sys_cnt))
     p = hit_cnt / (sys_cnt + 1e-8)
     r = hit_cnt / (true_cnt + 1e-8)
     print(p, r, 2 * p * r / (p + r + 1e-8))
@@ -313,27 +313,35 @@ def __rule_insight(opinion_term_dict_file, filter_nouns_file, dep_tags_file, pos
     assert len(dep_tags_list) == len(sent_texts)
     assert len(pos_tags_list) == len(dep_tags_list)
 
+    sents = None if sents_file is None else utils.load_json_objs(sents_file)
+
     aspects_sys_list = list()
     for sent_idx, sent_text in enumerate(sent_texts):
         dep_tags = dep_tags_list[sent_idx]
         pos_tags = pos_tags_list[sent_idx]
         assert len(dep_tags) == len(pos_tags)
 
+        # terms_true = set([t['term'].lower() for t in sents[sent_idx].get('terms', list())])
+        terms_true = None if sents is None else set(
+            [t['term'].lower() for t in sents[sent_idx].get('terms', list())])
+
         aspect_terms = set()
         # aspect_terms_new = rules.rule1(dep_tags, pos_tags, opinion_terms, nouns_filter)
         # aspect_terms.update(aspect_terms_new)
         # aspect_terms_new = rules.rule2(dep_tags, pos_tags, opinion_terms, nouns_filter)
         # aspect_terms.update(aspect_terms_new)
-        # aspect_terms_new = rules.rule3(dep_tags, pos_tags, opinion_terms, nouns_filter)
+        # aspect_terms_new = rules.rule3(dep_tags, pos_tags, opinion_terms, nouns_filter, terms_true)
         # aspect_terms.update(aspect_terms_new)
         aspect_terms_new = rules.rule4(dep_tags, pos_tags, sent_text, opinion_terms, nouns_filter,
                                        aspect_terms_train)
         aspect_terms.update(aspect_terms_new)
         # aspect_terms_new = rules.rule5(dep_tags, pos_tags, opinion_terms, nouns_filter)
         # aspect_terms.update(aspect_terms_new)
-        # aspect_terms_new = rules.conj_rule(dep_tags, pos_tags, opinion_terms, nouns_filter, aspect_terms)
-        # aspect_terms.update(aspect_terms_new)
-        aspect_terms_new = rules.rec_rule1(dep_tags, pos_tags, nouns_filter, opinion_terms)
+        aspect_terms_new = rules.conj_rule(dep_tags, pos_tags, opinion_terms, nouns_filter, aspect_terms)
+        aspect_terms.update(aspect_terms_new)
+
+        words = [dep_tag[2][1] for dep_tag in dep_tags]
+        aspect_terms_new = rules.rec_rule1(words, pos_tags, nouns_filter)
         aspect_terms.update(aspect_terms_new)
 
         # if sent_idx > 10:
@@ -360,7 +368,7 @@ def __rule_insight(opinion_term_dict_file, filter_nouns_file, dep_tags_file, pos
         sents = utils.load_json_objs(sents_file)
         aspect_terms_true = list()
         for sent in sents:
-            aspect_terms_true.append([t['term'] for t in sent.get('terms', list())])
+            aspect_terms_true.append([t['term'].lower() for t in sent.get('terms', list())])
         sent_texts = [sent['text'] for sent in sents]
         correct_sent_idxs = __evaluate(aspects_sys_list, aspect_terms_true, dep_tags_list, pos_tags_list, sent_texts)
         with open('d:/data/aspect/semeval14/rules-correct.txt', 'w', encoding='utf-8') as fout:
@@ -390,8 +398,10 @@ def __differ():
 
 # sents = utils.load_json_objs(config.SE14_LAPTOP_TEST_SENTS_FILE)
 
-opinion_terms_file = 'd:/data/aspect/semeval14/opinion-terms.txt'
+# opinion_terms_file = 'd:/data/aspect/semeval14/opinion-terms.txt'
+opinion_terms_file = 'd:/data/aspect/semeval14/opinion-terms-full.txt'
 filter_nouns_file = 'd:/data/aspect/semeval14/nouns-filter.txt'
+rest_filter_nouns_file = 'd:/data/aspect/semeval14/restaurant/aspect-nouns-filter.txt'
 
 # dep_tags_file = 'd:/data/aspect/semeval14/laptops/laptops-test-rule-dep.txt'
 # pos_tags_file = 'd:/data/aspect/semeval14/laptops/laptops-test-rule-pos.txt'
@@ -413,31 +423,36 @@ filter_nouns_file = 'd:/data/aspect/semeval14/nouns-filter.txt'
 # sent_texts_file = 'd:/data/amazon/laptops-reivews-sent-text.txt'
 # sents_file = None
 
+# __rule_insight(opinion_terms_file, filter_nouns_file, dep_tags_file, pos_tags_file, sent_texts_file,
+#                train_sents_file, dst_result_file=aspect_result_file, sents_file=sents_file)
+
+
 # dep_tags_file = 'd:/data/aspect/semeval14/restaurant/restaurants-train-rule-dep.txt'
 # pos_tags_file = 'd:/data/aspect/semeval14/restaurant/restaurants-train-rule-pos.txt'
-# result_file = 'd:/data/aspect/semeval14/restaurant/restaurants-train-aspect-rule-result.txt'
+# aspect_result_file = 'd:/data/aspect/semeval14/restaurant/restaurants-train-aspect-rule-result.txt'
 # sent_texts_file = 'd:/data/aspect/semeval14/restaurant/restaurants_train_texts.txt'
 # train_sents_file = config.SE14_REST_TRAIN_SENTS_FILE
 # sents_file = config.SE14_REST_TRAIN_SENTS_FILE
 
 # dep_tags_file = 'd:/data/aspect/semeval14/restaurant/restaurants-test-rule-dep.txt'
 # pos_tags_file = 'd:/data/aspect/semeval14/restaurant/restaurants-test-rule-pos.txt'
-# aspect_result_file = 'd:/data/aspect/semeval14/restaurant/restaurants-test-aspect-rule-result.txt'
+# aspect_result_file = 'd:/data/aspect/semeval14/restaurant/restaurants-test-aspect-rule-result-p.txt'
+# # aspect_result_file = 'd:/data/aspect/semeval14/restaurant/restaurants-test-aspect-rule-result-r.txt'
 # opinion_result_file = 'd:/data/aspect/semeval14/restaurant/restaurants-test-opinion-rule-result.txt'
 # sent_texts_file = 'd:/data/aspect/semeval14/restaurant/restaurants_test_texts.txt'
 # train_sents_file = config.SE14_REST_TRAIN_SENTS_FILE
 # sents_file = config.SE14_REST_TEST_SENTS_FILE
 
-
 dep_tags_file = 'd:/data/res/yelp-review-round-9-dep.txt'
 pos_tags_file = 'd:/data/res/yelp-review-round-9-pos.txt'
-aspect_result_file = 'd:/data/aspect/semeval14/restaurant/yelp-aspect-rule-result.txt'
+# aspect_result_file = 'd:/data/aspect/semeval14/restaurant/yelp-aspect-rule-result-p.txt'
+aspect_result_file = 'd:/data/aspect/semeval14/restaurant/yelp-aspect-rule-result-r.txt'
 opinion_result_file = 'd:/data/aspect/semeval14/restaurant/yelp-opinion-rule-result.txt'
 sent_texts_file = 'd:/data/res/yelp-review-eng-tok-sents-round-9.txt'
 train_sents_file = config.SE14_REST_TRAIN_SENTS_FILE
 sents_file = None
 
-__rule_insight(opinion_terms_file, filter_nouns_file, dep_tags_file, pos_tags_file, sent_texts_file,
+__rule_insight(opinion_terms_file, rest_filter_nouns_file, dep_tags_file, pos_tags_file, sent_texts_file,
                train_sents_file, dst_result_file=aspect_result_file, sents_file=sents_file)
 
 # terms_vocab = __load_opinion_terms_in_train(train_sents_file)

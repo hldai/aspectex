@@ -79,6 +79,7 @@ def get_data_amazon_ao(vocab, aspect_terms_file, opinion_terms_file, tok_texts_f
 def get_data_amazon(vocab, true_terms_file, tok_texts_file, task):
     terms_true_list = utils.load_json_objs(true_terms_file)
     tok_texts = utils.read_lines(tok_texts_file)
+    # print(len(terms_true_list), tok_texts_file, len(tok_texts))
     assert len(terms_true_list) == len(tok_texts)
 
     word_idx_dict = {w: i + 1 for i, w in enumerate(vocab)}
