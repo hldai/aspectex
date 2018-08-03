@@ -1,5 +1,7 @@
 import os
 import re
+import pickle
+import random
 import json
 import config
 from utils import utils
@@ -215,6 +217,60 @@ def __trim_word_vecs_file(text_files, origin_word_vec_file, dst_word_vec_file):
         pickle.dump((vocab, word_vec_matrix), fout, protocol=pickle.HIGHEST_PROTOCOL)
 
 
+def __gen_yelp_review_sents(yelp_review_file, dst_file):
+    import nltk
+    f = open(yelp_review_file, encoding='utf-8')
+    fout = open(dst_file, 'w', encoding='utf-8', newline='\n')
+    for i, line in enumerate(f):
+        review = json.loads(line)
+        review_text = review['text']
+        sents = nltk.sent_tokenize(review_text)
+        # print(sents)
+        for sent in sents:
+            sent = sent.strip()
+            if not sent:
+                continue
+            sent = re.sub('\s+', ' ', sent)
+            fout.write('{}\n'.format(sent))
+        if i % 10000 == 0:
+            print(i)
+        # if i > 10000:
+        #     break
+    f.close()
+    fout.close()
+
+
+def __select_random_yelp_review_sents(sents_file, dst_file):
+    f = open(sents_file, encoding='utf-8')
+    fout = open(dst_file, 'w', encoding='utf-8', newline='\n')
+    for line in f:
+        v = random.uniform(0, 1)
+        if v < 0.01:
+            fout.write(line)
+    f.close()
+    fout.close()
+
+
+def __filter_non_english_sents(tok_sents_file, dst_file):
+    with open(config.SE14_REST_GLOVE_WORD_VEC_FILE, 'rb') as f:
+        vocab, word_vecs_matrix = pickle.load(f)
+    vocab = set(vocab)
+    f = open(tok_sents_file, encoding='utf-8')
+    fout = open(dst_file, 'w', encoding='utf-8', newline='\n')
+    for line in f:
+        words = line.strip().split(' ')
+        hit_cnt = 0
+        for w in words:
+            if w in vocab:
+                hit_cnt += 1
+        # print(hit_cnt / len(words))
+        r = hit_cnt / len(words)
+        if r > 0.6:
+            fout.write(line)
+    fout.close()
+    f.close()
+
+
 def __split_training_set():
     pass
 
@@ -246,3 +302,11 @@ def __split_training_set():
 #     [config.SE14_REST_TRAIN_TOK_TEXTS_FILE, config.SE14_REST_TEST_TOK_TEXTS_FILE],
 #     config.GLOVE_WORD_VEC_FILE, config.SE14_REST_GLOVE_WORD_VEC_FILE
 # )
+
+yelp_rest_review_sents_file = 'd:/data/res/yelp-review-sents-round-9.txt'
+eng_yelp_rest_review_sents_file = 'd:/data/res/yelp-review-eng-tok-sents-round-9.txt'
+# __gen_yelp_review_sents('d:/data/yelp/srcdata/yelp_academic_dataset_review.json',
+#                         yelp_rest_review_sents_file)
+# __select_random_yelp_review_sents(yelp_rest_review_sents_file,
+#                                   'd:/data/res/yelp-review-sents-round-9-rand-part.txt')
+__filter_non_english_sents('d:/data/res/yelp-review-tok-sents-round-9.txt', eng_yelp_rest_review_sents_file)

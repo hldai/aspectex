@@ -281,7 +281,7 @@ class LSTMCRF:
                 epoch, n_batches, word_idxs_list_train, labels_list_train, word_idxs_list_valid, labels_list_valid,
                 valid_texts, aspects_true_list, opinions_true_list, lr, dropout,
                 best_f1_a, best_f1_o, best_f1_sum, train_feat_list=train_feat_list, valid_feat_list=valid_feat_list,
-                error_file=error_file)
+                error_file=error_file, save_model_file=save_file)
             # losses, losses_seg = list(), list()
             # for i in range(n_batches):
             #     word_idxs_list_batch = word_idxs_list_train[i * self.batch_size: (i + 1) * self.batch_size]
