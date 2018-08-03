@@ -416,8 +416,8 @@ def __train_nrdj_restaurant_pr():
 
     # n_train = 1000
     n_train = -1
-    # task = 'pretrain'
-    task = 'train'
+    task = 'pretrain'
+    # task = 'train'
     label_task = 'aspect'
     n_tags = 5 if label_task == 'both' else 3
     # n_tags = 5 if task == 'train' else 3

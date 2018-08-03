@@ -282,11 +282,11 @@ class NeuRuleDoubleJoint:
                 batch_idx_src2 = batch_idx_src2 + 1 if batch_idx_src2 + 1 < n_batches_src2 else 0
 
                 if (i + 1) % 100 == 0:
-                    p1, r1, f11 = self.evaluate(
+                    p1, r1, f11, _, _, _ = self.evaluate(
                         data_src1.word_idxs_list_valid, data_src1.labels_list_valid,
                         data_src1.valid_texts, data_src1.aspects_true_list, 'src1')
 
-                    p2, r2, f12 = self.evaluate(
+                    p2, r2, f12, _, _, _ = self.evaluate(
                         data_src2.word_idxs_list_valid, data_src2.labels_list_valid,
                         data_src2.valid_texts, data_src2.opinions_true_list, 'src2')
 
