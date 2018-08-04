@@ -505,7 +505,7 @@ def __train_nrdj_joint_restaurant_pr():
     # n_tags = 5 if task == 'train' else 3
     batch_size = 20
     hidden_size_lstm = 100
-    n_epochs = 200
+    n_epochs = 500
     lr = 0.001
     share_lstm = False
     # load_pretrained_model = True

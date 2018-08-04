@@ -4,6 +4,7 @@ import config
 import datetime
 from models.nrdoublejoint import NeuRuleDoubleJoint
 from models.nrdjmlp import NeuRuleDoubleJointMLP
+from models.nrdjdeep import NeuRuleDoubleJointDeep
 from utils import utils, modelutils, datautils
 from utils.loggingutils import init_logging
 import tensorflow as tf
@@ -136,23 +137,23 @@ def __train_nrdj_deep_restaurant_pr():
     #     vocab, opinion_terms_file, yelp_tok_texts_file, 'opinion')
     print('done')
 
-    nrdj = NeuRuleDoubleJointMLP(n_tags, word_vecs_matrix, share_lstm,
+    nrdj = NeuRuleDoubleJointDeep(n_tags, word_vecs_matrix, share_lstm,
                                  hidden_size_lstm=hidden_size_lstm,
                                  model_file=load_model_file)
 
     nrj_train_data_src1 = nrj_train_data_src2 = None
     # if train_mode != 'target-only':
-    nrj_train_data_src1 = NeuRuleDoubleJointMLP.TrainData(
+    nrj_train_data_src1 = NeuRuleDoubleJointDeep.TrainData(
         train_data_src1.word_idxs_list, train_data_src1.labels_list, valid_data_src1.word_idxs_list,
         valid_data_src1.labels_list, valid_data_src1.tok_texts, valid_data_src1.aspects_true_list, None
     )
-    nrj_train_data_src2 = NeuRuleDoubleJointMLP.TrainData(
+    nrj_train_data_src2 = NeuRuleDoubleJointDeep.TrainData(
         train_data_src2.word_idxs_list, train_data_src2.labels_list, valid_data_src2.word_idxs_list,
         valid_data_src2.labels_list, valid_data_src2.tok_texts, valid_data_src2.aspects_true_list,
         None
     )
 
-    nrj_train_data_tar = NeuRuleDoubleJointMLP.TrainData(
+    nrj_train_data_tar = NeuRuleDoubleJointDeep.TrainData(
         train_data_tar.word_idxs_list, train_data_tar.labels_list, valid_data_tar.word_idxs_list,
         valid_data_tar.labels_list, valid_data_tar.tok_texts, valid_data_tar.aspects_true_list,
         valid_data_tar.opinions_true_list
