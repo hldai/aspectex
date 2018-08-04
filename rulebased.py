@@ -332,13 +332,15 @@ def __rule_insight(opinion_term_dict_file, filter_nouns_file, dep_tags_file, pos
         # aspect_terms.update(aspect_terms_new)
         # aspect_terms_new = rules.rule3(dep_tags, pos_tags, opinion_terms, nouns_filter, terms_true)
         # aspect_terms.update(aspect_terms_new)
-        aspect_terms_new = rules.rule4(dep_tags, pos_tags, sent_text, opinion_terms, nouns_filter,
-                                       aspect_terms_train)
-        aspect_terms.update(aspect_terms_new)
+
+        # aspect_terms_new = rules.rule4(dep_tags, pos_tags, sent_text, opinion_terms, nouns_filter,
+        #                                aspect_terms_train)
+        # aspect_terms.update(aspect_terms_new)
+
         # aspect_terms_new = rules.rule5(dep_tags, pos_tags, opinion_terms, nouns_filter)
         # aspect_terms.update(aspect_terms_new)
-        aspect_terms_new = rules.conj_rule(dep_tags, pos_tags, opinion_terms, nouns_filter, aspect_terms)
-        aspect_terms.update(aspect_terms_new)
+        # aspect_terms_new = rules.conj_rule(dep_tags, pos_tags, opinion_terms, nouns_filter, aspect_terms)
+        # aspect_terms.update(aspect_terms_new)
 
         words = [dep_tag[2][1] for dep_tag in dep_tags]
         aspect_terms_new = rules.rec_rule1(words, pos_tags, nouns_filter)
@@ -446,7 +448,7 @@ rest_filter_nouns_file = 'd:/data/aspect/semeval14/restaurant/aspect-nouns-filte
 dep_tags_file = 'd:/data/res/yelp-review-round-9-dep.txt'
 pos_tags_file = 'd:/data/res/yelp-review-round-9-pos.txt'
 # aspect_result_file = 'd:/data/aspect/semeval14/restaurant/yelp-aspect-rule-result-p.txt'
-aspect_result_file = 'd:/data/aspect/semeval14/restaurant/yelp-aspect-rule-result-r.txt'
+aspect_result_file = 'd:/data/aspect/semeval14/restaurant/yelp-aspect-rule-result-r1.txt'
 opinion_result_file = 'd:/data/aspect/semeval14/restaurant/yelp-opinion-rule-result.txt'
 sent_texts_file = 'd:/data/res/yelp-review-eng-tok-sents-round-9.txt'
 train_sents_file = config.SE14_REST_TRAIN_SENTS_FILE
