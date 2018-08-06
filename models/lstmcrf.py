@@ -101,8 +101,8 @@ class LSTMCRF:
             log_likelihood, trans_params = tf.contrib.crf.crf_log_likelihood(
                     self.logits, self.labels, self.sequence_lengths)
             self.trans_params = trans_params  # need to evaluate it for decoding
-            self.loss = tf.reduce_mean(-log_likelihood)
-            # self.loss = tf.reduce_mean(-log_likelihood) + 0.001 * tf.nn.l2_loss(self.W)
+            # self.loss = tf.reduce_mean(-log_likelihood)
+            self.loss = tf.reduce_mean(-log_likelihood) + 0.001 * tf.nn.l2_loss(self.W)
         else:
             losses = tf.nn.sparse_softmax_cross_entropy_with_logits(
                     logits=self.logits, labels=self.labels)
@@ -231,14 +231,16 @@ class LSTMCRF:
 
                 if a_f1 + o_f1 > best_f1_sum:
                     best_f1_sum = a_f1 + o_f1
+                    best_f1_a = a_f1
+                    best_f1_o = o_f1
                     if self.saver is not None:
                         self.saver.save(self.sess, save_model_file)
                         # print('model saved to {}'.format(save_file))
                         logging.info('model saved to {}'.format(save_model_file))
-                if a_f1 > best_f1_a:
-                    best_f1_a = a_f1
-                if o_f1 > best_f1_o:
-                    best_f1_o = o_f1
+                # if a_f1 > best_f1_a:
+                #     best_f1_a = a_f1
+                # if o_f1 > best_f1_o:
+                #     best_f1_o = o_f1
         # print('iter {}, loss={}'.format(epoch, sum(losses)))
         # metrics = self.run_evaluate(dev)
         loss_val = sum(losses)
@@ -257,13 +259,15 @@ class LSTMCRF:
             epoch, loss_val, a_p, a_r, a_f1, best_f1_a, o_p, o_r, o_f1, best_f1_o))
         if a_f1 + o_f1 > best_f1_sum:
             best_f1_sum = a_f1 + o_f1
+            best_f1_a = a_f1
+            best_f1_o = o_f1
             if self.saver is not None:
                 self.saver.save(self.sess, save_model_file)
                 logging.info('model saved to {}'.format(save_model_file))
-        if a_f1 > best_f1_a:
-            best_f1_a = a_f1
-        if o_f1 > best_f1_o:
-            best_f1_o = o_f1
+        # if a_f1 > best_f1_a:
+        #     best_f1_a = a_f1
+        # if o_f1 > best_f1_o:
+        #     best_f1_o = o_f1
 
         return best_f1_a, best_f1_o, best_f1_sum
 

@@ -76,63 +76,6 @@ def __train_lstmcrf_manual_feat():
                   n_epochs=n_epochs)
 
 
-def __train_lstm_crf_restaurant():
-    init_logging('log/nr-rest-{}.log'.format(str_today), mode='a', to_stdout=True)
-    task = 'train'
-    # task = 'pretrain'
-    label_task_pretrain = 'both'
-    label_task_train = 'both'
-    # label_task_pretrain = 'aspect'
-    # label_task_train = 'aspect'
-    # load_pretrained_model = False
-    load_pretrained_model = True
-    n_tags = 3
-    if label_task_pretrain == 'both' or label_task_train == 'both':
-        n_tags = 5
-
-    aspect_terms_file = 'd:/data/aspect/semeval14/restaurant/yelp-aspect-rule-result-r.txt'
-    # aspect_terms_file = 'd:/data/aspect/semeval14/restaurant/yelp-aspect-rule-result-r1.txt'
-    opinion_terms_file = 'd:/data/aspect/semeval14/restaurant/yelp-opinion-rule-result.txt'
-    yelp_tok_texts_file = 'd:/data/res/yelp-review-eng-tok-sents-round-9.txt'
-    rule_model_file = 'd:/data/aspect/semeval14/tf-model/r1/restaurants-rule2.ckpl'
-    error_file = None
-
-    load_model_file = None
-    if task == 'train' and load_pretrained_model:
-        load_model_file = rule_model_file
-    # save_model_file = None if task == 'train' else rule_model_file
-    save_model_file = rule_model_file if task == 'pretrain' else None
-
-    print('loading data ...')
-    with open(config.SE14_REST_GLOVE_WORD_VEC_FILE, 'rb') as f:
-        vocab, word_vecs_matrix = pickle.load(f)
-    if task == 'train':
-        train_data, valid_data = datautils.get_data_semeval(
-            config.SE14_REST_TRAIN_SENTS_FILE, config.SE14_REST_TRAIN_TOK_TEXTS_FILE,
-            config.SE14_REST_TEST_SENTS_FILE, config.SE14_REST_TEST_TOK_TEXTS_FILE,
-            vocab, -1, label_task_train)
-    else:
-        if label_task_pretrain == 'both':
-            train_data, valid_data = datautils.get_data_amazon_ao(
-                vocab, aspect_terms_file, opinion_terms_file, yelp_tok_texts_file)
-        elif label_task_pretrain == 'aspect':
-            train_data, valid_data = datautils.get_data_amazon(
-                vocab, aspect_terms_file, yelp_tok_texts_file, label_task_pretrain)
-        else:
-            train_data, valid_data = datautils.get_data_amazon(
-                vocab, opinion_terms_file, yelp_tok_texts_file, label_task_pretrain)
-    print('done')
-
-    print(len(vocab), 'words in vocab')
-    # lstmcrf = LSTMCRF(n_tags, word_vecs_matrix, hidden_size_lstm=hidden_size_lstm)
-    lstmcrf = LSTMCRF(n_tags, word_vecs_matrix, hidden_size_lstm=hidden_size_lstm, model_file=load_model_file)
-    # print(valid_data.aspects_true_list)
-    lstmcrf.train(train_data.word_idxs_list, train_data.labels_list, valid_data.word_idxs_list,
-                  valid_data.labels_list, vocab, valid_data.tok_texts, valid_data.aspects_true_list,
-                  valid_data.opinions_true_list,
-                  n_epochs=n_epochs, save_file=save_model_file, error_file=error_file)
-
-
 def __pretrain_lstmcrf(word_vecs_file, pre_tok_texts_file, pre_aspect_terms_file, pre_opinion_terms_file,
                        dst_model_file, task):
     init_logging('log/nr-pre-{}.log'.format(str_today), mode='a', to_stdout=True)
