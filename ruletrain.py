@@ -174,11 +174,10 @@ def __train_lstmcrf(word_vecs_file, train_tok_texts_file, train_sents_file, test
     with open(word_vecs_file, 'rb') as f:
         vocab, word_vecs_matrix = pickle.load(f)
 
-    load_model_file = rule_model_file
     save_model_file = None
     train_data, valid_data = datautils.get_data_semeval(
-        config.SE14_LAPTOP_TRAIN_SENTS_FILE, config.SE14_LAPTOP_TRAIN_TOK_TEXTS_FILE,
-        config.SE14_LAPTOP_TEST_SENTS_FILE, config.SE14_LAPTOP_TEST_TOK_TEXTS_FILE,
+        train_sents_file, train_tok_texts_file,
+        test_sents_file, test_tok_texts_file,
         vocab, -1, task)
 
     # train_data, valid_data = __get_data_semeval(vocab, -1)

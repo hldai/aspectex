@@ -271,8 +271,8 @@ def __filter_non_english_sents(tok_sents_file, dst_file):
     f.close()
 
 
-def __split_training_set():
-    pass
+def __split_training_set(train_sents_file):
+    valid_data_percent = 0.2
 
 
 # test_file_json = 'd:/data/aspect/semeval14/Laptops_Test_Gold.json'
