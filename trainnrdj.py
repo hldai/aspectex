@@ -326,4 +326,4 @@ str_today = datetime.date.today().strftime('%y-%m-%d')
 # __train_nrdj_restaurant_pr()
 # __train_nrdj_joint_restaurant_pr
 # __train_nrdj_mlp_restaurant_pr()
-__train_nrdj_deep_restaurant_pr()
+# __train_nrdj_deep_restaurant_pr()

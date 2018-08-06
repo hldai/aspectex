@@ -78,21 +78,20 @@ def __train_lstmcrf_manual_feat():
 
 def __train_lstm_crf_restaurant():
     init_logging('log/nr-rest-{}.log'.format(str_today), mode='a', to_stdout=True)
-    # task = 'train'
-    task = 'pretrain'
-    # label_task_pretrain = 'both'
-    # label_task_train = 'both'
-    label_task_pretrain = 'aspect'
-    label_task_train = 'aspect'
+    task = 'train'
+    # task = 'pretrain'
+    label_task_pretrain = 'both'
+    label_task_train = 'both'
+    # label_task_pretrain = 'aspect'
+    # label_task_train = 'aspect'
     # load_pretrained_model = False
     load_pretrained_model = True
-    hidden_size_lstm = 100
-    n_epochs = 200
     n_tags = 3
     if label_task_pretrain == 'both' or label_task_train == 'both':
         n_tags = 5
 
-    aspect_terms_file = 'd:/data/aspect/semeval14/restaurant/yelp-aspect-rule-result.txt'
+    aspect_terms_file = 'd:/data/aspect/semeval14/restaurant/yelp-aspect-rule-result-r.txt'
+    # aspect_terms_file = 'd:/data/aspect/semeval14/restaurant/yelp-aspect-rule-result-r1.txt'
     opinion_terms_file = 'd:/data/aspect/semeval14/restaurant/yelp-opinion-rule-result.txt'
     yelp_tok_texts_file = 'd:/data/res/yelp-review-eng-tok-sents-round-9.txt'
     rule_model_file = 'd:/data/aspect/semeval14/tf-model/r1/restaurants-rule2.ckpl'
@@ -134,56 +133,53 @@ def __train_lstm_crf_restaurant():
                   n_epochs=n_epochs, save_file=save_model_file, error_file=error_file)
 
 
-def __train_lstmcrf():
-    init_logging('log/nr-{}.log'.format(str_today), mode='a', to_stdout=True)
+def __pretrain_lstmcrf(word_vecs_file, pre_tok_texts_file, pre_aspect_terms_file, pre_opinion_terms_file,
+                       dst_model_file, task):
+    init_logging('log/nr-pre-{}.log'.format(str_today), mode='a', to_stdout=True)
 
-    # task = 'pretrain'
-    task = 'train'
-    # label_task_pretrain = 'opinion'
-    # label_task_pretrain = 'aspect'
-    label_task_pretrain = 'both'
-    label_task_train = 'both'
-    hidden_size_lstm = 100
-    n_epochs = 200
-    n_tags = 3
-    if label_task_pretrain == 'both' or label_task_train == 'both':
-        n_tags = 5
-    # n_tags = 5 if label_task == 'both' else 3
-    # load_pretrained_model = False
-    load_pretrained_model = True
-    error_file = 'd:/data/aspect/semeval14/error-sents.txt' if task == 'train' else None
-    # error_file = None
-
-    aspect_terms_file = config.AMAZON_TERMS_TRUE2_FILE
-    opinion_terms_file = config.AMAZON_TERMS_TRUE4_FILE
-    rule_model_file = config.LAPTOP_RULE_MODEL2_FILE
+    n_tags = 5 if task == 'both' else 3
 
     print('loading data ...')
-    with open(config.SE14_LAPTOP_GLOVE_WORD_VEC_FILE, 'rb') as f:
+    with open(word_vecs_file, 'rb') as f:
         vocab, word_vecs_matrix = pickle.load(f)
 
-    if task == 'train':
-        load_model_file = rule_model_file
-        save_model_file = None
-        train_data, valid_data = datautils.get_data_semeval(
-            config.SE14_LAPTOP_TRAIN_SENTS_FILE, config.SE14_LAPTOP_TRAIN_TOK_TEXTS_FILE,
-            config.SE14_LAPTOP_TEST_SENTS_FILE, config.SE14_LAPTOP_TEST_TOK_TEXTS_FILE,
-            vocab, -1, label_task_train)
+    load_model_file = None
+    save_model_file = dst_model_file
+    if task == 'both':
+        train_data, valid_data = datautils.get_data_amazon_ao(
+            vocab, pre_aspect_terms_file, pre_opinion_terms_file, pre_tok_texts_file)
+    elif task == 'aspect':
+        train_data, valid_data = datautils.get_data_amazon(
+            vocab, pre_aspect_terms_file, pre_tok_texts_file, task)
     else:
-        load_model_file = None
-        save_model_file = rule_model_file
-        if label_task_pretrain == 'both':
-            train_data, valid_data = datautils.get_data_amazon_ao(
-                vocab, aspect_terms_file, opinion_terms_file, config.AMAZON_TOK_TEXTS_FILE)
-        elif label_task_pretrain == 'aspect':
-            train_data, valid_data = datautils.get_data_amazon(
-                vocab, aspect_terms_file, config.AMAZON_TOK_TEXTS_FILE, label_task_pretrain)
-        else:
-            train_data, valid_data = datautils.get_data_amazon(
-                vocab, opinion_terms_file, config.AMAZON_TOK_TEXTS_FILE, label_task_pretrain)
+        train_data, valid_data = datautils.get_data_amazon(
+            vocab, pre_opinion_terms_file, pre_tok_texts_file, task)
+    print('done')
 
-    if not load_pretrained_model:
-        load_model_file = None
+    # lstmcrf = LSTMCRF(n_tags, word_vecs_matrix, hidden_size_lstm=hidden_size_lstm)
+    lstmcrf = LSTMCRF(n_tags, word_vecs_matrix, hidden_size_lstm=hidden_size_lstm, model_file=load_model_file)
+    # print(valid_data.aspects_true_list)
+    lstmcrf.train(train_data.word_idxs_list, train_data.labels_list, valid_data.word_idxs_list,
+                  valid_data.labels_list, vocab, valid_data.tok_texts, valid_data.aspects_true_list,
+                  valid_data.opinions_true_list, n_epochs=n_epochs, save_file=save_model_file)
+
+
+def __train_lstmcrf(word_vecs_file, train_tok_texts_file, train_sents_file, test_tok_texts_file,
+                    test_sents_file, load_model_file, task, error_file=None):
+    init_logging('log/nr-{}.log'.format(str_today), mode='a', to_stdout=True)
+
+    n_tags = 5 if task == 'both' else 3
+
+    print('loading data ...')
+    with open(word_vecs_file, 'rb') as f:
+        vocab, word_vecs_matrix = pickle.load(f)
+
+    load_model_file = rule_model_file
+    save_model_file = None
+    train_data, valid_data = datautils.get_data_semeval(
+        config.SE14_LAPTOP_TRAIN_SENTS_FILE, config.SE14_LAPTOP_TRAIN_TOK_TEXTS_FILE,
+        config.SE14_LAPTOP_TEST_SENTS_FILE, config.SE14_LAPTOP_TEST_TOK_TEXTS_FILE,
+        vocab, -1, task)
 
     # train_data, valid_data = __get_data_semeval(vocab, -1)
     # train_data, valid_data = __get_data_amazon(vocab, config.AMAZON_TERMS_TRUE1_FILE)
@@ -247,8 +243,6 @@ def __train_neurule_double_joint():
     n_tags = 5 if label_opinions else 3
     # n_tags = 5 if task == 'train' else 3
     batch_size = 20
-    hidden_size_lstm = 100
-    n_epochs = 200
     lr = 0.001
     share_lstm = False
     train_mode = 'target-only'
@@ -321,9 +315,9 @@ def __train_nrdj_restaurant():
     load_pretrained_model = True
     train_mode = 'target-only'
 
-    aspect_terms_file = 'd:/data/aspect/semeval14/restaurant/yelp-aspect-rule-result.txt'
+    aspect_terms_file = 'd:/data/aspect/semeval14/restaurant/yelp-aspect-rule-result-r1.txt'
     opinion_terms_file = 'd:/data/aspect/semeval14/restaurant/yelp-opinion-rule-result.txt'
-    yelp_tok_texts_file = 'd:/data/res/yelp-review-tok-sents-round-9.txt'
+    yelp_tok_texts_file = 'd:/data/res/yelp-review-eng-tok-sents-round-9.txt'
     rule_model_file = 'd:/data/aspect/semeval14/tf-model/drest/yelp-nrdj.ckpl'
     # rule_model_file = None
 
@@ -379,9 +373,44 @@ def __train_nrdj_restaurant():
 
 
 str_today = datetime.date.today().strftime('%y-%m-%d')
+
+dataset_name = 'restaurant'
+method = 'lstm_crf'
+hidden_size_lstm = 100
+n_epochs = 200
+
+if dataset_name == 'laptops':
+    word_vecs_file = config.SE14_LAPTOP_WORD_VECS_FILE
+    pre_tok_texts_file = config.AMAZON_TOK_TEXTS_FILE
+    pre_aspect_terms_file = config.AMAZON_TERMS_TRUE2_FILE
+    pre_opinion_terms_file = config.AMAZON_TERMS_TRUE4_FILE
+    rule_model_file = config.LAPTOP_RULE_MODEL2_FILE
+
+    train_tok_texts_file = config.SE14_LAPTOP_TRAIN_TOK_TEXTS_FILE
+    train_sents_file = config.SE14_LAPTOP_TRAIN_SENTS_FILE
+    test_tok_texts_file = config.SE14_LAPTOP_TEST_TOK_TEXTS_FILE
+    test_sents_file = config.SE14_LAPTOP_TEST_SENTS_FILE
+else:
+    word_vecs_file = config.SE14_REST_GLOVE_WORD_VEC_FILE
+    pre_aspect_terms_file = 'd:/data/aspect/semeval14/restaurant/yelp-aspect-rule-result-r.txt'
+    # aspect_terms_file = 'd:/data/aspect/semeval14/restaurant/yelp-aspect-rule-result-r1.txt'
+    pre_opinion_terms_file = 'd:/data/aspect/semeval14/restaurant/yelp-opinion-rule-result.txt'
+    pre_tok_texts_file = 'd:/data/res/yelp-review-eng-tok-sents-round-9.txt'
+    rule_model_file = 'd:/data/aspect/semeval14/tf-model/r1/restaurants-rule2.ckpl'
+
+    train_tok_texts_file = config.SE14_REST_TRAIN_TOK_TEXTS_FILE
+    train_sents_file = config.SE14_REST_TRAIN_SENTS_FILE
+    test_tok_texts_file = config.SE14_REST_TEST_TOK_TEXTS_FILE
+    test_sents_file = config.SE14_REST_TEST_SENTS_FILE
+
+# __pretrain_lstmcrf(word_vecs_file, pre_tok_texts_file, pre_aspect_terms_file,
+#                    pre_opinion_terms_file, rule_model_file, 'both')
+
+__train_lstmcrf(word_vecs_file, train_tok_texts_file, train_sents_file, test_tok_texts_file,
+                test_sents_file, rule_model_file, 'both')
+
 # __train_lstmcrf_manual_feat()
-# __train_lstmcrf()
 # __train_lstm_crf_restaurant()
-__train_neurule_joint()
+# __train_neurule_joint()
 # __train_neurule_double_joint()
 # __train_nrdj_restaurant()

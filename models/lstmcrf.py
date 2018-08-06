@@ -102,6 +102,7 @@ class LSTMCRF:
                     self.logits, self.labels, self.sequence_lengths)
             self.trans_params = trans_params  # need to evaluate it for decoding
             self.loss = tf.reduce_mean(-log_likelihood)
+            # self.loss = tf.reduce_mean(-log_likelihood) + 0.001 * tf.nn.l2_loss(self.W)
         else:
             losses = tf.nn.sparse_softmax_cross_entropy_with_logits(
                     logits=self.logits, labels=self.labels)

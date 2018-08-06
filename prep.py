@@ -309,4 +309,4 @@ eng_yelp_rest_review_sents_file = 'd:/data/res/yelp-review-eng-tok-sents-round-9
 #                         yelp_rest_review_sents_file)
 # __select_random_yelp_review_sents(yelp_rest_review_sents_file,
 #                                   'd:/data/res/yelp-review-sents-round-9-rand-part.txt')
-__filter_non_english_sents('d:/data/res/yelp-review-tok-sents-round-9.txt', eng_yelp_rest_review_sents_file)
+# __filter_non_english_sents('d:/data/res/yelp-review-tok-sents-round-9.txt', eng_yelp_rest_review_sents_file)
