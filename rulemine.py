@@ -212,11 +212,20 @@ def __find_rule_candidates(dep_tags_list, pos_tags_list, aspect_terms_list, opin
 
 
 def __match_l1_pattern(pattern, dep_tags, pos_tags, opinion_terms_vocab):
-    pass
+    print(pattern)
+    print(dep_tags)
+    prel, pgov, pdep = pattern
+    for dep_tag in dep_tags:
+        rel, (igov, wgov), (idep, wdep) = dep_tag
+        if rel != prel:
+            continue
 
 
 def __filter_patterns_through_matching(patterns_l1, patterns_l2, dep_tags_list, pos_tags_list, opinion_terms_vocab):
-    pass
+    for p in patterns_l1:
+        for dep_tags, pos_tags, in zip(dep_tags_list, pos_tags_list):
+            __match_l1_pattern(p, dep_tags, pos_tags, opinion_terms_vocab)
+        exit()
 
 
 def __gen_aspect_patterns(dep_tags_file, pos_tags_file, sents_file, opinion_terms_file, word_cnts_file):
@@ -227,9 +236,12 @@ def __gen_aspect_patterns(dep_tags_file, pos_tags_file, sents_file, opinion_term
     aspect_terms_list = list()
     for sent in sents:
         aspect_terms_list.append([t['term'].lower() for t in sent.get('terms', list())])
+
     patterns_l1, patterns_l2 = __find_rule_candidates(
         dep_tags_list, pos_tags_list, aspect_terms_list, opinion_terms_vocab, word_cnts_file)
     print(len(patterns_l1), 'l1 patterns', len(patterns_l2), 'l2 patterns')
+
+    __filter_patterns_through_matching(patterns_l1, patterns_l2, dep_tags_list, pos_tags_list, opinion_terms_vocab)
 
 
 dep_tags_file = 'd:/data/aspect/semeval14/laptops/laptops-train-rule-dep.txt'
