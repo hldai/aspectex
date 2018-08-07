@@ -1,5 +1,6 @@
 import os
 import re
+import pandas as pd
 import pickle
 import random
 import json
@@ -271,6 +272,31 @@ def __filter_non_english_sents(tok_sents_file, dst_file):
     f.close()
 
 
+def __gen_word_cnts_file():
+    tok_texts_file = config.SE14_LAPTOP_TRAIN_TOK_TEXTS_FILE
+    dst_file = 'd:/data/aspect/semeval14/laptops/word_cnts.txt'
+    texts = utils.read_lines(tok_texts_file)
+    word_cnts_dict = dict()
+    total_word_cnt = 0
+    for sent_text in texts:
+        words = sent_text.split()
+        total_word_cnt += len(words)
+        for w in words:
+            cnt = word_cnts_dict.get(w, 0)
+            word_cnts_dict[w] = cnt + 1
+
+    word_cnt_tups = list(word_cnts_dict.items())
+    word_cnt_tups.sort(key=lambda x: -x[1])
+
+    word_cnt_rate_tups = list()
+    for w, cnt in word_cnt_tups:
+        word_cnt_rate_tups.append((w, cnt, cnt / total_word_cnt))
+    df = pd.DataFrame(word_cnt_rate_tups, columns=['word', 'cnt', 'p'])
+    with open(dst_file, 'w', encoding='utf-8', newline='\n') as fout:
+        df.to_csv(fout, index=False, float_format='%.5f')
+    print(total_word_cnt)
+
+
 def __split_training_set(train_sents_file):
     valid_data_percent = 0.2
 
@@ -310,3 +336,5 @@ eng_yelp_rest_review_sents_file = 'd:/data/res/yelp-review-eng-tok-sents-round-9
 # __select_random_yelp_review_sents(yelp_rest_review_sents_file,
 #                                   'd:/data/res/yelp-review-sents-round-9-rand-part.txt')
 # __filter_non_english_sents('d:/data/res/yelp-review-tok-sents-round-9.txt', eng_yelp_rest_review_sents_file)
+
+__gen_word_cnts_file()
