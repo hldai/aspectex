@@ -333,9 +333,9 @@ def __rule_insight(opinion_term_dict_file, filter_nouns_file, dep_tags_file, pos
         # aspect_terms_new = rules.rule3(dep_tags, pos_tags, opinion_terms, nouns_filter, terms_true)
         # aspect_terms.update(aspect_terms_new)
 
-        # aspect_terms_new = rules.rule4(dep_tags, pos_tags, sent_text, opinion_terms, nouns_filter,
-        #                                aspect_terms_train)
-        # aspect_terms.update(aspect_terms_new)
+        aspect_terms_new = rules.rule4(dep_tags, pos_tags, sent_text, opinion_terms, nouns_filter,
+                                       aspect_terms_train)
+        aspect_terms.update(aspect_terms_new)
 
         # aspect_terms_new = rules.rule5(dep_tags, pos_tags, opinion_terms, nouns_filter)
         # aspect_terms.update(aspect_terms_new)
@@ -405,12 +405,12 @@ opinion_terms_file = 'd:/data/aspect/semeval14/opinion-terms-full.txt'
 filter_nouns_file = 'd:/data/aspect/semeval14/nouns-filter.txt'
 rest_filter_nouns_file = 'd:/data/aspect/semeval14/restaurant/aspect-nouns-filter.txt'
 
-# dep_tags_file = 'd:/data/aspect/semeval14/laptops/laptops-test-rule-dep.txt'
-# pos_tags_file = 'd:/data/aspect/semeval14/laptops/laptops-test-rule-pos.txt'
-# result_file = 'd:/data/aspect/semeval14/laptops/laptops-test-aspect-rule-result.txt'
-# sent_texts_file = 'd:/data/aspect/semeval14/laptops/laptops_test_texts.txt'
-# train_sents_file = config.SE14_LAPTOP_TRAIN_SENTS_FILE
-# sents_file = config.SE14_LAPTOP_TEST_SENTS_FILE
+dep_tags_file = 'd:/data/aspect/semeval14/laptops/laptops-test-rule-dep.txt'
+pos_tags_file = 'd:/data/aspect/semeval14/laptops/laptops-test-rule-pos.txt'
+aspect_result_file = 'd:/data/aspect/semeval14/laptops/laptops-test-aspect-rule-result.txt'
+sent_texts_file = 'd:/data/aspect/semeval14/laptops/laptops_test_texts.txt'
+train_sents_file = config.SE14_LAPTOP_TRAIN_SENTS_FILE
+sents_file = config.SE14_LAPTOP_TEST_SENTS_FILE
 
 # dep_tags_file = 'd:/data/aspect/semeval14/laptops/laptops-train-rule-dep.txt'
 # pos_tags_file = 'd:/data/aspect/semeval14/laptops/laptops-train-rule-pos.txt'
@@ -425,8 +425,8 @@ rest_filter_nouns_file = 'd:/data/aspect/semeval14/restaurant/aspect-nouns-filte
 # sent_texts_file = 'd:/data/amazon/laptops-reivews-sent-text.txt'
 # sents_file = None
 
-# __rule_insight(opinion_terms_file, filter_nouns_file, dep_tags_file, pos_tags_file, sent_texts_file,
-#                train_sents_file, dst_result_file=aspect_result_file, sents_file=sents_file)
+__rule_insight(opinion_terms_file, filter_nouns_file, dep_tags_file, pos_tags_file, sent_texts_file,
+               train_sents_file, dst_result_file=aspect_result_file, sents_file=sents_file)
 
 
 # dep_tags_file = 'd:/data/aspect/semeval14/restaurant/restaurants-train-rule-dep.txt'
@@ -445,17 +445,17 @@ rest_filter_nouns_file = 'd:/data/aspect/semeval14/restaurant/aspect-nouns-filte
 # train_sents_file = config.SE14_REST_TRAIN_SENTS_FILE
 # sents_file = config.SE14_REST_TEST_SENTS_FILE
 
-dep_tags_file = 'd:/data/res/yelp-review-round-9-dep.txt'
-pos_tags_file = 'd:/data/res/yelp-review-round-9-pos.txt'
-# aspect_result_file = 'd:/data/aspect/semeval14/restaurant/yelp-aspect-rule-result-p.txt'
-aspect_result_file = 'd:/data/aspect/semeval14/restaurant/yelp-aspect-rule-result-r1.txt'
-opinion_result_file = 'd:/data/aspect/semeval14/restaurant/yelp-opinion-rule-result.txt'
-sent_texts_file = 'd:/data/res/yelp-review-eng-tok-sents-round-9.txt'
-train_sents_file = config.SE14_REST_TRAIN_SENTS_FILE
-sents_file = None
+# dep_tags_file = 'd:/data/res/yelp-review-round-9-dep.txt'
+# pos_tags_file = 'd:/data/res/yelp-review-round-9-pos.txt'
+# # aspect_result_file = 'd:/data/aspect/semeval14/restaurant/yelp-aspect-rule-result-p.txt'
+# aspect_result_file = 'd:/data/aspect/semeval14/restaurant/yelp-aspect-rule-result-r1.txt'
+# opinion_result_file = 'd:/data/aspect/semeval14/restaurant/yelp-opinion-rule-result.txt'
+# sent_texts_file = 'd:/data/res/yelp-review-eng-tok-sents-round-9.txt'
+# train_sents_file = config.SE14_REST_TRAIN_SENTS_FILE
+# sents_file = None
 
-__rule_insight(opinion_terms_file, rest_filter_nouns_file, dep_tags_file, pos_tags_file, sent_texts_file,
-               train_sents_file, dst_result_file=aspect_result_file, sents_file=sents_file)
+# __rule_insight(opinion_terms_file, rest_filter_nouns_file, dep_tags_file, pos_tags_file, sent_texts_file,
+#                train_sents_file, dst_result_file=aspect_result_file, sents_file=sents_file)
 
 # terms_vocab = __load_opinion_terms_in_train(train_sents_file)
 # __opinion_rule_insight(dep_tags_file, pos_tags_file, sent_texts_file, terms_vocab,

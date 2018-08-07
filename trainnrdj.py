@@ -321,8 +321,123 @@ def __train_nrdj_deep_restaurant_pr():
                n_epochs=n_epochs, lr=lr)
 
 
+def __pre_train_nrdj(word_vecs_file, tok_texts_file, aspect_terms_file, opinion_terms_file,
+                     dst_model_file, task):
+    init_logging('log/nrdj-pre-{}.log'.format(str_today), mode='a', to_stdout=True)
+
+    # n_train = 1000
+    n_train = -1
+    label_opinions = True
+    # label_opinions = False
+    n_tags = 5 if label_opinions else 3
+    # n_tags = 5 if task == 'train' else 3
+    batch_size = 20
+    lr = 0.001
+    share_lstm = False
+
+    print('loading data ...')
+    with open(word_vecs_file, 'rb') as f:
+        vocab, word_vecs_matrix = pickle.load(f)
+
+    # train_data_src1, valid_data_src1 = __get_data_amazon(vocab, config.AMAZON_TERMS_TRUE1_FILE)
+    # train_data_src1, valid_data_src1 = __get_data_amazon(vocab, config.AMAZON_TERMS_TRUE3_FILE)
+    train_data_src1, valid_data_src1 = datautils.get_data_amazon(
+        vocab, aspect_terms_file, tok_texts_file, 'aspect')
+    train_data_src2, valid_data_src2 = datautils.get_data_amazon(
+        vocab, opinion_terms_file, tok_texts_file, 'opinion')
+    print('done')
+
+    nrdj = NeuRuleDoubleJoint(n_tags, word_vecs_matrix, share_lstm,
+                              hidden_size_lstm=hidden_size_lstm,
+                              model_file=None)
+
+    nrj_train_data_src1 = nrj_train_data_src2 = None
+    # if train_mode != 'target-only':
+    nrj_train_data_src1 = NeuRuleDoubleJoint.TrainData(
+        train_data_src1.word_idxs_list, train_data_src1.labels_list, valid_data_src1.word_idxs_list,
+        valid_data_src1.labels_list, valid_data_src1.tok_texts, valid_data_src1.aspects_true_list, None
+    )
+    nrj_train_data_src2 = NeuRuleDoubleJoint.TrainData(
+        train_data_src2.word_idxs_list, train_data_src2.labels_list, valid_data_src2.word_idxs_list,
+        valid_data_src2.labels_list, valid_data_src2.tok_texts, None,
+        valid_data_src2.opinions_true_list
+    )
+
+    nrdj.pre_train(nrj_train_data_src1, nrj_train_data_src2, vocab, n_epochs=n_epochs, lr=lr,
+                   save_file=dst_model_file)
+
+
+def __train_nrdj(word_vecs_file, train_tok_texts_file, train_sents_file, test_tok_texts_file,
+                 test_sents_file, load_model_file, task):
+    init_logging('log/nrdj-{}.log'.format(str_today), mode='a', to_stdout=True)
+
+    # n_train = 1000
+    n_train = -1
+    label_opinions = True
+    # label_opinions = False
+    n_tags = 5 if label_opinions else 3
+    # n_tags = 5 if task == 'train' else 3
+    batch_size = 20
+    lr = 0.001
+    share_lstm = False
+    train_mode = 'target-only'
+
+    print('loading data ...')
+    with open(word_vecs_file, 'rb') as f:
+        vocab, word_vecs_matrix = pickle.load(f)
+    train_data_tar, valid_data_tar = datautils.get_data_semeval(
+        train_sents_file, train_tok_texts_file, test_sents_file, test_tok_texts_file,
+        vocab, n_train, label_opinions)
+    print('done')
+
+    nrdj = NeuRuleDoubleJoint(n_tags, word_vecs_matrix, share_lstm,
+                              hidden_size_lstm=hidden_size_lstm,
+                              model_file=load_model_file)
+
+    nrj_train_data_tar = NeuRuleDoubleJoint.TrainData(
+        train_data_tar.word_idxs_list, train_data_tar.labels_list, valid_data_tar.word_idxs_list,
+        valid_data_tar.labels_list, valid_data_tar.tok_texts, valid_data_tar.aspects_true_list,
+        valid_data_tar.opinions_true_list
+    )
+
+    nrdj.train(None, None, nrj_train_data_tar, vocab, train_mode,
+               n_epochs=n_epochs, lr=lr)
+
+
 str_today = datetime.date.today().strftime('%y-%m-%d')
-# __train_nrdj_restaurant()
+
+dataset_name = 'restaurant'
+hidden_size_lstm = 100
+n_epochs = 200
+
+if dataset_name == 'laptops':
+    word_vecs_file = config.SE14_LAPTOP_WORD_VECS_FILE
+    pre_tok_texts_file = config.AMAZON_TOK_TEXTS_FILE
+    pre_aspect_terms_file = config.AMAZON_TERMS_TRUE2_FILE
+    pre_opinion_terms_file = config.AMAZON_TERMS_TRUE4_FILE
+    rule_model_file = config.LAPTOP_RULE_MODEL2_FILE
+
+    train_tok_texts_file = config.SE14_LAPTOP_TRAIN_TOK_TEXTS_FILE
+    train_sents_file = config.SE14_LAPTOP_TRAIN_SENTS_FILE
+    test_tok_texts_file = config.SE14_LAPTOP_TEST_TOK_TEXTS_FILE
+    test_sents_file = config.SE14_LAPTOP_TEST_SENTS_FILE
+else:
+    word_vecs_file = config.SE14_REST_GLOVE_WORD_VEC_FILE
+    pre_aspect_terms_file = 'd:/data/aspect/semeval14/restaurant/yelp-aspect-rule-result-r.txt'
+    # aspect_terms_file = 'd:/data/aspect/semeval14/restaurant/yelp-aspect-rule-result-r1.txt'
+    pre_opinion_terms_file = 'd:/data/aspect/semeval14/restaurant/yelp-opinion-rule-result.txt'
+    pre_tok_texts_file = 'd:/data/res/yelp-review-eng-tok-sents-round-9.txt'
+    rule_model_file = 'd:/data/aspect/semeval14/tf-model/drest/yelp-nrdj.ckpl'
+
+    train_tok_texts_file = config.SE14_REST_TRAIN_TOK_TEXTS_FILE
+    train_sents_file = config.SE14_REST_TRAIN_SENTS_FILE
+    test_tok_texts_file = config.SE14_REST_TEST_TOK_TEXTS_FILE
+    test_sents_file = config.SE14_REST_TEST_SENTS_FILE
+
+# __pre_train_nrdj(word_vecs_file, pre_tok_texts_file, pre_aspect_terms_file,
+#                  pre_opinion_terms_file, rule_model_file, 'both')
+__train_nrdj(word_vecs_file, train_tok_texts_file, train_sents_file, test_tok_texts_file, test_sents_file,
+             rule_model_file, 'both')
 # __train_nrdj_restaurant_pr()
 # __train_nrdj_joint_restaurant_pr
 # __train_nrdj_mlp_restaurant_pr()

@@ -310,11 +310,14 @@ class NeuRuleDoubleJoint:
         if save_file is not None and self.saver is None:
             self.saver = tf.train.Saver()
 
-        n_train_src1 = len(data_src1.word_idxs_list_train)
-        n_batches_src1 = (n_train_src1 + self.batch_size - 1) // self.batch_size
+        n_train_src1, n_batches_src1, n_train_src2, n_batches_src2 = 0, 0, 0, 0
+        if data_src1 is not None:
+            n_train_src1 = len(data_src1.word_idxs_list_train)
+            n_batches_src1 = (n_train_src1 + self.batch_size - 1) // self.batch_size
 
-        n_train_src2 = len(data_src2.word_idxs_list_train)
-        n_batches_src2 = (n_train_src2 + self.batch_size - 1) // self.batch_size
+        if data_src2 is not None:
+            n_train_src2 = len(data_src2.word_idxs_list_train)
+            n_batches_src2 = (n_train_src2 + self.batch_size - 1) // self.batch_size
 
         n_train_tar = len(data_tar.word_idxs_list_train)
         n_batches_tar = (n_train_tar + self.batch_size - 1) // self.batch_size
