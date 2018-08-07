@@ -295,10 +295,11 @@ class NeuRuleDoubleJoint:
                         p1, r1, f11, p2, r2, f12
                     ))
 
-                    # if f11 + f12 > best_f1:
-                    if f11 >= best_f11 and f12 >= best_f12:
-                        best_f11 = f11
-                        best_f12 = f12
+                    if f11 + f12 > best_f1:
+                        best_f1 = f11 + f12
+                    # if f11 >= best_f11 and f12 >= best_f12:
+                    #     best_f11 = f11
+                    #     best_f12 = f12
                         if self.saver is not None:
                             self.saver.save(self.sess, save_file)
                             # print('model saved to {}'.format(save_file))
