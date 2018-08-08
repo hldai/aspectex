@@ -129,5 +129,26 @@ def __semeval_rule_insight():
             print(t, cnt)
 
 
+def __rule_result_differ():
+    idxs_rule = utils.read_lines('d:/data/aspect/semeval14/rules-correct.txt')
+    idxs_neu = utils.read_lines('d:/data/aspect/semeval14/lstmcrf-correct.txt')
+    idxs_rule = [int(idx) for idx in idxs_rule]
+    idxs_neu = [int(idx) for idx in idxs_neu]
+    print(idxs_rule)
+    print(idxs_neu)
+    idxs_rule_only = list()
+    for i in idxs_rule:
+        if i not in idxs_neu:
+            idxs_rule_only.append(i)
+    idxs_neu_only = list()
+    for i in idxs_neu:
+        if i not in idxs_rule:
+            idxs_neu_only.append(i)
+    print(idxs_rule_only)
+    print(len(idxs_rule_only))
+    print(idxs_neu_only)
+    print(len(idxs_neu_only))
+
+
 # __count_adj_phrases()
 # __semeval_rule_insight()

@@ -1,7 +1,7 @@
 import json
 import config
 from utils import utils
-from models import rules
+from models import rules, opinionrules, rulescommon
 
 
 # word-idx to (idx, word)
@@ -11,23 +11,6 @@ def __get_word_tup(dep_word):
     # idx = int(dep_word[p + 1:]) - 1
     idx = int(dep_word[p + 1:])
     return s, idx
-
-
-def __read_sent_dep_tups(fin):
-    tups = list()
-    for line in fin:
-        line = line.strip()
-        if not line:
-            return tups
-        line = line[:-1]
-        line = line.replace('(', ' ')
-        line = line.replace(', ', ' ')
-        rel, gov, dep = line.split(' ')
-        w_gov, idx_gov = __get_word_tup(gov)
-        w_dep, idx_dep = __get_word_tup(dep)
-        tups.append((rel, (idx_gov, w_gov), (idx_dep, w_dep)))
-        # tups.append(line.split(' '))
-    return tups
 
 
 def __match_terms(sent_text: str, terms_vocab):
@@ -84,20 +67,6 @@ def __load_opinion_terms_in_train(train_sents_file):
     return terms_vocab
 
 
-def __get_phrase_span_by_compound(dep_tags, base_word_idx):
-    dl = 1
-    while base_word_idx - dl > -1:
-        if dep_tags[base_word_idx - dl][0] != 'compound':
-            break
-        dl += 1
-    dr = 1
-    while base_word_idx + dr < len(dep_tags):
-        if dep_tags[base_word_idx + dr][0] != 'compound':
-            break
-        dr += 1
-    return base_word_idx - dl + 1, base_word_idx + dr
-
-
 def __count_hit(y_true, y_sys):
     hit_cnt = 0
     for yi in y_true:
@@ -150,84 +119,6 @@ def __evaluate(terms_sys_list, terms_true_list, dep_tags_list, pos_tags_list, se
     return correct_sent_idxs
 
 
-def __opinion_rule1(dep_tags, pos_tags):
-    words = [dep_tag[2][1] for dep_tag in dep_tags]
-    assert len(words) == len(pos_tags)
-    # print(words)
-    # print(pos_tags)
-
-    opinion_terms = list()
-    for i, w in enumerate(words):
-        pos = pos_tags[i]
-        if pos in {'JJ', 'RB'} and w not in {"n't", 'not', 'so', 'also'}:
-            opinion_terms.append(w)
-    # print(' '.join(words))
-    # print(noun_phrases)
-    return opinion_terms
-
-
-def __opinion_rule2(dep_tags, pos_tags):
-    words = [dep_tag[2][1] for dep_tag in dep_tags]
-    assert len(words) == len(pos_tags)
-    # print(words)
-    # print(pos_tags)
-
-    opinion_terms = list()
-    for dep_tup in dep_tags:
-        rel, gov, dep = dep_tup
-        if rel not in {'nsubj'}:
-            continue
-
-        igov, wgov = gov
-        idep, wdep = dep
-
-        # if wdep == 'i':
-        #     opinion_terms.append(wgov)
-        if wdep == 'it' and pos_tags[igov] == 'JJ':
-            opinion_terms.append(wgov)
-
-    # print(' '.join(words))
-    # print(noun_phrases)
-    # print(opinion_terms)
-    return opinion_terms
-
-
-def __opinion_rule3(sent_text: str, terms_dict):
-    terms = list()
-    for t in terms_dict:
-        pbeg = sent_text.find(t)
-        pend = pbeg + len(t)
-        if pbeg > 0 and sent_text[pbeg - 1].isalpha():
-            continue
-        if pend < len(sent_text) and sent_text[pend].isalpha():
-            continue
-        terms.append(t)
-    return terms
-
-
-def __opinion_rule4(dep_tags, pos_tags):
-    words = [dep_tag[2][1] for dep_tag in dep_tags]
-    assert len(words) == len(pos_tags)
-    # print(words)
-    # print(pos_tags)
-
-    opinion_terms = list()
-    for dep_tup in dep_tags:
-        rel, gov, dep = dep_tup
-        if rel not in {'amod'}:
-            continue
-
-        igov, wgov = gov
-        idep, wdep = dep
-        print(wgov, wdep)
-        opinion_terms.append(wdep)
-
-    # print(' '.join(words))
-    # print(noun_phrases)
-    # print(opinion_terms)
-    return opinion_terms
-
-
 def __filter_sub_terms(terms):
     terms_sys_tmp = list(terms)
     terms_sys_tmp.sort(key=lambda x: len(x))
@@ -270,11 +161,11 @@ def __opinion_rule_insight(dep_tags_file, pos_tags_file, sent_text_file, terms_v
         assert len(dep_tags) == len(pos_tags)
 
         opinion_terms = set()
-        # terms_new = __opinion_rule1(dep_tags, pos_tags)
+        # terms_new = opinionrules.rule1(dep_tags, pos_tags)
         # opinion_terms.update(terms_new)
-        terms_new = __opinion_rule2(dep_tags, pos_tags)
+        terms_new = opinionrules.rule2(dep_tags, pos_tags)
         opinion_terms.update(terms_new)
-        # terms_new = __opinion_rule4(dep_tags, pos_tags)
+        # terms_new = opinionrules.rule4(dep_tags, pos_tags)
         # opinion_terms.update(terms_new)
         terms_new = __match_terms(sent_text, terms_vocab)
         opinion_terms.update(terms_new)
@@ -368,34 +259,16 @@ def __rule_insight(opinion_term_dict_file, filter_nouns_file, dep_tags_file, pos
 
     if sents_file is not None:
         sents = utils.load_json_objs(sents_file)
-        aspect_terms_true = list()
-        for sent in sents:
-            aspect_terms_true.append([t['term'].lower() for t in sent.get('terms', list())])
+        aspect_terms_true = utils.aspect_terms_list_from_sents(sents)
         sent_texts = [sent['text'] for sent in sents]
         correct_sent_idxs = __evaluate(aspects_sys_list, aspect_terms_true, dep_tags_list, pos_tags_list, sent_texts)
         with open('d:/data/aspect/semeval14/rules-correct.txt', 'w', encoding='utf-8') as fout:
             fout.write('\n'.join([str(i) for i in correct_sent_idxs]))
 
 
-def __differ():
-    idxs_rule = utils.read_lines('d:/data/aspect/semeval14/rules-correct.txt')
-    idxs_neu = utils.read_lines('d:/data/aspect/semeval14/lstmcrf-correct.txt')
-    idxs_rule = [int(idx) for idx in idxs_rule]
-    idxs_neu = [int(idx) for idx in idxs_neu]
-    print(idxs_rule)
-    print(idxs_neu)
-    idxs_rule_only = list()
-    for i in idxs_rule:
-        if i not in idxs_neu:
-            idxs_rule_only.append(i)
-    idxs_neu_only = list()
-    for i in idxs_neu:
-        if i not in idxs_rule:
-            idxs_neu_only.append(i)
-    print(idxs_rule_only)
-    print(len(idxs_rule_only))
-    print(idxs_neu_only)
-    print(len(idxs_neu_only))
+def __run_with_mined_rules(rule_patterns_file, dep_tags_file, pos_tags_file, sent_texts_file, opinion_terms_file,
+                           sents_file=None):
+    rulescommon.load_rule_patterns_file(rule_patterns_file)
 
 
 # sents = utils.load_json_objs(config.SE14_LAPTOP_TEST_SENTS_FILE)
@@ -466,5 +339,3 @@ if task == 'opinion':
     terms_vocab = __load_opinion_terms_in_train(train_sents_file)
     __opinion_rule_insight(dep_tags_file, pos_tags_file, sent_texts_file, terms_vocab,
                            dst_result_file=opinion_result_file, sents_file=sents_file)
-
-# __differ()

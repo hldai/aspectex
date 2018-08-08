@@ -1,26 +1,4 @@
-NOUN_POS_TAGS = {'NN', 'NNP', 'NNS'}
-
-
-def __get_noun_phrase(dep_tags, pos_tags, base_word_idxs, opinion_terms):
-    words = [tup[2][1] for tup in dep_tags]
-    phrase_word_idxs = set(base_word_idxs)
-
-    ileft = min(phrase_word_idxs)
-    iright = max(phrase_word_idxs)
-    ileft_new, iright_new = ileft, iright
-    while ileft_new > 0:
-        if pos_tags[ileft_new - 1] in NOUN_POS_TAGS:
-            ileft_new -= 1
-        else:
-            break
-    while iright_new < len(pos_tags) - 1:
-        if pos_tags[iright_new + 1] in {'NN', 'NNP', 'NNS', 'CD'}:
-            iright_new += 1
-        else:
-            break
-
-    phrase = ' '.join([words[widx] for widx in range(ileft_new, iright_new + 1)])
-    return phrase
+from models import rulescommon
 
 
 def rule1(dep_tags, pos_tags, opinion_terms, nouns_filter):
@@ -40,7 +18,7 @@ def rule1(dep_tags, pos_tags, opinion_terms, nouns_filter):
 
         # print(rel, wgov, wdep)
         # phrase = __get_phrase(dep_tags, pos_tags, idep)
-        phrase = __get_noun_phrase(dep_tags, pos_tags, [idep], opinion_terms)
+        phrase = rulescommon.get_noun_phrase_from_seed(dep_tags, pos_tags, [idep])
 
         if phrase in nouns_filter:
             continue
@@ -69,7 +47,7 @@ def rule2(dep_tags, pos_tags, opinion_terms, nouns_filter):
 
         # print(dep_tup)
         # phrase = __get_phrase(dep_tags, pos_tags, igov)
-        phrase = __get_noun_phrase(dep_tags, pos_tags, [igov], opinion_terms)
+        phrase = rulescommon.get_noun_phrase_from_seed(dep_tags, pos_tags, [igov])
         if phrase in nouns_filter:
             continue
         aspect_terms.add(phrase)
@@ -92,7 +70,7 @@ def rule3(dep_tags, pos_tags, opinion_terms, nouns_filter, terms_true=None):
         if pos_tags[idep] not in NOUN_POS_TAGS:
             continue
 
-        phrase = __get_noun_phrase(dep_tags, pos_tags, [idep], opinion_terms)
+        phrase = rulescommon.get_noun_phrase_from_seed(dep_tags, pos_tags, [idep])
         if phrase in nouns_filter:
             continue
         # if phrase in terms_true:
@@ -157,7 +135,7 @@ def __pharse_for_span(span, sent_text_lower, words, pos_tags, dep_tags, opinion_
         # exit()
         return None
 
-    phrase = __get_noun_phrase(dep_tags, pos_tags, widxs, opinion_terms)
+    phrase = rulescommon.get_noun_phrase_from_seed(dep_tags, pos_tags, widxs)
     return phrase
 
 
@@ -229,12 +207,12 @@ def conj_rule(dep_tags, pos_tags, opinion_terms, nouns_filter, terms_extracted):
 
         if __word_in_terms(wgov, terms_extracted) and not __word_in_terms(
                 wdep, terms_extracted) and pos_tags[idep] in NOUN_POS_TAGS and wdep not in nouns_filter:
-            phrase = __get_noun_phrase(dep_tags, pos_tags, [idep], opinion_terms)
+            phrase = rulescommon.get_noun_phrase_from_seed(dep_tags, pos_tags, [idep])
             # phrase = __get_phrase(dep_tags, pos_tags, idep)
             aspect_terms.add(phrase)
         elif __word_in_terms(wdep, terms_extracted) and not __word_in_terms(
                 wgov, terms_extracted) and pos_tags[igov] in NOUN_POS_TAGS and wgov not in nouns_filter:
-            phrase = __get_noun_phrase(dep_tags, pos_tags, [idep], opinion_terms)
+            phrase = rulescommon.get_noun_phrase_from_seed(dep_tags, pos_tags, [idep])
             # phrase = __get_phrase(dep_tags, pos_tags, idep)
             aspect_terms.add(phrase)
 
@@ -247,7 +225,7 @@ def rec_rule1(words, pos_tags, nouns_filter):
     noun_phrases = list()
     pleft = 0
     while pleft < len(words):
-        if pos_tags[pleft] not in {'NN', 'NNS', 'NNP'}:
+        if pos_tags[pleft] not in rulescommon.NOUN_POS_TAGS:
             pleft += 1
             continue
         pright = pleft + 1

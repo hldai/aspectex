@@ -1,36 +1,36 @@
-import config
-from utils import utils
-from models import rules
 import pandas as pd
 from collections import namedtuple
+import config
+from utils import utils
+from models import rules, rulescommon
 
 
 RuleMineData = namedtuple('RuleMineData', ['dep_tag_seqs', 'pos_tag_seqs', 'sents'])
 
-NOUN_POS_TAGS = {'NN', 'NNP', 'NNS', 'NNPS'}
-VB_POS_TAGS = {'VB', 'VBN', 'VBP', 'VBZ', 'VBG', 'VBD'}
+# NOUN_POS_TAGS = {'NN', 'NNP', 'NNS', 'NNPS'}
+# VB_POS_TAGS = {'VB', 'VBN', 'VBP', 'VBZ', 'VBG', 'VBD'}
 
 
-def __get_noun_phrase(dep_tags, pos_tags, base_word_idxs):
-    words = [tup[2][1] for tup in dep_tags]
-    phrase_word_idxs = set(base_word_idxs)
-
-    ileft = min(phrase_word_idxs)
-    iright = max(phrase_word_idxs)
-    ileft_new, iright_new = ileft, iright
-    while ileft_new > 0:
-        if pos_tags[ileft_new - 1] in NOUN_POS_TAGS:
-            ileft_new -= 1
-        else:
-            break
-    while iright_new < len(pos_tags) - 1:
-        if pos_tags[iright_new + 1] in {'NN', 'NNP', 'NNS', 'CD'}:
-            iright_new += 1
-        else:
-            break
-
-    phrase = ' '.join([words[widx] for widx in range(ileft_new, iright_new + 1)])
-    return phrase
+# def __get_noun_phrase(dep_tags, pos_tags, base_word_idxs):
+#     words = [tup[2][1] for tup in dep_tags]
+#     phrase_word_idxs = set(base_word_idxs)
+#
+#     ileft = min(phrase_word_idxs)
+#     iright = max(phrase_word_idxs)
+#     ileft_new, iright_new = ileft, iright
+#     while ileft_new > 0:
+#         if pos_tags[ileft_new - 1] in NOUN_POS_TAGS:
+#             ileft_new -= 1
+#         else:
+#             break
+#     while iright_new < len(pos_tags) - 1:
+#         if pos_tags[iright_new + 1] in {'NN', 'NNP', 'NNS', 'CD'}:
+#             iright_new += 1
+#         else:
+#             break
+#
+#     phrase = ' '.join([words[widx] for widx in range(ileft_new, iright_new + 1)])
+#     return phrase
 
 
 def __find_phrase_word_idx_span(phrase, sent_words):
@@ -197,10 +197,10 @@ def __get_word_cnts_dict(word_cnts_file):
 
 def __get_term_pos_type(term_pos_tags):
     for t in term_pos_tags:
-        if t in NOUN_POS_TAGS:
+        if t in rulescommon.NOUN_POS_TAGS:
             return 'N'
     for t in term_pos_tags:
-        if t in VB_POS_TAGS:
+        if t in rulescommon.VB_POS_TAGS:
             return 'V'
     return None
 
@@ -257,9 +257,9 @@ def __find_rule_candidates(dep_tags_list, pos_tags_list, aspect_terms_list, opin
 
 
 def __match_pattern_word(pw, w, pos_tag, opinion_terms_vocab):
-    if pw == '_AV' and pos_tag in VB_POS_TAGS:
+    if pw == '_AV' and pos_tag in rulescommon.VB_POS_TAGS:
         return True
-    if pw == '_AN' and pos_tag in NOUN_POS_TAGS:
+    if pw == '_AN' and pos_tag in rulescommon.NOUN_POS_TAGS:
         return True
     if pw == '_OP' and w in opinion_terms_vocab:
         return True
@@ -298,7 +298,7 @@ def __get_aspect_term_from_matched_pattern(pattern, dep_tags, pos_tags, matched_
     if pattern[aspect_position] == '_AV':
         return w
     else:
-        return __get_noun_phrase(dep_tags, pos_tags, [widx])
+        return rulescommon.get_noun_phrase_from_seed(dep_tags, pos_tags, [widx])
 
 
 def __find_terms_by_l1_pattern(pattern, dep_tags, pos_tags, opinion_terms_vocab, filter_terms_vocab):
@@ -418,7 +418,7 @@ def __get_term_filter_dict(dep_tag_seqs, pos_tag_seqs, terms_list):
 
         verbs = list()
         for w, pos_tag in zip(words, pos_tag_seq):
-            if pos_tag in VB_POS_TAGS:
+            if pos_tag in rulescommon.VB_POS_TAGS:
                 verbs.append(w)
 
         term_cands = noun_phrases + verbs
