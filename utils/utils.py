@@ -2,6 +2,13 @@ import json
 import numpy as np
 
 
+def aspect_terms_list_from_sents(sents):
+    aspect_terms_list = list()
+    for sent in sents:
+        aspect_terms_list.append([t['term'].lower() for t in sent.get('terms', list())])
+    return aspect_terms_list
+
+
 def prf1(n_true, n_sys, n_hit):
     p = n_hit / (n_sys + 1e-6)
     r = n_hit / (n_true + 1e-6)

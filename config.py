@@ -47,6 +47,7 @@ SE14_LAPTOP_TEST_DEP_PARSE_FILE = join(DATA_DIR_SE14, 'laptops/laptops_test_dep.
 SE14_LAPTOP_TEST_OPINIONS_FILE = join(DATA_DIR_SE14, 'laptops/test_laptop_opinions.txt')
 SE14_LAPTOP_TRAIN_XML_FILE = join(DATA_DIR_SE14, 'laptops/Laptops_Train.xml')
 SE14_LAPTOP_TRAIN_SENTS_FILE = join(DATA_DIR_SE14, 'laptops/laptops_train_sents.json')
+SE14_LAPTOP_TRAIN_VALID_SPLIT_FILE = join(DATA_DIR_SE14, 'laptops/laptops_train_valid_split.txt')
 SE14_LAPTOP_TRAIN_SENT_TEXTS_FILE = join(DATA_DIR_SE14, 'laptops/laptops_train_texts.txt')
 SE14_LAPTOP_TRAIN_TOK_TEXTS_FILE = join(DATA_DIR_SE14, 'laptops/laptops_train_texts_tok.txt')
 SE14_LAPTOP_TRAIN_OPINIONS_FILE = join(DATA_DIR_SE14, 'laptops/train_laptop_opinions.txt')

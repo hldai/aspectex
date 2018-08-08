@@ -1,4 +1,5 @@
 import os
+import numpy as np
 import re
 import pandas as pd
 import pickle
@@ -171,7 +172,6 @@ def __gen_judge_train_data():
     n_train = 2000
     assert n_sents == len(dep_tags_list)
 
-    import numpy as np
     perm = np.random.permutation(n_sents)
     idxs_train, idxs_test = perm[:n_train], perm[n_train:]
     sents_train = [sents[idx] for idx in idxs_train]
@@ -297,8 +297,16 @@ def __gen_word_cnts_file():
     print(total_word_cnt)
 
 
-def __split_training_set(train_sents_file):
+def __split_training_set(train_sents_file, dst_file):
     valid_data_percent = 0.2
+    sents = utils.load_json_objs(train_sents_file)
+    n_sents = len(sents)
+    perm = np.random.permutation(n_sents)
+    valid_idxs = set(perm[:int(n_sents * valid_data_percent)])
+    with open(dst_file, 'w', encoding='utf-8', newline='\n') as fout:
+        train_valid_labels = ['1' if i in valid_idxs else '0' for i in range(n_sents)]
+        fout.write(' '.join(train_valid_labels))
+        fout.write('\n')
 
 
 # test_file_json = 'd:/data/aspect/semeval14/Laptops_Test_Gold.json'
@@ -337,4 +345,5 @@ eng_yelp_rest_review_sents_file = 'd:/data/res/yelp-review-eng-tok-sents-round-9
 #                                   'd:/data/res/yelp-review-sents-round-9-rand-part.txt')
 # __filter_non_english_sents('d:/data/res/yelp-review-tok-sents-round-9.txt', eng_yelp_rest_review_sents_file)
 
-__gen_word_cnts_file()
+# __gen_word_cnts_file()
+__split_training_set(config.SE14_LAPTOP_TRAIN_SENTS_FILE, config.SE14_LAPTOP_TRAIN_VALID_SPLIT_FILE)
