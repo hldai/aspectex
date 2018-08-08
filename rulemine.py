@@ -256,86 +256,86 @@ def __find_rule_candidates(dep_tags_list, pos_tags_list, aspect_terms_list, opin
     return patterns_l1, patterns_l2
 
 
-def __match_pattern_word(pw, w, pos_tag, opinion_terms_vocab):
-    if pw == '_AV' and pos_tag in rulescommon.VB_POS_TAGS:
-        return True
-    if pw == '_AN' and pos_tag in rulescommon.NOUN_POS_TAGS:
-        return True
-    if pw == '_OP' and w in opinion_terms_vocab:
-        return True
-    if pw.isupper() and pos_tag == pw:
-        return True
-    return pw == w
+# def __match_pattern_word(pw, w, pos_tag, opinion_terms_vocab):
+#     if pw == '_AV' and pos_tag in rulescommon.VB_POS_TAGS:
+#         return True
+#     if pw == '_AN' and pos_tag in rulescommon.NOUN_POS_TAGS:
+#         return True
+#     if pw == '_OP' and w in opinion_terms_vocab:
+#         return True
+#     if pw.isupper() and pos_tag == pw:
+#         return True
+#     return pw == w
 
 
-def __match_l1_pattern(pattern, dep_tag, pos_tags, opinion_terms_vocab):
-    prel, pgov, pdep = pattern
-    rel, (igov, wgov), (idep, wdep) = dep_tag
-    if rel != prel:
-        return False
-    return __match_pattern_word(pgov, wgov, pos_tags[igov], opinion_terms_vocab) and __match_pattern_word(
-        pdep, wdep, pos_tags[idep], opinion_terms_vocab)
+# def __match_l1_pattern(pattern, dep_tag, pos_tags, opinion_terms_vocab):
+#     prel, pgov, pdep = pattern
+#     rel, (igov, wgov), (idep, wdep) = dep_tag
+#     if rel != prel:
+#         return False
+#     return __match_pattern_word(pgov, wgov, pos_tags[igov], opinion_terms_vocab) and __match_pattern_word(
+#         pdep, wdep, pos_tags[idep], opinion_terms_vocab)
 
 
-def __get_l1_pattern_matched_dep_tags(pattern, dep_tags, pos_tags, opinion_terms_vocab):
-    matched_idxs = list()
-    for i, dep_tag in enumerate(dep_tags):
-        if __match_l1_pattern(pattern, dep_tag, pos_tags, opinion_terms_vocab):
-            matched_idxs.append(i)
-    return matched_idxs
+# def __get_l1_pattern_matched_dep_tags(pattern, dep_tags, pos_tags, opinion_terms_vocab):
+#     matched_idxs = list()
+#     for i, dep_tag in enumerate(dep_tags):
+#         if __match_l1_pattern(pattern, dep_tag, pos_tags, opinion_terms_vocab):
+#             matched_idxs.append(i)
+#     return matched_idxs
 
 
-def __get_aspect_term_from_matched_pattern(pattern, dep_tags, pos_tags, matched_dep_tag_idx):
-    if pattern[1].startswith('_A'):
-        aspect_position = 1
-    elif pattern[2].startswith('_A'):
-        aspect_position = 2
-    else:
-        return None
-
-    dep_tag = dep_tags[matched_dep_tag_idx]
-    widx, w = dep_tag[aspect_position]
-    if pattern[aspect_position] == '_AV':
-        return w
-    else:
-        return rulescommon.get_noun_phrase_from_seed(dep_tags, pos_tags, [widx])
-
-
-def __find_terms_by_l1_pattern(pattern, dep_tags, pos_tags, opinion_terms_vocab, filter_terms_vocab):
-    terms = list()
-    matched_dep_tag_idxs = __get_l1_pattern_matched_dep_tags(pattern, dep_tags, pos_tags, opinion_terms_vocab)
-    for idx in matched_dep_tag_idxs:
-        term = __get_aspect_term_from_matched_pattern(pattern, dep_tags, pos_tags, idx)
-
-        if term in filter_terms_vocab:
-            continue
-        terms.append(term)
-    return terms
+# def __get_aspect_term_from_matched_pattern(pattern, dep_tags, pos_tags, matched_dep_tag_idx):
+#     if pattern[1].startswith('_A'):
+#         aspect_position = 1
+#     elif pattern[2].startswith('_A'):
+#         aspect_position = 2
+#     else:
+#         return None
+#
+#     dep_tag = dep_tags[matched_dep_tag_idx]
+#     widx, w = dep_tag[aspect_position]
+#     if pattern[aspect_position] == '_AV':
+#         return w
+#     else:
+#         return rulescommon.get_noun_phrase_from_seed(dep_tags, pos_tags, [widx])
 
 
-def __find_terms_by_l2_pattern(pattern, dep_tags, pos_tags, opinion_terms_vocab, filter_terms_vocab):
-    (pl, ipl), (pr, ipr) = pattern
-    terms = list()
-    matched_dep_tag_idxs = __get_l1_pattern_matched_dep_tags(pl, dep_tags, pos_tags, opinion_terms_vocab)
-    for idx in matched_dep_tag_idxs:
-        dep_tag_l = dep_tags[idx]
-        sw_idx = dep_tag_l[ipl][0]  # index of the shared word
+# def __find_terms_by_l1_pattern(pattern, dep_tags, pos_tags, opinion_terms_vocab, filter_terms_vocab):
+#     terms = list()
+#     matched_dep_tag_idxs = __get_l1_pattern_matched_dep_tags(pattern, dep_tags, pos_tags, opinion_terms_vocab)
+#     for idx in matched_dep_tag_idxs:
+#         term = __get_aspect_term_from_matched_pattern(pattern, dep_tags, pos_tags, idx)
+#
+#         if term in filter_terms_vocab:
+#             continue
+#         terms.append(term)
+#     return terms
 
-        for j, dep_tag_r in enumerate(dep_tags):
-            if dep_tag_r[ipr][0] != sw_idx:
-                continue
-            if not __match_l1_pattern(pr, dep_tag_r, pos_tags, opinion_terms_vocab):
-                continue
 
-            term = __get_aspect_term_from_matched_pattern(pl, dep_tags, pos_tags, idx)
-            if term is None:
-                term = __get_aspect_term_from_matched_pattern(pr, dep_tags, pos_tags, j)
-            if term is None or term in filter_terms_vocab:
-                # print(p, 'term not found')
-                continue
-
-            terms.append(term)
-    return terms
+# def __find_terms_by_l2_pattern(pattern, dep_tags, pos_tags, opinion_terms_vocab, filter_terms_vocab):
+#     (pl, ipl), (pr, ipr) = pattern
+#     terms = list()
+#     matched_dep_tag_idxs = __get_l1_pattern_matched_dep_tags(pl, dep_tags, pos_tags, opinion_terms_vocab)
+#     for idx in matched_dep_tag_idxs:
+#         dep_tag_l = dep_tags[idx]
+#         sw_idx = dep_tag_l[ipl][0]  # index of the shared word
+#
+#         for j, dep_tag_r in enumerate(dep_tags):
+#             if dep_tag_r[ipr][0] != sw_idx:
+#                 continue
+#             if not __match_l1_pattern(pr, dep_tag_r, pos_tags, opinion_terms_vocab):
+#                 continue
+#
+#             term = __get_aspect_term_from_matched_pattern(pl, dep_tags, pos_tags, idx)
+#             if term is None:
+#                 term = __get_aspect_term_from_matched_pattern(pr, dep_tags, pos_tags, j)
+#             if term is None or term in filter_terms_vocab:
+#                 # print(p, 'term not found')
+#                 continue
+#
+#             terms.append(term)
+#     return terms
 
 
 def __filter_l1_patterns_through_matching(patterns, dep_tags_list, pos_tags_list,
@@ -345,7 +345,8 @@ def __filter_l1_patterns_through_matching(patterns, dep_tags_list, pos_tags_list
         hit_cnt, cnt = 0, 0
         for dep_tags, pos_tags, aspect_terms in zip(dep_tags_list, pos_tags_list, aspect_terms_list):
             aspect_terms = set(aspect_terms)
-            terms = __find_terms_by_l1_pattern(p, dep_tags, pos_tags, opinion_terms_vocab, filter_terms_vocab)
+            terms = rulescommon.find_terms_by_l1_pattern(
+                p, dep_tags, pos_tags, opinion_terms_vocab, filter_terms_vocab)
 
             for term in terms:
                 if term in filter_terms_vocab:
@@ -367,7 +368,7 @@ def __filter_l2_patterns_through_matching(patterns, dep_tags_list, pos_tags_list
         hit_cnt, cnt = 0, 0
         for dep_tags, pos_tags, aspect_terms in zip(dep_tags_list, pos_tags_list, aspect_terms_list):
             aspect_terms = set(aspect_terms)
-            terms = __find_terms_by_l2_pattern(p, dep_tags, pos_tags, opinion_terms_vocab, filter_terms_vocab)
+            terms = rulescommon.find_terms_by_l2_pattern(p, dep_tags, pos_tags, opinion_terms_vocab, filter_terms_vocab)
             for term in terms:
                 cnt += 1
                 if term in aspect_terms:
@@ -410,7 +411,7 @@ def __load_data(dep_tags_file, pos_tags_file, sents_file, train_valid_split_file
     return data_train, data_valid
 
 
-def __get_term_filter_dict(dep_tag_seqs, pos_tag_seqs, terms_list):
+def __get_term_filter_dict(dep_tag_seqs, pos_tag_seqs, terms_list, filter_rate):
     term_cnts_dict = dict()
     for dep_tag_seq, pos_tag_seq, terms in zip(dep_tag_seqs, pos_tag_seqs, terms_list):
         words = [tup[2][1] for tup in dep_tag_seq]
@@ -430,7 +431,7 @@ def __get_term_filter_dict(dep_tag_seqs, pos_tag_seqs, terms_list):
 
     filter_terms = set()
     for t, (hit_cnt, cnt) in term_cnts_dict.items():
-        if hit_cnt / cnt < 0.1:
+        if hit_cnt / cnt < filter_rate:
             filter_terms.add(t)
     return filter_terms
 
@@ -442,7 +443,7 @@ def __gen_aspect_patterns(dep_tags_file, pos_tags_file, sents_file,
 
     aspect_terms_list_train = utils.aspect_terms_list_from_sents(data_train.sents)
     filter_terms_vocab = __get_term_filter_dict(
-        data_train.dep_tag_seqs, data_train.pos_tag_seqs, aspect_terms_list_train)
+        data_train.dep_tag_seqs, data_train.pos_tag_seqs, aspect_terms_list_train, term_filter_rate)
 
     patterns_l1, patterns_l2 = __find_rule_candidates(
         data_train.dep_tag_seqs, data_train.pos_tag_seqs, aspect_terms_list_train,
@@ -468,6 +469,18 @@ def __gen_aspect_patterns(dep_tags_file, pos_tags_file, sents_file,
     fout.close()
 
 
+def __gen_filter_terms_vocab_file(dep_tags_file, pos_tags_file, sents_file, dst_file):
+    dep_tags_list = utils.load_dep_tags_list(dep_tags_file)
+    pos_tags_list = utils.load_pos_tags(pos_tags_file)
+    sents = utils.load_json_objs(sents_file)
+    aspect_terms_list = utils.aspect_terms_list_from_sents(sents)
+    filter_terms_vocab = __get_term_filter_dict(dep_tags_list, pos_tags_list, aspect_terms_list, term_filter_rate)
+    with open(dst_file, 'w', encoding='utf-8', newline='\n') as fout:
+        for t in filter_terms_vocab:
+            fout.write('{}\n'.format(t))
+
+
+term_filter_rate = 0.1
 dep_tags_file = 'd:/data/aspect/semeval14/laptops/laptops-train-rule-dep.txt'
 pos_tags_file = 'd:/data/aspect/semeval14/laptops/laptops-train-rule-pos.txt'
 sent_texts_file = 'd:/data/aspect/semeval14/laptops/laptops_train_texts.txt'
@@ -478,5 +491,9 @@ word_cnts_file = 'd:/data/aspect/semeval14/laptops/word_cnts.txt'
 sents_file = config.SE14_LAPTOP_TRAIN_SENTS_FILE
 patterns_file = 'd:/data/aspect/semeval14/laptops/mined_rule_patterns.txt'
 
-__gen_aspect_patterns(dep_tags_file, pos_tags_file, sents_file, train_valid_split_file,
-                      opinion_terms_file, word_cnts_file, patterns_file)
+full_train_term_filter_file = 'd:/data/aspect/semeval14/laptops/aspect_filter_vocab_full.txt'
+
+# __gen_aspect_patterns(dep_tags_file, pos_tags_file, sents_file, train_valid_split_file,
+#                       opinion_terms_file, word_cnts_file, patterns_file)
+
+__gen_filter_terms_vocab_file(dep_tags_file, pos_tags_file, sents_file, full_train_term_filter_file)

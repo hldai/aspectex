@@ -67,7 +67,7 @@ def rule3(dep_tags, pos_tags, opinion_terms, nouns_filter, terms_true=None):
         idep, wdep = dep
         # if wdep in nouns_filter or pos_tags[idep] not in {'NN', 'NNS', 'NNP'}:
         #     continue
-        if pos_tags[idep] not in NOUN_POS_TAGS:
+        if pos_tags[idep] not in rulescommon.NOUN_POS_TAGS:
             continue
 
         phrase = rulescommon.get_noun_phrase_from_seed(dep_tags, pos_tags, [idep])
@@ -206,12 +206,12 @@ def conj_rule(dep_tags, pos_tags, opinion_terms, nouns_filter, terms_extracted):
         idep, wdep = dep
 
         if __word_in_terms(wgov, terms_extracted) and not __word_in_terms(
-                wdep, terms_extracted) and pos_tags[idep] in NOUN_POS_TAGS and wdep not in nouns_filter:
+                wdep, terms_extracted) and pos_tags[idep] in rulescommon.NOUN_POS_TAGS and wdep not in nouns_filter:
             phrase = rulescommon.get_noun_phrase_from_seed(dep_tags, pos_tags, [idep])
             # phrase = __get_phrase(dep_tags, pos_tags, idep)
             aspect_terms.add(phrase)
         elif __word_in_terms(wdep, terms_extracted) and not __word_in_terms(
-                wgov, terms_extracted) and pos_tags[igov] in NOUN_POS_TAGS and wgov not in nouns_filter:
+                wgov, terms_extracted) and pos_tags[igov] in rulescommon.NOUN_POS_TAGS and wgov not in nouns_filter:
             phrase = rulescommon.get_noun_phrase_from_seed(dep_tags, pos_tags, [idep])
             # phrase = __get_phrase(dep_tags, pos_tags, idep)
             aspect_terms.add(phrase)
