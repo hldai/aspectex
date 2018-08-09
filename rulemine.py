@@ -517,18 +517,33 @@ def __gen_term_hit_rate_file(train_sents_file, dep_tags_file, pos_tags_file, dst
 
 
 term_filter_rate = 0.1
-dep_tags_file = 'd:/data/aspect/semeval14/laptops/laptops-train-rule-dep.txt'
-pos_tags_file = 'd:/data/aspect/semeval14/laptops/laptops-train-rule-pos.txt'
-sent_texts_file = 'd:/data/aspect/semeval14/laptops/laptops_train_texts.txt'
-train_valid_split_file = config.SE14_LAPTOP_TRAIN_VALID_SPLIT_FILE
+# dataset = 'laptops'
+dataset = 'restaurants'
 opinion_terms_file = 'd:/data/aspect/semeval14/opinion-terms-full.txt'
-word_cnts_file = 'd:/data/aspect/semeval14/laptops/word_cnts.txt'
-# train_sents_file = config.SE14_LAPTOP_TRAIN_SENTS_FILE
-sents_file = config.SE14_LAPTOP_TRAIN_SENTS_FILE
-patterns_file = 'd:/data/aspect/semeval14/laptops/mined_rule_patterns.txt'
-term_hit_rate_file = 'd:/data/aspect/semeval14/laptops/aspect-term-hit-rate.txt'
 
-full_train_term_filter_file = 'd:/data/aspect/semeval14/laptops/aspect_filter_vocab_full.txt'
+if dataset == 'laptops':
+    dep_tags_file = 'd:/data/aspect/semeval14/laptops/laptops-train-rule-dep.txt'
+    pos_tags_file = 'd:/data/aspect/semeval14/laptops/laptops-train-rule-pos.txt'
+    sent_texts_file = 'd:/data/aspect/semeval14/laptops/laptops_train_texts.txt'
+    train_valid_split_file = config.SE14_LAPTOP_TRAIN_VALID_SPLIT_FILE
+    word_cnts_file = 'd:/data/aspect/semeval14/laptops/word_cnts.txt'
+    sents_file = config.SE14_LAPTOP_TRAIN_SENTS_FILE
+    patterns_file = 'd:/data/aspect/semeval14/laptops/mined_rule_patterns.txt'
+    term_hit_rate_file = 'd:/data/aspect/semeval14/laptops/aspect-term-hit-rate.txt'
+
+    full_train_term_filter_file = 'd:/data/aspect/semeval14/laptops/aspect_filter_vocab_full.txt'
+else:
+    dep_tags_file = 'd:/data/aspect/semeval14/restaurant/restaurants-train-rule-dep.txt'
+    pos_tags_file = 'd:/data/aspect/semeval14/restaurant/restaurants-train-rule-pos.txt'
+    sent_texts_file = 'd:/data/aspect/semeval14/restaurant/restaurants_train_texts.txt'
+    train_valid_split_file = config.SE14_REST_TRAIN_VALID_SPLIT_FILE
+    opinion_terms_file = 'd:/data/aspect/semeval14/opinion-terms-full.txt'
+    word_cnts_file = 'd:/data/aspect/semeval14/restaurant/word_cnts.txt'
+    sents_file = config.SE14_REST_TRAIN_SENTS_FILE
+    patterns_file = 'd:/data/aspect/semeval14/restaurant/mined_rule_patterns.txt'
+    term_hit_rate_file = 'd:/data/aspect/semeval14/restaurant/aspect-term-hit-rate.txt'
+
+    full_train_term_filter_file = 'd:/data/aspect/semeval14/restaurant/aspect_filter_vocab_full.txt'
 
 # __gen_aspect_patterns(dep_tags_file, pos_tags_file, sents_file, train_valid_split_file,
 #                       opinion_terms_file, word_cnts_file, patterns_file)
