@@ -199,26 +199,26 @@ def conj_rule(dep_tags, pos_tags, opinion_terms, nouns_filter, terms_extracted):
     return aspect_terms
 
 
-def rec_rule1(words, pos_tags, nouns_filter):
-    assert len(words) == len(pos_tags)
-
-    noun_phrases = list()
-    pleft = 0
-    while pleft < len(words):
-        if pos_tags[pleft] not in rulescommon.NOUN_POS_TAGS:
-            pleft += 1
-            continue
-        pright = pleft + 1
-        while pright < len(words) and pos_tags[pright] in {'NN', 'NNS', 'NNP', 'CD'}:
-            pright += 1
-
-        # if pleft > 0 and pos_tags[pleft - 1] == 'JJ' and words[pleft - 1] not in opinion_terms:
-        #     pleft -= 1
-
-        phrase = ' '.join(words[pleft: pright])
-        if nouns_filter is None or phrase not in nouns_filter:
-            noun_phrases.append(phrase)
-        pleft = pright
-    # print(' '.join(words))
-    # print(noun_phrases)
-    return noun_phrases
+# def rec_rule1(words, pos_tags, nouns_filter):
+#     assert len(words) == len(pos_tags)
+#
+#     noun_phrases = list()
+#     pleft = 0
+#     while pleft < len(words):
+#         if pos_tags[pleft] not in rulescommon.NOUN_POS_TAGS:
+#             pleft += 1
+#             continue
+#         pright = pleft + 1
+#         while pright < len(words) and pos_tags[pright] in {'NN', 'NNS', 'NNP', 'CD'}:
+#             pright += 1
+#
+#         # if pleft > 0 and pos_tags[pleft - 1] == 'JJ' and words[pleft - 1] not in opinion_terms:
+#         #     pleft -= 1
+#
+#         phrase = ' '.join(words[pleft: pright])
+#         if nouns_filter is None or phrase not in nouns_filter:
+#             noun_phrases.append(phrase)
+#         pleft = pright
+#     # print(' '.join(words))
+#     # print(noun_phrases)
+#     return noun_phrases

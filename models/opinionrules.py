@@ -7,7 +7,8 @@ def rule1(dep_tags, pos_tags):
     opinion_terms = list()
     for i, w in enumerate(words):
         pos = pos_tags[i]
-        if pos in {'JJ', 'RB'} and w not in {"n't", 'not', 'so', 'also'}:
+        if pos in {'JJ', 'JJR', 'JJS', 'RB', 'RBR', 'VB', 'VBN', 'VBD', 'VBP', 'VBZ', 'VBG'} and w not in {
+            "n't", 'not', 'so', 'also'}:
             opinion_terms.append(w)
     # print(' '.join(words))
     # print(noun_phrases)

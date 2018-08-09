@@ -161,6 +161,7 @@ def __opinion_rule_insight(dep_tags_file, pos_tags_file, sent_text_file, terms_v
         assert len(dep_tags) == len(pos_tags)
 
         opinion_terms = set()
+        # used rule2 and __match_terms to pretrain
         # terms_new = opinionrules.rule1(dep_tags, pos_tags)
         # opinion_terms.update(terms_new)
         terms_new = opinionrules.rule2(dep_tags, pos_tags)
@@ -182,7 +183,8 @@ def __opinion_rule_insight(dep_tags_file, pos_tags_file, sent_text_file, terms_v
         opinions_true_list = list()
         for sent in sents:
             opinions_true_list.append([t.lower() for t in sent.get('opinions', list())])
-        correct_sent_idxs = __evaluate(opinions_sys_list, opinions_true_list, dep_tags_list, pos_tags_list, sent_texts)
+        correct_sent_idxs = __evaluate(
+            opinions_sys_list, opinions_true_list, dep_tags_list, pos_tags_list, sent_texts)
 
 
 def __rule_insight(opinion_term_dict_file, filter_nouns_file, dep_tags_file, pos_tags_file,
@@ -314,12 +316,12 @@ opinion_terms_file = 'd:/data/aspect/semeval14/opinion-terms-full.txt'
 laptops_filter_nouns_file = 'd:/data/aspect/semeval14/nouns-filter.txt'
 rest_filter_nouns_file = 'd:/data/aspect/semeval14/restaurants/aspect-nouns-filter.txt'
 
-# dataset = 'laptops-test'
+dataset = 'laptops-test'
 # dataset = 'laptops-amazon'
 # dataset = 'restaurants-test'
-dataset = 'restaurants-yelp'
-task = 'aspect'
-# task = 'opinion'
+# dataset = 'restaurants-yelp'
+# task = 'aspect'
+task = 'opinion'
 
 filter_nouns_file = laptops_filter_nouns_file if dataset.startswith('laptops') else rest_filter_nouns_file
 

@@ -1,5 +1,7 @@
 NOUN_POS_TAGS = {'NN', 'NNP', 'NNS', 'NNPS'}
 VB_POS_TAGS = {'VB', 'VBN', 'VBP', 'VBZ', 'VBG', 'VBD'}
+JJ_POS_TAGS = {'JJ', 'JJR', 'JJS'}
+RB_POS_TAGS = {'RB', 'RBR'}
 
 
 def load_rule_patterns_file(filename):
@@ -199,3 +201,28 @@ def get_terms_by_matching(dep_tags, pos_tags, sent_text, terms_vocab):
             aspect_terms.add(phrase)
 
     return aspect_terms
+
+
+def get_noun_phrases(words, pos_tags, nouns_filter):
+    assert len(words) == len(pos_tags)
+
+    noun_phrases = list()
+    pleft = 0
+    while pleft < len(words):
+        if pos_tags[pleft] not in NOUN_POS_TAGS:
+            pleft += 1
+            continue
+        pright = pleft + 1
+        while pright < len(words) and pos_tags[pright] in {'NN', 'NNS', 'NNP', 'CD'}:
+            pright += 1
+
+        # if pleft > 0 and pos_tags[pleft - 1] == 'JJ' and words[pleft - 1] not in opinion_terms:
+        #     pleft -= 1
+
+        phrase = ' '.join(words[pleft: pright])
+        if nouns_filter is None or phrase not in nouns_filter:
+            noun_phrases.append(phrase)
+        pleft = pright
+    # print(' '.join(words))
+    # print(noun_phrases)
+    return noun_phrases

@@ -3,34 +3,10 @@ from collections import namedtuple
 import config
 from utils import utils
 from models import rules, rulescommon
+from models.aspectminehelper import AspectMineHelper
 
 
 RuleMineData = namedtuple('RuleMineData', ['dep_tag_seqs', 'pos_tag_seqs', 'sents'])
-
-# NOUN_POS_TAGS = {'NN', 'NNP', 'NNS', 'NNPS'}
-# VB_POS_TAGS = {'VB', 'VBN', 'VBP', 'VBZ', 'VBG', 'VBD'}
-
-
-# def __get_noun_phrase(dep_tags, pos_tags, base_word_idxs):
-#     words = [tup[2][1] for tup in dep_tags]
-#     phrase_word_idxs = set(base_word_idxs)
-#
-#     ileft = min(phrase_word_idxs)
-#     iright = max(phrase_word_idxs)
-#     ileft_new, iright_new = ileft, iright
-#     while ileft_new > 0:
-#         if pos_tags[ileft_new - 1] in NOUN_POS_TAGS:
-#             ileft_new -= 1
-#         else:
-#             break
-#     while iright_new < len(pos_tags) - 1:
-#         if pos_tags[iright_new + 1] in {'NN', 'NNP', 'NNS', 'CD'}:
-#             iright_new += 1
-#         else:
-#             break
-#
-#     phrase = ' '.join([words[widx] for widx in range(ileft_new, iright_new + 1)])
-#     return phrase
 
 
 def __find_phrase_word_idx_span(phrase, sent_words):
@@ -256,88 +232,6 @@ def __find_rule_candidates(dep_tags_list, pos_tags_list, aspect_terms_list, opin
     return patterns_l1, patterns_l2
 
 
-# def __match_pattern_word(pw, w, pos_tag, opinion_terms_vocab):
-#     if pw == '_AV' and pos_tag in rulescommon.VB_POS_TAGS:
-#         return True
-#     if pw == '_AN' and pos_tag in rulescommon.NOUN_POS_TAGS:
-#         return True
-#     if pw == '_OP' and w in opinion_terms_vocab:
-#         return True
-#     if pw.isupper() and pos_tag == pw:
-#         return True
-#     return pw == w
-
-
-# def __match_l1_pattern(pattern, dep_tag, pos_tags, opinion_terms_vocab):
-#     prel, pgov, pdep = pattern
-#     rel, (igov, wgov), (idep, wdep) = dep_tag
-#     if rel != prel:
-#         return False
-#     return __match_pattern_word(pgov, wgov, pos_tags[igov], opinion_terms_vocab) and __match_pattern_word(
-#         pdep, wdep, pos_tags[idep], opinion_terms_vocab)
-
-
-# def __get_l1_pattern_matched_dep_tags(pattern, dep_tags, pos_tags, opinion_terms_vocab):
-#     matched_idxs = list()
-#     for i, dep_tag in enumerate(dep_tags):
-#         if __match_l1_pattern(pattern, dep_tag, pos_tags, opinion_terms_vocab):
-#             matched_idxs.append(i)
-#     return matched_idxs
-
-
-# def __get_aspect_term_from_matched_pattern(pattern, dep_tags, pos_tags, matched_dep_tag_idx):
-#     if pattern[1].startswith('_A'):
-#         aspect_position = 1
-#     elif pattern[2].startswith('_A'):
-#         aspect_position = 2
-#     else:
-#         return None
-#
-#     dep_tag = dep_tags[matched_dep_tag_idx]
-#     widx, w = dep_tag[aspect_position]
-#     if pattern[aspect_position] == '_AV':
-#         return w
-#     else:
-#         return rulescommon.get_noun_phrase_from_seed(dep_tags, pos_tags, [widx])
-
-
-# def __find_terms_by_l1_pattern(pattern, dep_tags, pos_tags, opinion_terms_vocab, filter_terms_vocab):
-#     terms = list()
-#     matched_dep_tag_idxs = __get_l1_pattern_matched_dep_tags(pattern, dep_tags, pos_tags, opinion_terms_vocab)
-#     for idx in matched_dep_tag_idxs:
-#         term = __get_aspect_term_from_matched_pattern(pattern, dep_tags, pos_tags, idx)
-#
-#         if term in filter_terms_vocab:
-#             continue
-#         terms.append(term)
-#     return terms
-
-
-# def __find_terms_by_l2_pattern(pattern, dep_tags, pos_tags, opinion_terms_vocab, filter_terms_vocab):
-#     (pl, ipl), (pr, ipr) = pattern
-#     terms = list()
-#     matched_dep_tag_idxs = __get_l1_pattern_matched_dep_tags(pl, dep_tags, pos_tags, opinion_terms_vocab)
-#     for idx in matched_dep_tag_idxs:
-#         dep_tag_l = dep_tags[idx]
-#         sw_idx = dep_tag_l[ipl][0]  # index of the shared word
-#
-#         for j, dep_tag_r in enumerate(dep_tags):
-#             if dep_tag_r[ipr][0] != sw_idx:
-#                 continue
-#             if not __match_l1_pattern(pr, dep_tag_r, pos_tags, opinion_terms_vocab):
-#                 continue
-#
-#             term = __get_aspect_term_from_matched_pattern(pl, dep_tags, pos_tags, idx)
-#             if term is None:
-#                 term = __get_aspect_term_from_matched_pattern(pr, dep_tags, pos_tags, j)
-#             if term is None or term in filter_terms_vocab:
-#                 # print(p, 'term not found')
-#                 continue
-#
-#             terms.append(term)
-#     return terms
-
-
 def __filter_l1_patterns_through_matching(patterns, dep_tags_list, pos_tags_list,
                                           aspect_terms_list, opinion_terms_vocab, filter_terms_vocab):
     patterns_keep = list()
@@ -411,18 +305,19 @@ def __load_data(dep_tags_file, pos_tags_file, sents_file, train_valid_split_file
     return data_train, data_valid
 
 
-def __get_term_filter_dict(dep_tag_seqs, pos_tag_seqs, terms_list, filter_rate):
+def __get_term_filter_dict(dep_tag_seqs, pos_tag_seqs, filter_rate, helper):
     term_cnts_dict = dict()
-    for dep_tag_seq, pos_tag_seq, terms in zip(dep_tag_seqs, pos_tag_seqs, terms_list):
-        words = [tup[2][1] for tup in dep_tag_seq]
-        noun_phrases = rules.rec_rule1(words, pos_tag_seq, None)
-
-        verbs = list()
-        for w, pos_tag in zip(words, pos_tag_seq):
-            if pos_tag in rulescommon.VB_POS_TAGS:
-                verbs.append(w)
-
-        term_cands = noun_phrases + verbs
+    for dep_tag_seq, pos_tag_seq, terms in zip(dep_tag_seqs, pos_tag_seqs, helper.terms_list_train):
+        term_cands = helper.get_candidate_terms(dep_tag_seq, pos_tag_seq)
+        # words = [tup[2][1] for tup in dep_tag_seq]
+        # noun_phrases = rules.rec_rule1(words, pos_tag_seq, None)
+        #
+        # verbs = list()
+        # for w, pos_tag in zip(words, pos_tag_seq):
+        #     if pos_tag in rulescommon.VB_POS_TAGS:
+        #         verbs.append(w)
+        #
+        # term_cands = noun_phrases + verbs
         # term_cands = verbs
         for t in term_cands:
             cnts = term_cnts_dict.get(t, (0, 0))
@@ -440,13 +335,14 @@ def __gen_aspect_patterns(dep_tags_file, pos_tags_file, sents_file,
                           train_valid_split_file, opinion_terms_file, word_cnts_file, dst_file):
     opinion_terms_vocab = set(utils.read_lines(opinion_terms_file))
     data_train, data_valid = __load_data(dep_tags_file, pos_tags_file, sents_file, train_valid_split_file)
+    mine_helper = AspectMineHelper(opinion_terms_file, data_train.sents)
 
-    aspect_terms_list_train = utils.aspect_terms_list_from_sents(data_train.sents)
+    # aspect_terms_list_train = utils.aspect_terms_list_from_sents(data_train.sents)
     filter_terms_vocab = __get_term_filter_dict(
-        data_train.dep_tag_seqs, data_train.pos_tag_seqs, aspect_terms_list_train, term_filter_rate)
+        data_train.dep_tag_seqs, data_train.pos_tag_seqs, term_filter_rate, mine_helper)
 
     patterns_l1, patterns_l2 = __find_rule_candidates(
-        data_train.dep_tag_seqs, data_train.pos_tag_seqs, aspect_terms_list_train,
+        data_train.dep_tag_seqs, data_train.pos_tag_seqs, mine_helper.terms_list_train,
         opinion_terms_vocab, word_cnts_file)
     print(len(patterns_l1), 'l1 patterns', len(patterns_l2), 'l2 patterns')
 
@@ -460,6 +356,8 @@ def __gen_aspect_patterns(dep_tags_file, pos_tags_file, sents_file,
         patterns_l2, data_valid.dep_tag_seqs, data_valid.pos_tag_seqs, aspect_terms_list_valid,
         opinion_terms_vocab, filter_terms_vocab)
 
+    patterns_l1.sort()
+    patterns_l2.sort()
     fout = open(dst_file, 'w', encoding='utf-8', newline='\n')
     for p in patterns_l1:
         fout.write('{}\n'.format(' '.join(p)))
@@ -467,6 +365,20 @@ def __gen_aspect_patterns(dep_tags_file, pos_tags_file, sents_file,
         (pl, ipl), (pr, ipr) = p
         fout.write('{} {} {} {}\n'.format(' '.join(pl), ipl, ' '.join(pr), ipr))
     fout.close()
+
+
+def __gen_opinion_patterns(dep_tags_file, pos_tags_file, sents_file, train_valid_split_file,
+                           opinion_terms_file, word_cnts_file, dst_file):
+    data_train, data_valid = __load_data(dep_tags_file, pos_tags_file, sents_file, train_valid_split_file)
+
+    aspect_terms_list_train = utils.aspect_terms_list_from_sents(data_train.sents)
+    filter_terms_vocab = __get_term_filter_dict(
+        data_train.dep_tag_seqs, data_train.pos_tag_seqs, aspect_terms_list_train, term_filter_rate)
+
+    # patterns_l1, patterns_l2 = __find_rule_candidates(
+    #     data_train.dep_tag_seqs, data_train.pos_tag_seqs, aspect_terms_list_train,
+    #     opinion_terms_vocab, word_cnts_file)
+    # print(len(patterns_l1), 'l1 patterns', len(patterns_l2), 'l2 patterns')
 
 
 def __gen_filter_terms_vocab_file(dep_tags_file, pos_tags_file, sents_file, dst_file):
@@ -517,37 +429,26 @@ def __gen_term_hit_rate_file(train_sents_file, dep_tags_file, pos_tags_file, dst
 
 
 term_filter_rate = 0.1
-# dataset = 'laptops'
-dataset = 'restaurants'
+dataset = 'laptops'
+# dataset = 'restaurants'
 opinion_terms_file = 'd:/data/aspect/semeval14/opinion-terms-full.txt'
 
+dep_tags_file = 'd:/data/aspect/semeval14/{}/{}-train-rule-dep.txt'.format(dataset, dataset)
+pos_tags_file = 'd:/data/aspect/semeval14/{}/{}-train-rule-pos.txt'.format(dataset, dataset)
+sent_texts_file = 'd:/data/aspect/semeval14/{}/{}_train_texts.txt'.format(dataset, dataset)
+word_cnts_file = 'd:/data/aspect/semeval14/{}/word_cnts.txt'.format(dataset)
+patterns_file = 'd:/data/aspect/semeval14/{}/mined_rule_patterns_tmp.txt'.format(dataset)
+term_hit_rate_file = 'd:/data/aspect/semeval14/{}/aspect-term-hit-rate.txt'.format(dataset)
+full_train_term_filter_file = 'd:/data/aspect/semeval14/{}/aspect_filter_vocab_full.txt'.format(dataset)
+
 if dataset == 'laptops':
-    dep_tags_file = 'd:/data/aspect/semeval14/laptops/laptops-train-rule-dep.txt'
-    pos_tags_file = 'd:/data/aspect/semeval14/laptops/laptops-train-rule-pos.txt'
-    sent_texts_file = 'd:/data/aspect/semeval14/laptops/laptops_train_texts.txt'
     train_valid_split_file = config.SE14_LAPTOP_TRAIN_VALID_SPLIT_FILE
-    word_cnts_file = 'd:/data/aspect/semeval14/laptops/word_cnts.txt'
     sents_file = config.SE14_LAPTOP_TRAIN_SENTS_FILE
-    patterns_file = 'd:/data/aspect/semeval14/laptops/mined_rule_patterns.txt'
-    term_hit_rate_file = 'd:/data/aspect/semeval14/laptops/aspect-term-hit-rate.txt'
-
-    full_train_term_filter_file = 'd:/data/aspect/semeval14/laptops/aspect_filter_vocab_full.txt'
 else:
-    dep_tags_file = 'd:/data/aspect/semeval14/restaurant/restaurants-train-rule-dep.txt'
-    pos_tags_file = 'd:/data/aspect/semeval14/restaurant/restaurants-train-rule-pos.txt'
-    sent_texts_file = 'd:/data/aspect/semeval14/restaurant/restaurants_train_texts.txt'
     train_valid_split_file = config.SE14_REST_TRAIN_VALID_SPLIT_FILE
-    opinion_terms_file = 'd:/data/aspect/semeval14/opinion-terms-full.txt'
-    word_cnts_file = 'd:/data/aspect/semeval14/restaurant/word_cnts.txt'
     sents_file = config.SE14_REST_TRAIN_SENTS_FILE
-    patterns_file = 'd:/data/aspect/semeval14/restaurant/mined_rule_patterns.txt'
-    term_hit_rate_file = 'd:/data/aspect/semeval14/restaurant/aspect-term-hit-rate.txt'
 
-    full_train_term_filter_file = 'd:/data/aspect/semeval14/restaurant/aspect_filter_vocab_full.txt'
-
-# __gen_aspect_patterns(dep_tags_file, pos_tags_file, sents_file, train_valid_split_file,
-#                       opinion_terms_file, word_cnts_file, patterns_file)
-
+__gen_aspect_patterns(dep_tags_file, pos_tags_file, sents_file, train_valid_split_file,
+                      opinion_terms_file, word_cnts_file, patterns_file)
 # __gen_filter_terms_vocab_file(dep_tags_file, pos_tags_file, sents_file, full_train_term_filter_file)
-
 # __gen_term_hit_rate_file(sents_file, dep_tags_file, pos_tags_file, term_hit_rate_file)

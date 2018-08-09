@@ -150,7 +150,8 @@ class NeuRuleDoubleJoint:
             with tf.variable_scope("crf-tar"):
                 log_likelihood, self.trans_params_tar = tf.contrib.crf.crf_log_likelihood(
                         self.logits_tar, self.labels_tar, self.sequence_lengths)
-                self.loss_tar = tf.reduce_mean(-log_likelihood)
+                # self.loss_tar = tf.reduce_mean(-log_likelihood)
+                self.loss_tar = tf.reduce_mean(-log_likelihood) + 0.001 * tf.nn.l2_loss(self.W_tar)
         else:
             assert False
             # losses = tf.nn.sparse_softmax_cross_entropy_with_logits(
