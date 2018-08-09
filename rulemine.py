@@ -480,6 +480,42 @@ def __gen_filter_terms_vocab_file(dep_tags_file, pos_tags_file, sents_file, dst_
             fout.write('{}\n'.format(t))
 
 
+def __gen_term_hit_rate_file(train_sents_file, dep_tags_file, pos_tags_file, dst_file):
+    dep_tags_list = utils.load_dep_tags_list(dep_tags_file)
+    pos_tags_list = utils.load_pos_tags(pos_tags_file)
+    sents = utils.load_json_objs(train_sents_file)
+    terms_list = utils.aspect_terms_list_from_sents(sents)
+    term_hit_cnts = dict()
+    for terms in terms_list:
+        for t in terms:
+            cnt = term_hit_cnts.get(t, 0)
+            term_hit_cnts[t] = cnt + 1
+
+    all_terms = set(term_hit_cnts.keys())
+    print(len(all_terms), 'terms')
+    term_cnts = {t: 0 for t in all_terms}
+    # for t in term_hit_cnts.keys():
+    for dep_tags, pos_tags, sent in zip(dep_tags_list, pos_tags_list, sents):
+        sent_text = sent['text'].lower()
+        terms = rulescommon.get_terms_by_matching(dep_tags, pos_tags, sent_text, all_terms)
+        for t in terms:
+            cnt = term_cnts.get(t, 0)
+            term_cnts[t] = cnt + 1
+
+    term_hit_rate_tups = list()
+    for t, hit_cnt in term_hit_cnts.items():
+        total_cnt = term_cnts.get(t, 0)
+        if total_cnt > 0:
+            term_hit_rate_tups.append((t, hit_cnt / (total_cnt + 1e-5)))
+
+    term_hit_rate_tups.sort(key=lambda x: -x[1])
+
+    with open(dst_file, 'w', encoding='utf-8', newline='\n') as fout:
+        pd.DataFrame(term_hit_rate_tups, columns=['term', 'rate']).to_csv(
+            fout, float_format='%.4f', index=False
+        )
+
+
 term_filter_rate = 0.1
 dep_tags_file = 'd:/data/aspect/semeval14/laptops/laptops-train-rule-dep.txt'
 pos_tags_file = 'd:/data/aspect/semeval14/laptops/laptops-train-rule-pos.txt'
@@ -490,10 +526,13 @@ word_cnts_file = 'd:/data/aspect/semeval14/laptops/word_cnts.txt'
 # train_sents_file = config.SE14_LAPTOP_TRAIN_SENTS_FILE
 sents_file = config.SE14_LAPTOP_TRAIN_SENTS_FILE
 patterns_file = 'd:/data/aspect/semeval14/laptops/mined_rule_patterns.txt'
+term_hit_rate_file = 'd:/data/aspect/semeval14/laptops/aspect-term-hit-rate.txt'
 
 full_train_term_filter_file = 'd:/data/aspect/semeval14/laptops/aspect_filter_vocab_full.txt'
 
 # __gen_aspect_patterns(dep_tags_file, pos_tags_file, sents_file, train_valid_split_file,
 #                       opinion_terms_file, word_cnts_file, patterns_file)
 
-__gen_filter_terms_vocab_file(dep_tags_file, pos_tags_file, sents_file, full_train_term_filter_file)
+# __gen_filter_terms_vocab_file(dep_tags_file, pos_tags_file, sents_file, full_train_term_filter_file)
+
+# __gen_term_hit_rate_file(sents_file, dep_tags_file, pos_tags_file, term_hit_rate_file)

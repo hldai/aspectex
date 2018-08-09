@@ -119,3 +119,83 @@ def find_terms_by_l2_pattern(pattern, dep_tags, pos_tags, opinion_terms_vocab, f
 
             terms.append(term)
     return terms
+
+
+def __remove_embeded(matched_tups):
+    matched_tups_new = list()
+    for i, t0 in enumerate(matched_tups):
+        exist = False
+        for j, t1 in enumerate(matched_tups):
+            if i != j and t1[0] <= t0[0] and t1[1] >= t0[1]:
+                exist = True
+                break
+        if not exist:
+            matched_tups_new.append(t0)
+    return matched_tups_new
+
+
+def __find_word_spans(text_lower, words):
+    p = 0
+    word_spans = list()
+    for w in words:
+        wp = text_lower[p:].find(w)
+        if wp < 0:
+            word_spans.append((-1, -1))
+            continue
+        word_spans.append((p + wp, p + wp + len(w)))
+        p += wp + len(w)
+    return word_spans
+
+
+def pharse_for_span(span, sent_text_lower, words, pos_tags, dep_tags):
+    word_spans = __find_word_spans(sent_text_lower, words)
+    widxs = list()
+    for i, wspan in enumerate(word_spans):
+        if (wspan[0] <= span[0] < wspan[1]) or (wspan[0] < span[1] <= wspan[1]):
+            widxs.append(i)
+
+    if not widxs:
+        # print(span)
+        # print(sent_text_lower[span[0]: span[1]])
+        # print(sent_text_lower)
+        # print(words)
+        # print(word_spans)
+        # exit()
+        return None
+
+    phrase = get_noun_phrase_from_seed(dep_tags, pos_tags, widxs)
+    return phrase
+
+
+def get_aspect_term_vocab(aspect_term_hit_rate_file, rate_thres):
+    import pandas as pd
+
+    df = pd.read_csv(aspect_term_hit_rate_file)
+    df = df[df['rate'] > rate_thres]
+    return set(df['term'])
+
+
+def get_terms_by_matching(dep_tags, pos_tags, sent_text, terms_vocab):
+    sent_text_lower = sent_text.lower()
+    matched_tups = list()
+    for t in terms_vocab:
+        pbeg = sent_text_lower.find(t)
+        if pbeg < 0:
+            continue
+        if pbeg != 0 and sent_text_lower[pbeg - 1].isalpha():
+            continue
+        pend = pbeg + len(t)
+        if pend != len(sent_text_lower) and sent_text_lower[pend].isalpha():
+            continue
+        matched_tups.append((pbeg, pend))
+        # break
+
+    matched_tups = __remove_embeded(matched_tups)
+    sent_words = [tup[2][1] for tup in dep_tags]
+    aspect_terms = set()
+    for matched_span in matched_tups:
+        phrase = pharse_for_span(matched_span, sent_text_lower, sent_words, pos_tags, dep_tags)
+        if phrase is not None:
+            aspect_terms.add(phrase)
+
+    return aspect_terms

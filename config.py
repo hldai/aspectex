@@ -28,7 +28,7 @@ DATA_DIR_HL04 = join(DATA_DIR, 'huliu04')
 DATA_DIR_SE14 = join(DATA_DIR, 'semeval14')
 
 # SE14_LAPTOP_GLOVE_WORD_VEC_FILE = 'd:/data/aspect/semeval14/model-data/glove-word-vecs.pkl'
-SE14_LAPTOP_GLOVE_WORD_VEC_FILE = join(DATA_DIR_SE14, 'model-data/glove-word-vecs.pkl')
+SE14_LAPTOP_GLOVE_WORD_VEC_FILE = join(DATA_DIR_SE14, 'model-data/laptops-glove-word-vecs.pkl')
 
 DATA_FILE_LIST_FILE_HL04 = join(DATA_DIR_HL04, 'data-file-names.txt')
 REVIEWS_FILE_HL04 = join(DATA_DIR_HL04, 'reviews.json')
@@ -56,7 +56,7 @@ SE14_LAPTOP_TRAIN_DEP_PARSE_FILE = join(DATA_DIR_SE14, 'laptops/laptops_train_de
 SE14_LAPTOP_TEST_RNCRF_DATA_FILE = join(DATA_DIR_SE14, 'laptops_test_rncrf_data.pkl')
 SE14_LAPTOP_TRAIN_RNCRF_DATA_FILE = join(DATA_DIR_SE14, 'laptops_train_rncrf_data.pkl')
 SE14_LAPTOP_TRAIN_WORD_VECS_FILE = join(DATA_DIR_SE14, 'laptops_train_rncrf_word_vecs.pkl')
-SE14_LAPTOP_WORD_VECS_FILE = join(DATA_DIR_SE14, 'laptops_rncrf_word_vecs.pkl')
+SE14_LAPTOP_WORD_VECS_FILE = join(DATA_DIR_SE14, 'model-data/laptops_train_rncrf_word_vecs.pkl')
 SE14_LAPTOP_PRE_MODEL_FILE = join(DATA_DIR_SE14, 'laptops_pretrain_model.pkl')
 SE14_LAPTOP_MODEL_FILE = join(DATA_DIR_SE14, 'laptops_model.pkl')
 
@@ -78,7 +78,7 @@ SE14_REST_GLOVE_WORD_VEC_FILE = join(DATA_DIR_SE14, 'model-data/restaurants_word
 AMAZON_TOK_TEXTS_FILE = join(AMAZON_DATA_DIR, 'laptops-reivews-sent-tok-text.txt')
 AMAZON_TERMS_TRUE1_FILE = join(AMAZON_DATA_DIR, 'laptops-rule-result1.txt')
 AMAZON_TERMS_TRUE2_FILE = join(AMAZON_DATA_DIR, 'laptops-rule-result2.txt')
-AMAZON_TERMS_TRUE3_FILE = join(AMAZON_DATA_DIR, 'laptops-rule-result3.txt')
+AMAZON_RM_TERMS_FILE = join(AMAZON_DATA_DIR, 'laptops-aspect-rm-rule-result.txt')
 # AMAZON_TERMS_TRUE4_FILE = join(AMAZON_DATA_DIR, 'laptops-rule-result4.txt')
 AMAZON_TERMS_TRUE4_FILE = join(AMAZON_DATA_DIR, 'laptops-opinion-rule-result.txt')
 LAPTOP_RULE_MODEL1_FILE = join(DATA_DIR_SE14, 'tf-model/single-1/laptop-rule1.ckpl')

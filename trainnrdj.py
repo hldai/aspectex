@@ -406,14 +406,15 @@ def __train_nrdj(word_vecs_file, train_tok_texts_file, train_sents_file, test_to
 
 str_today = datetime.date.today().strftime('%y-%m-%d')
 
-dataset_name = 'restaurant'
+# dataset_name = 'restaurant'
+dataset_name = 'laptops'
 hidden_size_lstm = 100
 n_epochs = 200
 
 if dataset_name == 'laptops':
-    word_vecs_file = config.SE14_LAPTOP_WORD_VECS_FILE
+    word_vecs_file = config.SE14_LAPTOP_GLOVE_WORD_VEC_FILE
     pre_tok_texts_file = config.AMAZON_TOK_TEXTS_FILE
-    pre_aspect_terms_file = config.AMAZON_TERMS_TRUE2_FILE
+    pre_aspect_terms_file = config.AMAZON_RM_TERMS_FILE
     pre_opinion_terms_file = config.AMAZON_TERMS_TRUE4_FILE
     rule_model_file = config.LAPTOP_RULE_MODEL2_FILE
 
@@ -434,10 +435,10 @@ else:
     test_tok_texts_file = config.SE14_REST_TEST_TOK_TEXTS_FILE
     test_sents_file = config.SE14_REST_TEST_SENTS_FILE
 
-# __pre_train_nrdj(word_vecs_file, pre_tok_texts_file, pre_aspect_terms_file,
-#                  pre_opinion_terms_file, rule_model_file, 'both')
-__train_nrdj(word_vecs_file, train_tok_texts_file, train_sents_file, test_tok_texts_file, test_sents_file,
-             rule_model_file, 'both')
+__pre_train_nrdj(word_vecs_file, pre_tok_texts_file, pre_aspect_terms_file,
+                 pre_opinion_terms_file, rule_model_file, 'both')
+# __train_nrdj(word_vecs_file, train_tok_texts_file, train_sents_file, test_tok_texts_file, test_sents_file,
+#              rule_model_file, 'both')
 # __train_nrdj_restaurant_pr()
 # __train_nrdj_joint_restaurant_pr
 # __train_nrdj_mlp_restaurant_pr()

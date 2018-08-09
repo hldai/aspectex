@@ -322,10 +322,10 @@ def __split_training_set(train_sents_file, dst_file):
 #                             config.SE14_LAPTOP_TEST_SENTS_FILE, config.SE14_LAPTOP_TEST_SENT_TEXTS_FILE)
 # __gen_judge_train_data()
 
-# __trim_word_vecs_file(
-#     [config.SE14_LAPTOP_TRAIN_TOK_TEXTS_FILE, config.SE14_LAPTOP_TEST_TOK_TEXTS_FILE],
-#     config.GLOVE_WORD_VEC_FILE, config.SE14_LAPTOP_GLOVE_WORD_VEC_FILE
-# )
+__trim_word_vecs_file(
+    [config.SE14_LAPTOP_TRAIN_TOK_TEXTS_FILE, config.SE14_LAPTOP_TEST_TOK_TEXTS_FILE],
+    config.GLOVE_WORD_VEC_FILE, config.SE14_LAPTOP_GLOVE_WORD_VEC_FILE
+)
 
 # __process_raw_sem_eval_data(config.SE14_REST_TRAIN_XML_FILE, config.SE14_REST_TRAIN_OPINIONS_FILE,
 #                             config.SE14_REST_TRAIN_SENTS_FILE, config.SE14_REST_TRAIN_SENT_TEXTS_FILE)
@@ -346,4 +346,4 @@ eng_yelp_rest_review_sents_file = 'd:/data/res/yelp-review-eng-tok-sents-round-9
 # __filter_non_english_sents('d:/data/res/yelp-review-tok-sents-round-9.txt', eng_yelp_rest_review_sents_file)
 
 # __gen_word_cnts_file()
-__split_training_set(config.SE14_LAPTOP_TRAIN_SENTS_FILE, config.SE14_LAPTOP_TRAIN_VALID_SPLIT_FILE)
+# __split_training_set(config.SE14_LAPTOP_TRAIN_SENTS_FILE, config.SE14_LAPTOP_TRAIN_VALID_SPLIT_FILE)

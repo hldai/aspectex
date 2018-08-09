@@ -119,27 +119,7 @@ def __find_word_spans(text_lower, words):
     return word_spans
 
 
-def __pharse_for_span(span, sent_text_lower, words, pos_tags, dep_tags, opinion_terms):
-    word_spans = __find_word_spans(sent_text_lower, words)
-    widxs = list()
-    for i, wspan in enumerate(word_spans):
-        if (wspan[0] <= span[0] < wspan[1]) or (wspan[0] < span[1] <= wspan[1]):
-            widxs.append(i)
-
-    if not widxs:
-        # print(span)
-        # print(sent_text_lower[span[0]: span[1]])
-        # print(sent_text_lower)
-        # print(words)
-        # print(word_spans)
-        # exit()
-        return None
-
-    phrase = rulescommon.get_noun_phrase_from_seed(dep_tags, pos_tags, widxs)
-    return phrase
-
-
-def rule4(dep_tags, pos_tags, sent_text, opinion_terms, nouns_filter, terms_train):
+def rule4(dep_tags, pos_tags, sent_text, nouns_filter, terms_train):
     sent_text_lower = sent_text.lower()
     matched_tups = list()
     for t in terms_train:
@@ -158,7 +138,7 @@ def rule4(dep_tags, pos_tags, sent_text, opinion_terms, nouns_filter, terms_trai
     sent_words = [tup[2][1] for tup in dep_tags]
     aspect_terms = set()
     for matched_span in matched_tups:
-        phrase = __pharse_for_span(matched_span, sent_text_lower, sent_words, pos_tags, dep_tags, opinion_terms)
+        phrase = rulescommon.pharse_for_span(matched_span, sent_text_lower, sent_words, pos_tags, dep_tags)
         if phrase is not None:
             aspect_terms.add(phrase)
 
