@@ -406,8 +406,8 @@ def __train_nrdj(word_vecs_file, train_tok_texts_file, train_sents_file, test_to
 
 str_today = datetime.date.today().strftime('%y-%m-%d')
 
-# dataset_name = 'restaurant'
-dataset_name = 'laptops'
+dataset_name = 'restaurant'
+# dataset_name = 'laptops'
 hidden_size_lstm = 100
 n_epochs = 200
 
@@ -424,9 +424,10 @@ if dataset_name == 'laptops':
     test_sents_file = config.SE14_LAPTOP_TEST_SENTS_FILE
 else:
     word_vecs_file = config.SE14_REST_GLOVE_WORD_VEC_FILE
-    pre_aspect_terms_file = 'd:/data/aspect/semeval14/restaurant/yelp-aspect-rule-result-r.txt'
+    pre_aspect_terms_file = 'd:/data/aspect/semeval14/restaurants/yelp-aspect-rm-rule-result.txt'
+    # pre_aspect_terms_file = 'd:/data/aspect/semeval14/restaurants/yelp-aspect-rule-result-r.txt'
     # aspect_terms_file = 'd:/data/aspect/semeval14/restaurant/yelp-aspect-rule-result-r1.txt'
-    pre_opinion_terms_file = 'd:/data/aspect/semeval14/restaurant/yelp-opinion-rule-result.txt'
+    pre_opinion_terms_file = 'd:/data/aspect/semeval14/restaurants/yelp-opinion-rule-result.txt'
     pre_tok_texts_file = 'd:/data/res/yelp-review-eng-tok-sents-round-9.txt'
     rule_model_file = 'd:/data/aspect/semeval14/tf-model/drest/yelp-nrdj.ckpl'
 
