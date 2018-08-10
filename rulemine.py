@@ -291,7 +291,7 @@ def __filter_l1_patterns_through_matching(patterns, dep_tags_list, pos_tags_list
                 if term in terms_true:
                     hit_cnt += 1
 
-        if hit_cnt / (cnt + 1e-5) > 0.6:
+        if hit_cnt / (cnt + 1e-5) > pattern_filter_rate:
             # print(p, hit_cnt, cnt, hit_cnt / (cnt + 1e-5))
             patterns_keep.append(p)
     return patterns_keep
@@ -314,7 +314,7 @@ def __filter_l2_patterns_through_matching(patterns, dep_tags_list, pos_tags_list
                     # print(dep_tag_l, dep_tag_r)
                     # print(term)
 
-        if hit_cnt / (cnt + 1e-5) > 0.6:
+        if hit_cnt / (cnt + 1e-5) > pattern_filter_rate:
             # print(p, hit_cnt, cnt, hit_cnt / (cnt + 1e-5))
             patterns_keep.append(p)
     return patterns_keep
@@ -454,7 +454,7 @@ def __gen_term_hit_rate_file(mine_helper, train_sents_file, dep_tags_file, pos_t
     # for t in term_hit_cnts.keys():
     for dep_tags, pos_tags, sent in zip(dep_tags_list, pos_tags_list, sents):
         sent_text = sent['text'].lower()
-        terms = rulescommon.get_terms_by_matching(dep_tags, pos_tags, sent_text, all_terms)
+        terms = mine_helper.get_terms_by_matching(dep_tags, pos_tags, sent_text, all_terms)
         for t in terms:
             cnt = term_cnts.get(t, 0)
             term_cnts[t] = cnt + 1
@@ -473,9 +473,17 @@ def __gen_term_hit_rate_file(mine_helper, train_sents_file, dep_tags_file, pos_t
         )
 
 
-term_filter_rate = 0.1
 dataset = 'laptops'
 # dataset = 'restaurants'
+target = 'opinion'
+
+if target == 'aspect':
+    term_filter_rate = 0.1
+    pattern_filter_rate = 0.6
+else:
+    term_filter_rate = 0.1
+    pattern_filter_rate = 0.6
+
 opinion_terms_file = 'd:/data/aspect/semeval14/opinion-terms-full.txt'
 
 dep_tags_file = 'd:/data/aspect/semeval14/{}/{}-train-rule-dep.txt'.format(dataset, dataset)
@@ -497,9 +505,11 @@ else:
     train_valid_split_file = config.SE14_REST_TRAIN_VALID_SPLIT_FILE
     sents_file = config.SE14_REST_TRAIN_SENTS_FILE
 
-# mine_helper = AspectMineHelper(opinion_terms_file)
-mine_helper = OpinionMineHelper()
+if target == 'aspect':
+    mine_helper = AspectMineHelper(opinion_terms_file)
+else:
+    mine_helper = OpinionMineHelper()
 # __gen_aspect_patterns(mine_helper, dep_tags_file, pos_tags_file, sents_file, train_valid_split_file,
 #                       word_cnts_file, patterns_file)
 # __gen_filter_terms_vocab_file(mine_helper, dep_tags_file, pos_tags_file, sents_file, full_train_term_filter_file)
-# __gen_term_hit_rate_file(mine_helper, sents_file, dep_tags_file, pos_tags_file, term_hit_rate_file)
+__gen_term_hit_rate_file(mine_helper, sents_file, dep_tags_file, pos_tags_file, term_hit_rate_file)

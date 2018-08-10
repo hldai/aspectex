@@ -62,11 +62,50 @@ class AspectMineHelper:
         return pw == w
 
     @staticmethod
+    def get_terms_by_matching(dep_tags, pos_tags, sent_text, terms_vocab):
+        sent_text_lower = sent_text.lower()
+        matched_tups = list()
+        for t in terms_vocab:
+            pbeg = sent_text_lower.find(t)
+            if pbeg < 0:
+                continue
+            if pbeg != 0 and sent_text_lower[pbeg - 1].isalpha():
+                continue
+            pend = pbeg + len(t)
+            if pend != len(sent_text_lower) and sent_text_lower[pend].isalpha():
+                continue
+            matched_tups.append((pbeg, pend))
+            # break
+
+        matched_tups = AspectMineHelper.__remove_embeded(matched_tups)
+        sent_words = [tup[2][1] for tup in dep_tags]
+        aspect_terms = set()
+        for matched_span in matched_tups:
+            phrase = rulescommon.pharse_for_span(matched_span, sent_text_lower, sent_words, pos_tags, dep_tags)
+            if phrase is not None:
+                aspect_terms.add(phrase)
+
+        return aspect_terms
+
+    @staticmethod
     def terms_list_from_sents(sents):
         aspect_terms_list = list()
         for sent in sents:
             aspect_terms_list.append([t['term'].lower() for t in sent.get('terms', list())])
         return aspect_terms_list
+
+    @staticmethod
+    def __remove_embeded(matched_tups):
+        matched_tups_new = list()
+        for i, t0 in enumerate(matched_tups):
+            exist = False
+            for j, t1 in enumerate(matched_tups):
+                if i != j and t1[0] <= t0[0] and t1[1] >= t0[1]:
+                    exist = True
+                    break
+            if not exist:
+                matched_tups_new.append(t0)
+        return matched_tups_new
 
     def __patterns_from_l1_dep_tags(self, aspect_word_wc, related_dep_tags, pos_tags, term_word_idx_span):
         widx_beg, widx_end = term_word_idx_span

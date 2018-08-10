@@ -269,11 +269,11 @@ def __rule_insight(opinion_term_dict_file, filter_nouns_file, dep_tags_file, pos
             fout.write('\n'.join([str(i) for i in correct_sent_idxs]))
 
 
-def __run_with_mined_rules(mine_helper, rule_patterns_file, aspect_term_hit_rate_file, dep_tags_file, pos_tags_file,
+def __run_with_mined_rules(mine_helper, rule_patterns_file, term_hit_rate_file, dep_tags_file, pos_tags_file,
                            sent_texts_file, filter_terms_vocab_file,
                            dst_result_file=None, sents_file=None):
     l1_rules, l2_rules = rulescommon.load_rule_patterns_file(rule_patterns_file)
-    term_vocab = rulescommon.get_term_vocab(aspect_term_hit_rate_file, 0.6)
+    term_vocab = rulescommon.get_term_vocab(term_hit_rate_file, 0.6)
 
     dep_tags_list = utils.load_dep_tags_list(dep_tags_file)
     pos_tags_list = utils.load_pos_tags(pos_tags_file)
@@ -293,7 +293,7 @@ def __run_with_mined_rules(mine_helper, rule_patterns_file, aspect_term_hit_rate
                 p, dep_tag_seq, pos_tag_seq, mine_helper, filter_terms_vocab)
             terms.update(terms_new)
 
-        terms_new = rulescommon.get_terms_by_matching(dep_tag_seq, pos_tag_seq, sent_text, term_vocab)
+        terms_new = mine_helper.get_terms_by_matching(dep_tag_seq, pos_tag_seq, sent_text, term_vocab)
         terms.update(terms_new)
 
         terms_sys_list.append(terms)
@@ -319,8 +319,8 @@ opinion_terms_file = 'd:/data/aspect/semeval14/opinion-terms-full.txt'
 laptops_filter_nouns_file = 'd:/data/aspect/semeval14/nouns-filter.txt'
 rest_filter_nouns_file = 'd:/data/aspect/semeval14/restaurants/aspect-nouns-filter.txt'
 
-dataset = 'laptops-test'
-# dataset = 'laptops-amazon'
+# dataset = 'laptops-test'
+dataset = 'laptops-amazon'
 # dataset = 'restaurants-test'
 # dataset = 'restaurants-yelp'
 # task = 'aspect'
@@ -346,22 +346,23 @@ if dataset.endswith('test') or dataset.endswith('train'):
     opinion_result_file = 'd:/data/aspect/semeval14/{}/{}-{}-opinion-rule-result.txt'.format(ds1, ds1, ds2)
     sent_texts_file = 'd:/data/aspect/semeval14/{}/{}_{}_texts.txt'.format(ds1, ds1, ds2)
 
-if dataset == 'laptops-test':
+if dataset.startswith('laptops'):
     train_sents_file = config.SE14_LAPTOP_TRAIN_SENTS_FILE
+else:
+    train_sents_file = config.SE14_REST_TRAIN_SENTS_FILE
+
+if dataset == 'laptops-test':
     sents_file = config.SE14_LAPTOP_TEST_SENTS_FILE
 if dataset == 'laptops-train':
-    train_sents_file = config.SE14_LAPTOP_TRAIN_SENTS_FILE
     sents_file = config.SE14_LAPTOP_TRAIN_SENTS_FILE
 if dataset == 'restaurants-test':
-    train_sents_file = config.SE14_REST_TRAIN_SENTS_FILE
     sents_file = config.SE14_REST_TEST_SENTS_FILE
 if dataset == 'restaurants-train':
-    train_sents_file = config.SE14_REST_TRAIN_SENTS_FILE
     sents_file = config.SE14_REST_TRAIN_SENTS_FILE
 if dataset == 'laptops-amazon':
     dep_tags_file = 'd:/data/amazon/laptops-rule-dep.txt'
     pos_tags_file = 'd:/data/amazon/laptops-rule-pos.txt'
-    # opinion_result_file = 'd:/data/amazon/laptops-opinion-rule-result.txt'
+    opinion_result_file = 'd:/data/amazon/laptops-opinion-rule-result.txt'
     aspect_result_file = 'd:/data/amazon/laptops-aspect-rm-rule-result.txt'
     sent_texts_file = 'd:/data/amazon/laptops-reivews-sent-text.txt'
 if dataset == 'restaurants-yelp':
@@ -371,7 +372,6 @@ if dataset == 'restaurants-yelp':
     aspect_result_file = 'd:/data/aspect/semeval14/restaurants/yelp-aspect-rm-rule-result.txt'
     opinion_result_file = 'd:/data/aspect/semeval14/restaurants/yelp-opinion-rule-result.txt'
     sent_texts_file = 'd:/data/res/yelp-review-eng-tok-sents-round-9.txt'
-    train_sents_file = config.SE14_REST_TRAIN_SENTS_FILE
 
 if task == 'aspect':
     # __rule_insight(opinion_terms_file, filter_nouns_file, dep_tags_file, pos_tags_file, sent_texts_file,
@@ -387,4 +387,4 @@ if task == 'opinion':
     mine_helper = OpinionMineHelper()
     __run_with_mined_rules(
         mine_helper, opinion_rule_patterns_file, opinion_term_hit_rate_file, dep_tags_file, pos_tags_file,
-        sent_texts_file, opinion_filter_terms_vocab_file, dst_result_file=aspect_result_file, sents_file=sents_file)
+        sent_texts_file, opinion_filter_terms_vocab_file, dst_result_file=opinion_result_file, sents_file=sents_file)

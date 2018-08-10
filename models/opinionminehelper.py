@@ -58,6 +58,21 @@ class OpinionMineHelper:
         return pw == w
 
     @staticmethod
+    def get_terms_by_matching(dep_tags, pos_tags, sent_text, terms_vocab):
+        terms = list()
+        for t in terms_vocab:
+            pbeg = sent_text.find(t)
+            if pbeg < 0:
+                continue
+            pend = pbeg + len(t)
+            if pbeg > 0 and sent_text[pbeg - 1].isalpha():
+                continue
+            if pend < len(sent_text) and sent_text[pend].isalpha():
+                continue
+            terms.append(t)
+        return terms
+
+    @staticmethod
     def terms_list_from_sents(sents):
         opinion_terms_list = list()
         for sent in sents:
