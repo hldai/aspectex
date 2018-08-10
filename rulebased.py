@@ -237,7 +237,7 @@ def __rule_insight(opinion_term_dict_file, filter_nouns_file, dep_tags_file, pos
         # aspect_terms.update(aspect_terms_new)
 
         words = [dep_tag[2][1] for dep_tag in dep_tags]
-        aspect_terms_new = rules.rec_rule1(words, pos_tags, nouns_filter)
+        aspect_terms_new = rulescommon.get_noun_phrases(words, pos_tags, nouns_filter)
         aspect_terms.update(aspect_terms_new)
 
         # if sent_idx > 10:
@@ -320,9 +320,9 @@ laptops_filter_nouns_file = 'd:/data/aspect/semeval14/nouns-filter.txt'
 rest_filter_nouns_file = 'd:/data/aspect/semeval14/restaurants/aspect-nouns-filter.txt'
 
 # dataset = 'laptops-test'
-dataset = 'laptops-amazon'
+# dataset = 'laptops-amazon'
 # dataset = 'restaurants-test'
-# dataset = 'restaurants-yelp'
+dataset = 'restaurants-yelp'
 # task = 'aspect'
 task = 'opinion'
 

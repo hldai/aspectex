@@ -5,37 +5,57 @@ import config
 
 
 TrainData = namedtuple("TrainData", ["labels_list", "word_idxs_list"])
-ValidData = namedtuple("TestData", [
+ValidData = namedtuple("ValidData", [
     "labels_list", "word_idxs_list", "tok_texts", "aspects_true_list", "opinions_true_list"])
 
 
-def get_data_semeval(train_sents_file, train_tok_text_file, test_sents_file,
+def __get_valid_data(sents, tok_texts, vocab, task):
+    labels_list_test, word_idxs_list_test = modelutils.data_from_sents_file(sents, tok_texts, vocab, task)
+    # exit()
+
+    aspect_terms_true_list = list() if task != 'opinion' else None
+    opinion_terms_true_list = list() if task != 'aspect' else None
+    for sent in sents:
+        if aspect_terms_true_list is not None:
+            aspect_terms_true_list.append(
+                [t['term'].lower() for t in sent['terms']] if 'terms' in sent else list())
+        if opinion_terms_true_list is not None:
+            opinion_terms_true_list.append([w.lower() for w in sent.get('opinions', list())])
+
+    return ValidData(labels_list_test, word_idxs_list_test, tok_texts, aspect_terms_true_list,
+                     opinion_terms_true_list)
+
+
+def get_data_semeval(train_sents_file, train_tok_text_file, train_valid_split_file, test_sents_file,
                      test_tok_text_file, vocab, n_train, task):
+    tvs_line = utils.read_lines(train_valid_split_file)[0]
+    tvs_arr = [int(v) for v in tvs_line.split()]
+
     sents = utils.load_json_objs(train_sents_file)
     texts = utils.read_lines(train_tok_text_file)
-    labels_list_train, word_idxs_list_train = modelutils.data_from_sents_file(sents, texts, vocab, task)
+
+    sents_train, texts_train, sents_valid, texts_valid = list(), list(), list(), list()
+    for label, s, t in zip(tvs_arr, sents, texts):
+        if label == 0:
+            sents_train.append(s)
+            texts_train.append(t)
+        else:
+            sents_valid.append(s)
+            texts_valid.append(t)
+
+    labels_list_train, word_idxs_list_train = modelutils.data_from_sents_file(sents_train, texts_train, vocab, task)
     if n_train > -1:
         labels_list_train = labels_list_train[:n_train]
         word_idxs_list_train = word_idxs_list_train[:n_train]
 
+    train_data = TrainData(labels_list_train, word_idxs_list_train)
+
+    valid_data = __get_valid_data(sents_valid, texts_valid, vocab, task)
+
     sents_test = utils.load_json_objs(test_sents_file)
     texts_test = utils.read_lines(test_tok_text_file)
-    labels_list_test, word_idxs_list_test = modelutils.data_from_sents_file(sents_test, texts_test, vocab, task)
-    # exit()
-
-    aspect_terms_true_list_test = list() if task != 'opinion' else None
-    opinion_terms_true_list_test = list() if task != 'aspect' else None
-    for sent in sents_test:
-        if aspect_terms_true_list_test is not None:
-            aspect_terms_true_list_test.append(
-                [t['term'].lower() for t in sent['terms']] if 'terms' in sent else list())
-        if opinion_terms_true_list_test is not None:
-            opinion_terms_true_list_test.append([w.lower() for w in sent.get('opinions', list())])
-
-    train_data = TrainData(labels_list_train, word_idxs_list_train)
-    valid_data = ValidData(labels_list_test, word_idxs_list_test, texts_test, aspect_terms_true_list_test,
-                           opinion_terms_true_list_test)
-    return train_data, valid_data
+    test_data = __get_valid_data(sents_test, texts_test, vocab, task)
+    return train_data, valid_data, test_data
 
 
 def get_data_amazon_ao(vocab, aspect_terms_file, opinion_terms_file, tok_texts_file):

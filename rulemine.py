@@ -473,9 +473,10 @@ def __gen_term_hit_rate_file(mine_helper, train_sents_file, dep_tags_file, pos_t
         )
 
 
-dataset = 'laptops'
-# dataset = 'restaurants'
-target = 'opinion'
+# dataset = 'laptops'
+dataset = 'restaurants'
+# target = 'opinion'
+target = 'aspect'
 
 if target == 'aspect':
     term_filter_rate = 0.1
@@ -490,13 +491,15 @@ dep_tags_file = 'd:/data/aspect/semeval14/{}/{}-train-rule-dep.txt'.format(datas
 pos_tags_file = 'd:/data/aspect/semeval14/{}/{}-train-rule-pos.txt'.format(dataset, dataset)
 sent_texts_file = 'd:/data/aspect/semeval14/{}/{}_train_texts.txt'.format(dataset, dataset)
 word_cnts_file = 'd:/data/aspect/semeval14/{}/word_cnts.txt'.format(dataset)
-# patterns_file = 'd:/data/aspect/semeval14/{}/aspect_mined_rule_patterns.txt'.format(dataset)
-# term_hit_rate_file = 'd:/data/aspect/semeval14/{}/aspect-term-hit-rate.txt'.format(dataset)
-# full_train_term_filter_file = 'd:/data/aspect/semeval14/{}/aspect_filter_vocab_full.txt'.format(dataset)
 
-patterns_file = 'd:/data/aspect/semeval14/{}/opinion_mined_rule_patterns.txt'.format(dataset)
-term_hit_rate_file = 'd:/data/aspect/semeval14/{}/opinion-term-hit-rate.txt'.format(dataset)
-full_train_term_filter_file = 'd:/data/aspect/semeval14/{}/opinion_filter_vocab_full.txt'.format(dataset)
+if target == 'aspect':
+    patterns_file = 'd:/data/aspect/semeval14/{}/aspect_mined_rule_patterns.txt'.format(dataset)
+    term_hit_rate_file = 'd:/data/aspect/semeval14/{}/aspect-term-hit-rate.txt'.format(dataset)
+    full_train_term_filter_file = 'd:/data/aspect/semeval14/{}/aspect_filter_vocab_full.txt'.format(dataset)
+else:
+    patterns_file = 'd:/data/aspect/semeval14/{}/opinion_mined_rule_patterns.txt'.format(dataset)
+    term_hit_rate_file = 'd:/data/aspect/semeval14/{}/opinion-term-hit-rate.txt'.format(dataset)
+    full_train_term_filter_file = 'd:/data/aspect/semeval14/{}/opinion_filter_vocab_full.txt'.format(dataset)
 
 if dataset == 'laptops':
     train_valid_split_file = config.SE14_LAPTOP_TRAIN_VALID_SPLIT_FILE
@@ -509,7 +512,8 @@ if target == 'aspect':
     mine_helper = AspectMineHelper(opinion_terms_file)
 else:
     mine_helper = OpinionMineHelper()
+
 # __gen_aspect_patterns(mine_helper, dep_tags_file, pos_tags_file, sents_file, train_valid_split_file,
 #                       word_cnts_file, patterns_file)
 # __gen_filter_terms_vocab_file(mine_helper, dep_tags_file, pos_tags_file, sents_file, full_train_term_filter_file)
-__gen_term_hit_rate_file(mine_helper, sents_file, dep_tags_file, pos_tags_file, term_hit_rate_file)
+# __gen_term_hit_rate_file(mine_helper, sents_file, dep_tags_file, pos_tags_file, term_hit_rate_file)
