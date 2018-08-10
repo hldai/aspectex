@@ -2,6 +2,8 @@ import json
 import config
 from utils import utils
 from models import rules, opinionrules, rulescommon
+from models.aspectminehelper import AspectMineHelper
+from models.opinionminehelper import OpinionMineHelper
 
 
 # word-idx to (idx, word)
@@ -267,46 +269,47 @@ def __rule_insight(opinion_term_dict_file, filter_nouns_file, dep_tags_file, pos
             fout.write('\n'.join([str(i) for i in correct_sent_idxs]))
 
 
-def __run_with_mined_rules(rule_patterns_file, aspect_term_hit_rate_file, dep_tags_file, pos_tags_file,
-                           sent_texts_file, opinion_terms_file, filter_terms_vocab_file,
+def __run_with_mined_rules(mine_helper, rule_patterns_file, aspect_term_hit_rate_file, dep_tags_file, pos_tags_file,
+                           sent_texts_file, filter_terms_vocab_file,
                            dst_result_file=None, sents_file=None):
     l1_rules, l2_rules = rulescommon.load_rule_patterns_file(rule_patterns_file)
-    aspect_term_vocab = rulescommon.get_aspect_term_vocab(aspect_term_hit_rate_file, 0.6)
+    term_vocab = rulescommon.get_term_vocab(aspect_term_hit_rate_file, 0.6)
 
     dep_tags_list = utils.load_dep_tags_list(dep_tags_file)
     pos_tags_list = utils.load_pos_tags(pos_tags_file)
     sent_texts = utils.read_lines(sent_texts_file)
     filter_terms_vocab = set(utils.read_lines(filter_terms_vocab_file))
-    opinion_terms_vocab = set(utils.read_lines(opinion_terms_file))
+    # opinion_terms_vocab = set(utils.read_lines(opinion_terms_file))
 
-    aspects_sys_list = list()
+    terms_sys_list = list()
     for sent_idx, (dep_tag_seq, pos_tag_seq, sent_text) in enumerate(zip(dep_tags_list, pos_tags_list, sent_texts)):
         terms = set()
         for p in l1_rules:
             terms_new = rulescommon.find_terms_by_l1_pattern(
-                p, dep_tag_seq, pos_tag_seq, opinion_terms_vocab, filter_terms_vocab)
+                p, dep_tag_seq, pos_tag_seq, mine_helper, filter_terms_vocab)
             terms.update(terms_new)
         for p in l2_rules:
             terms_new = rulescommon.find_terms_by_l2_pattern(
-                p, dep_tag_seq, pos_tag_seq, opinion_terms_vocab, filter_terms_vocab)
+                p, dep_tag_seq, pos_tag_seq, mine_helper, filter_terms_vocab)
             terms.update(terms_new)
 
-        terms_new = rulescommon.get_terms_by_matching(dep_tag_seq, pos_tag_seq, sent_text, aspect_term_vocab)
+        terms_new = rulescommon.get_terms_by_matching(dep_tag_seq, pos_tag_seq, sent_text, term_vocab)
         terms.update(terms_new)
 
-        aspects_sys_list.append(terms)
+        terms_sys_list.append(terms)
 
         if sent_idx % 10000 == 0:
             print(sent_idx)
 
     if dst_result_file is not None:
-        __write_rule_results(aspects_sys_list, sent_texts, dst_result_file)
+        __write_rule_results(terms_sys_list, sent_texts, dst_result_file)
 
     if sents_file is not None:
         sents = utils.load_json_objs(sents_file)
-        aspect_terms_true = utils.aspect_terms_list_from_sents(sents)
+        # aspect_terms_true = utils.aspect_terms_list_from_sents(sents)
+        terms_list_true = mine_helper.terms_list_from_sents(sents)
         sent_texts = [sent['text'] for sent in sents]
-        correct_sent_idxs = __evaluate(aspects_sys_list, aspect_terms_true, dep_tags_list, pos_tags_list, sent_texts)
+        correct_sent_idxs = __evaluate(terms_sys_list, terms_list_true, dep_tags_list, pos_tags_list, sent_texts)
 
 
 # sents = utils.load_json_objs(config.SE14_LAPTOP_TEST_SENTS_FILE)
@@ -329,9 +332,12 @@ dep_tags_file, pos_tags_file, sent_texts_file, sents_file = None, None, None, No
 train_sents_file, aspect_result_file, opinion_result_file = None, None, None
 
 ds1, ds2 = dataset.split('-')
-filter_terms_vocab_file = 'd:/data/aspect/semeval14/{}/aspect_filter_vocab_full.txt'.format(ds1)
+aspect_filter_terms_vocab_file = 'd:/data/aspect/semeval14/{}/aspect_filter_vocab_full.txt'.format(ds1)
+opinion_filter_terms_vocab_file = 'd:/data/aspect/semeval14/{}/opinion_filter_vocab_full.txt'.format(ds1)
 aspect_term_hit_rate_file = 'd:/data/aspect/semeval14/{}/aspect-term-hit-rate.txt'.format(ds1)
-rule_patterns_file = 'd:/data/aspect/semeval14/{}/mined_rule_patterns.txt'.format(ds1)
+opinion_term_hit_rate_file = 'd:/data/aspect/semeval14/{}/opinion-term-hit-rate.txt'.format(ds1)
+aspect_rule_patterns_file = 'd:/data/aspect/semeval14/{}/aspect_mined_rule_patterns.txt'.format(ds1)
+opinion_rule_patterns_file = 'd:/data/aspect/semeval14/{}/opinion_mined_rule_patterns.txt'.format(ds1)
 
 if dataset.endswith('test') or dataset.endswith('train'):
     dep_tags_file = 'd:/data/aspect/semeval14/{}/{}-{}-rule-dep.txt'.format(ds1, ds1, ds2)
@@ -370,10 +376,15 @@ if dataset == 'restaurants-yelp':
 if task == 'aspect':
     # __rule_insight(opinion_terms_file, filter_nouns_file, dep_tags_file, pos_tags_file, sent_texts_file,
     #                train_sents_file, dst_result_file=aspect_result_file, sents_file=sents_file)
-    __run_with_mined_rules(rule_patterns_file, aspect_term_hit_rate_file, dep_tags_file, pos_tags_file,
-                           sent_texts_file, opinion_terms_file, filter_terms_vocab_file,
-                           dst_result_file=aspect_result_file, sents_file=sents_file)
+    mine_helper = AspectMineHelper(opinion_terms_file)
+    __run_with_mined_rules(
+        mine_helper, aspect_rule_patterns_file, aspect_term_hit_rate_file, dep_tags_file, pos_tags_file,
+        sent_texts_file, aspect_filter_terms_vocab_file, dst_result_file=aspect_result_file, sents_file=sents_file)
 if task == 'opinion':
-    terms_vocab = __load_opinion_terms_in_train(train_sents_file)
-    __opinion_rule_insight(dep_tags_file, pos_tags_file, sent_texts_file, terms_vocab,
-                           dst_result_file=opinion_result_file, sents_file=sents_file)
+    # terms_vocab = __load_opinion_terms_in_train(train_sents_file)
+    # __opinion_rule_insight(dep_tags_file, pos_tags_file, sent_texts_file, terms_vocab,
+    #                        dst_result_file=opinion_result_file, sents_file=sents_file)
+    mine_helper = OpinionMineHelper()
+    __run_with_mined_rules(
+        mine_helper, opinion_rule_patterns_file, opinion_term_hit_rate_file, dep_tags_file, pos_tags_file,
+        sent_texts_file, opinion_filter_terms_vocab_file, dst_result_file=aspect_result_file, sents_file=sents_file)

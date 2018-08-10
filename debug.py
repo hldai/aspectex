@@ -4,9 +4,14 @@ import string
 import tensorflow as tf
 
 
-f = open('d:/data/res/yelp-review-tok-sents-round-9.txt', encoding='utf-8')
-cnt = 0
-for line in f:
-    cnt += 1
-f.close()
-print(cnt)
+class Tmp:
+    def __init__(self):
+        self.a = 1
+
+    @staticmethod
+    def allright(h):
+        print('all right', h)
+
+
+t = Tmp()
+t.allright(3)

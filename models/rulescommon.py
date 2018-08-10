@@ -41,31 +41,19 @@ def get_noun_phrase_from_seed(dep_tags, pos_tags, base_word_idxs):
     return phrase
 
 
-def __match_pattern_word(pw, w, pos_tag, opinion_terms_vocab):
-    if pw == '_AV' and pos_tag in VB_POS_TAGS:
-        return True
-    if pw == '_AN' and pos_tag in NOUN_POS_TAGS:
-        return True
-    if pw == '_OP' and w in opinion_terms_vocab:
-        return True
-    if pw.isupper() and pos_tag == pw:
-        return True
-    return pw == w
-
-
-def __match_l1_pattern(pattern, dep_tag, pos_tags, opinion_terms_vocab):
+def __match_l1_pattern(pattern, dep_tag, pos_tags, mine_helper):
     prel, pgov, pdep = pattern
     rel, (igov, wgov), (idep, wdep) = dep_tag
     if rel != prel:
         return False
-    return __match_pattern_word(pgov, wgov, pos_tags[igov], opinion_terms_vocab) and __match_pattern_word(
-        pdep, wdep, pos_tags[idep], opinion_terms_vocab)
+    return mine_helper.match_pattern_word(pgov, wgov, pos_tags[igov]) and mine_helper.match_pattern_word(
+        pdep, wdep, pos_tags[idep])
 
 
-def __get_l1_pattern_matched_dep_tags(pattern, dep_tags, pos_tags, opinion_terms_vocab):
+def __get_l1_pattern_matched_dep_tags(pattern, dep_tags, pos_tags, mine_helper):
     matched_idxs = list()
     for i, dep_tag in enumerate(dep_tags):
-        if __match_l1_pattern(pattern, dep_tag, pos_tags, opinion_terms_vocab):
+        if __match_l1_pattern(pattern, dep_tag, pos_tags, mine_helper):
             matched_idxs.append(i)
     return matched_idxs
 
@@ -86,11 +74,11 @@ def __get_aspect_term_from_matched_pattern(pattern, dep_tags, pos_tags, matched_
         return get_noun_phrase_from_seed(dep_tags, pos_tags, [widx])
 
 
-def find_terms_by_l1_pattern(pattern, dep_tags, pos_tags, opinion_terms_vocab, filter_terms_vocab):
+def find_terms_by_l1_pattern(pattern, dep_tags, pos_tags, mine_helper, filter_terms_vocab):
     terms = list()
-    matched_dep_tag_idxs = __get_l1_pattern_matched_dep_tags(pattern, dep_tags, pos_tags, opinion_terms_vocab)
+    matched_dep_tag_idxs = __get_l1_pattern_matched_dep_tags(pattern, dep_tags, pos_tags, mine_helper)
     for idx in matched_dep_tag_idxs:
-        term = __get_aspect_term_from_matched_pattern(pattern, dep_tags, pos_tags, idx)
+        term = mine_helper.get_term_from_matched_pattern(pattern, dep_tags, pos_tags, idx)
 
         if term in filter_terms_vocab:
             continue
@@ -98,10 +86,10 @@ def find_terms_by_l1_pattern(pattern, dep_tags, pos_tags, opinion_terms_vocab, f
     return terms
 
 
-def find_terms_by_l2_pattern(pattern, dep_tags, pos_tags, opinion_terms_vocab, filter_terms_vocab):
+def find_terms_by_l2_pattern(pattern, dep_tags, pos_tags, mine_helper, filter_terms_vocab):
     (pl, ipl), (pr, ipr) = pattern
     terms = list()
-    matched_dep_tag_idxs = __get_l1_pattern_matched_dep_tags(pl, dep_tags, pos_tags, opinion_terms_vocab)
+    matched_dep_tag_idxs = __get_l1_pattern_matched_dep_tags(pl, dep_tags, pos_tags, mine_helper)
     for idx in matched_dep_tag_idxs:
         dep_tag_l = dep_tags[idx]
         sw_idx = dep_tag_l[ipl][0]  # index of the shared word
@@ -109,12 +97,12 @@ def find_terms_by_l2_pattern(pattern, dep_tags, pos_tags, opinion_terms_vocab, f
         for j, dep_tag_r in enumerate(dep_tags):
             if dep_tag_r[ipr][0] != sw_idx:
                 continue
-            if not __match_l1_pattern(pr, dep_tag_r, pos_tags, opinion_terms_vocab):
+            if not __match_l1_pattern(pr, dep_tag_r, pos_tags, mine_helper):
                 continue
 
-            term = __get_aspect_term_from_matched_pattern(pl, dep_tags, pos_tags, idx)
+            term = mine_helper.get_term_from_matched_pattern(pl, dep_tags, pos_tags, idx)
             if term is None:
-                term = __get_aspect_term_from_matched_pattern(pr, dep_tags, pos_tags, j)
+                term = mine_helper.get_term_from_matched_pattern(pr, dep_tags, pos_tags, j)
             if term is None or term in filter_terms_vocab:
                 # print(p, 'term not found')
                 continue
@@ -169,7 +157,7 @@ def pharse_for_span(span, sent_text_lower, words, pos_tags, dep_tags):
     return phrase
 
 
-def get_aspect_term_vocab(aspect_term_hit_rate_file, rate_thres):
+def get_term_vocab(aspect_term_hit_rate_file, rate_thres):
     import pandas as pd
 
     df = pd.read_csv(aspect_term_hit_rate_file)
@@ -226,3 +214,21 @@ def get_noun_phrases(words, pos_tags, nouns_filter):
     # print(' '.join(words))
     # print(noun_phrases)
     return noun_phrases
+
+
+def find_related_l2_dep_tags(related_dep_tag_idxs, dep_tags):
+    related = list()
+    for i in related_dep_tag_idxs:
+        rel, gov, dep = dep_tags[i]
+        igov, wgov = gov
+        idep, wdep = dep
+        for j, dep_tag_j in enumerate(dep_tags):
+            if i == j:
+                continue
+            rel_j, gov_j, dep_j = dep_tag_j
+            igov_j, wgov_j = gov_j
+            idep_j, wdep_j = dep_j
+            if igov == igov_j or igov == idep_j or idep == igov_j or idep == idep_j:
+                # print(dep_tags[i], dep_tag_j)
+                related.append((dep_tags[i], dep_tag_j))
+    return related
