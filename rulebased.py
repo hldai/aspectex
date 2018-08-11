@@ -319,12 +319,12 @@ opinion_terms_file = 'd:/data/aspect/semeval14/opinion-terms-full.txt'
 laptops_filter_nouns_file = 'd:/data/aspect/semeval14/nouns-filter.txt'
 rest_filter_nouns_file = 'd:/data/aspect/semeval14/restaurants/aspect-nouns-filter.txt'
 
-# dataset = 'laptops-test'
+dataset = 'laptops-test'
 # dataset = 'laptops-amazon'
 # dataset = 'restaurants-test'
-dataset = 'restaurants-yelp'
-# task = 'aspect'
-task = 'opinion'
+# dataset = 'restaurants-yelp'
+task = 'aspect'
+# task = 'opinion'
 
 filter_nouns_file = laptops_filter_nouns_file if dataset.startswith('laptops') else rest_filter_nouns_file
 

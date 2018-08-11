@@ -16,11 +16,20 @@ def prf1(n_true, n_sys, n_hit):
     return p, r, f1
 
 
-def count_hit(vals_true, vals_pred):
+def count_hit(terms_true, terms_pred):
+    terms_true, terms_pred = terms_true.copy(), terms_pred.copy()
+    terms_true.sort()
+    terms_pred.sort()
+    idx_pred = 0
     cnt_hit = 0
-    for v in vals_true:
-        if v in vals_pred:
+    for t in terms_true:
+        while idx_pred < len(terms_pred) and terms_pred[idx_pred] < t:
+            idx_pred += 1
+        if idx_pred == len(terms_pred):
+            continue
+        if terms_pred[idx_pred] == t:
             cnt_hit += 1
+            idx_pred += 1
     return cnt_hit
 
 

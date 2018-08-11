@@ -1,17 +1,9 @@
 # from seqItem import *
 # from numpy import *
-import string
-import tensorflow as tf
+from utils import utils
 
 
-class Tmp:
-    def __init__(self):
-        self.a = 1
-
-    @staticmethod
-    def allright(h):
-        print('all right', h)
-
-
-t = Tmp()
-t.allright(3)
+v1 = [3, 8, 7, 1, 1]
+v2 = [3, 2, 7, 1, 8]
+# v1.sort()
+print(utils.count_hit(v1, v2))
