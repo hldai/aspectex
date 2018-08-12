@@ -290,6 +290,43 @@ def aspect_terms_from_labeled(sent_tree, y_pred):
     return phrases
 
 
+def trim_word_vecs_file(text_files, origin_word_vec_file, dst_word_vec_file, dst_file_type='pkl', val_sep_dst=','):
+    import numpy as np
+    import pickle
+
+    word_vecs_dict = load_word_vec_file(origin_word_vec_file)
+    print('{} words in word vec file'.format(len(word_vecs_dict)))
+    vocab = set()
+    for text_file in text_files:
+        f = open(text_file, encoding='utf-8')
+        for line in f:
+            words = line.strip().split(' ')
+            for w in words:
+                w = w.lower()
+                if w in word_vecs_dict:
+                    vocab.add(w)
+        f.close()
+    print(len(vocab), 'words')
+
+    dim = next(iter(word_vecs_dict.values())).shape[0]
+    print('dim: ', dim)
+    vocab = list(vocab)
+    word_vec_matrix = np.zeros((len(vocab) + 1, dim), np.float32)
+    word_vec_matrix[0] = np.random.normal(size=dim)
+    for i, word in enumerate(vocab):
+        word_vec_matrix[i + 1] = word_vecs_dict[word]
+
+    if dst_file_type == 'pkl':
+        with open(dst_word_vec_file, 'wb') as fout:
+            pickle.dump((vocab, word_vec_matrix), fout, protocol=pickle.HIGHEST_PROTOCOL)
+        return
+
+    with open(dst_word_vec_file, 'w', encoding='utf-8', newline='\n') as fout:
+        for w, vec in zip(vocab, word_vec_matrix):
+            vec_str = val_sep_dst.join([str(v) for v in vec])
+            fout.write('{}{}{}\n'.format(w, val_sep_dst, vec_str))
+
+
 def get_apects_true(sents, to_lower=False):
     aspect_terms = set()
     for s in sents:

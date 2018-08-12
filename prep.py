@@ -189,35 +189,6 @@ def __gen_judge_train_data():
             fout.write('{}\n'.format(sent['text']))
 
 
-def __trim_word_vecs_file(text_files, origin_word_vec_file, dst_word_vec_file):
-    import numpy as np
-    import pickle
-
-    word_vecs_dict = utils.load_word_vec_file(origin_word_vec_file)
-    print('{} words in word vec file'.format(len(word_vecs_dict)))
-    vocab = set()
-    for text_file in text_files:
-        f = open(text_file, encoding='utf-8')
-        for line in f:
-            words = line.strip().split(' ')
-            for w in words:
-                if w in word_vecs_dict:
-                    vocab.add(w)
-        f.close()
-    print(len(vocab), 'words')
-
-    dim = next(iter(word_vecs_dict.values())).shape[0]
-    print(dim)
-    vocab = list(vocab)
-    word_vec_matrix = np.zeros((len(vocab) + 1, dim), np.float32)
-    word_vec_matrix[0] = np.random.normal(size=dim)
-    for i, word in enumerate(vocab):
-        word_vec_matrix[i + 1] = word_vecs_dict[word]
-
-    with open(dst_word_vec_file, 'wb') as fout:
-        pickle.dump((vocab, word_vec_matrix), fout, protocol=pickle.HIGHEST_PROTOCOL)
-
-
 def __gen_yelp_review_sents(yelp_review_file, dst_file):
     import nltk
     f = open(yelp_review_file, encoding='utf-8')
@@ -330,10 +301,10 @@ def __split_training_set(train_sents_file, dst_file):
 # __process_raw_sem_eval_data(config.SE14_REST_TEST_XML_FILE, config.SE14_REST_TEST_OPINIONS_FILE,
 #                             config.SE14_REST_TEST_SENTS_FILE, config.SE14_REST_TEST_SENT_TEXTS_FILE)
 
-# __trim_word_vecs_file(
-#     [config.SE14_REST_TRAIN_TOK_TEXTS_FILE, config.SE14_REST_TEST_TOK_TEXTS_FILE],
-#     config.GLOVE_WORD_VEC_FILE, config.SE14_REST_GLOVE_WORD_VEC_FILE
-# )
+utils.trim_word_vecs_file(
+    [config.SE14_REST_TRAIN_TOK_TEXTS_FILE, config.SE14_REST_TEST_TOK_TEXTS_FILE],
+    config.GLOVE_WORD_VEC_FILE, config.SE14_REST_GLOVE_WORD_VEC_FILE
+)
 
 yelp_rest_review_sents_file = 'd:/data/res/yelp-review-sents-round-9.txt'
 eng_yelp_rest_review_sents_file = 'd:/data/res/yelp-review-eng-tok-sents-round-9.txt'
