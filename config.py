@@ -29,6 +29,7 @@ DATA_DIR_SE14 = join(DATA_DIR, 'semeval14')
 
 # SE14_LAPTOP_GLOVE_WORD_VEC_FILE = 'd:/data/aspect/semeval14/model-data/glove-word-vecs.pkl'
 SE14_LAPTOP_GLOVE_WORD_VEC_FILE = join(DATA_DIR_SE14, 'model-data/laptops-glove-word-vecs.pkl')
+SE14_LAPTOP_AMAZON_WORD_VEC_FILE = join(DATA_DIR_SE14, 'model-data/laptops-glove-word-vecs.pkl')
 
 DATA_FILE_LIST_FILE_HL04 = join(DATA_DIR_HL04, 'data-file-names.txt')
 REVIEWS_FILE_HL04 = join(DATA_DIR_HL04, 'reviews.json')

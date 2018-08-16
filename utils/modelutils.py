@@ -93,7 +93,7 @@ def label_sentence(words, aspect_terms=None, opinion_terms=None):
 
 
 def get_terms_from_label_list(labels, tok_text, label_beg, label_in):
-    terms = set()
+    terms = list()
     words = tok_text.split(' ')
     # print(labels_pred)
     # print(len(words), len(labels_pred))
@@ -106,7 +106,7 @@ def get_terms_from_label_list(labels, tok_text, label_beg, label_in):
             pright = p
             while pright + 1 < len(words) and labels[pright + 1] == label_in:
                 pright += 1
-            terms.add(' '.join(words[p: pright + 1]))
+            terms.append(' '.join(words[p: pright + 1]))
             p = pright + 1
         else:
             p += 1

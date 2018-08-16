@@ -282,6 +282,7 @@ def __split_training_set(train_sents_file, dst_file):
 # train_file_xml = 'd:/data/aspect/semeval14/Laptops_Train.xml'
 # train_file_json = 'd:/data/aspect/semeval14/Laptops_Train.json'
 txt_yelp_word_vecs_file = 'd:/data/res/yelp-word-vecs.txt'
+txt_amazon_word_vecs_file = 'd:/data/res/electronics-word-vecs-100.txt'
 
 # __process_hl04()
 # __rncrf_sample_to_json()
@@ -296,6 +297,10 @@ txt_yelp_word_vecs_file = 'd:/data/res/yelp-word-vecs.txt'
 #     [config.SE14_LAPTOP_TRAIN_TOK_TEXTS_FILE, config.SE14_LAPTOP_TEST_TOK_TEXTS_FILE],
 #     config.GLOVE_WORD_VEC_FILE, config.SE14_LAPTOP_GLOVE_WORD_VEC_FILE
 # )
+utils.trim_word_vecs_file(
+    [config.SE14_LAPTOP_TRAIN_TOK_TEXTS_FILE, config.SE14_LAPTOP_TEST_TOK_TEXTS_FILE],
+    txt_amazon_word_vecs_file, config.SE14_LAPTOP_AMAZON_WORD_VEC_FILE
+)
 
 # __process_raw_sem_eval_data(config.SE14_REST_TRAIN_XML_FILE, config.SE14_REST_TRAIN_OPINIONS_FILE,
 #                             config.SE14_REST_TRAIN_SENTS_FILE, config.SE14_REST_TRAIN_SENT_TEXTS_FILE)
@@ -306,10 +311,10 @@ txt_yelp_word_vecs_file = 'd:/data/res/yelp-word-vecs.txt'
 #     [config.SE14_REST_TRAIN_TOK_TEXTS_FILE, config.SE14_REST_TEST_TOK_TEXTS_FILE],
 #     config.GLOVE_WORD_VEC_FILE, config.SE14_REST_GLOVE_WORD_VEC_FILE
 # )
-utils.trim_word_vecs_file(
-    [config.SE14_REST_TRAIN_TOK_TEXTS_FILE, config.SE14_REST_TEST_TOK_TEXTS_FILE],
-    txt_yelp_word_vecs_file, config.SE14_REST_YELP_WORD_VEC_FILE
-)
+# utils.trim_word_vecs_file(
+#     [config.SE14_REST_TRAIN_TOK_TEXTS_FILE, config.SE14_REST_TEST_TOK_TEXTS_FILE],
+#     txt_yelp_word_vecs_file, config.SE14_REST_YELP_WORD_VEC_FILE
+# )
 
 yelp_rest_review_sents_file = 'd:/data/res/yelp-review-sents-round-9.txt'
 eng_yelp_rest_review_sents_file = 'd:/data/res/yelp-review-eng-tok-sents-round-9.txt'

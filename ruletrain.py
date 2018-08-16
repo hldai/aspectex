@@ -107,7 +107,7 @@ def __pretrain_lstmcrf(word_vecs_file, pre_tok_texts_file, pre_aspect_terms_file
                   valid_data.opinions_true_list, n_epochs=n_epochs, save_file=save_model_file)
 
 
-def __train_lstmcrf(word_vecs_file, train_tok_texts_file, train_sents_file, test_tok_texts_file,
+def __train_lstmcrf(word_vecs_file, train_tok_texts_file, train_sents_file, train_valid_split_file, test_tok_texts_file,
                     test_sents_file, load_model_file, task, error_file=None):
     init_logging('log/nr-{}.log'.format(str_today), mode='a', to_stdout=True)
 
@@ -118,8 +118,8 @@ def __train_lstmcrf(word_vecs_file, train_tok_texts_file, train_sents_file, test
         vocab, word_vecs_matrix = pickle.load(f)
 
     save_model_file = None
-    train_data, valid_data = datautils.get_data_semeval(
-        train_sents_file, train_tok_texts_file,
+    train_data, valid_data, test_data = datautils.get_data_semeval(
+        train_sents_file, train_tok_texts_file, train_valid_split_file,
         test_sents_file, test_tok_texts_file,
         vocab, -1, task)
 
@@ -257,22 +257,24 @@ if dataset_name == 'laptops':
     test_tok_texts_file = config.SE14_LAPTOP_TEST_TOK_TEXTS_FILE
     test_sents_file = config.SE14_LAPTOP_TEST_SENTS_FILE
 else:
-    word_vecs_file = config.SE14_REST_GLOVE_WORD_VEC_FILE
-    pre_aspect_terms_file = 'd:/data/aspect/semeval14/restaurant/yelp-aspect-rule-result-r.txt'
+    # word_vecs_file = config.SE14_REST_GLOVE_WORD_VEC_FILE
+    word_vecs_file = config.SE14_REST_YELP_WORD_VEC_FILE
+    pre_aspect_terms_file = 'd:/data/aspect/semeval14/restaurants/yelp-aspect-rm-rule-result.txt'
     # aspect_terms_file = 'd:/data/aspect/semeval14/restaurant/yelp-aspect-rule-result-r1.txt'
-    pre_opinion_terms_file = 'd:/data/aspect/semeval14/restaurant/yelp-opinion-rule-result.txt'
+    pre_opinion_terms_file = 'd:/data/aspect/semeval14/restaurants/yelp-opinion-rule-result.txt'
     pre_tok_texts_file = 'd:/data/res/yelp-review-eng-tok-sents-round-9.txt'
     rule_model_file = 'd:/data/aspect/semeval14/tf-model/r1/restaurants-rule2.ckpl'
 
     train_tok_texts_file = config.SE14_REST_TRAIN_TOK_TEXTS_FILE
     train_sents_file = config.SE14_REST_TRAIN_SENTS_FILE
+    train_valid_split_file = 'D:/data/aspect/semeval14/restaurants/restaurants_train_valid_split.txt'
     test_tok_texts_file = config.SE14_REST_TEST_TOK_TEXTS_FILE
     test_sents_file = config.SE14_REST_TEST_SENTS_FILE
 
 # __pretrain_lstmcrf(word_vecs_file, pre_tok_texts_file, pre_aspect_terms_file,
 #                    pre_opinion_terms_file, rule_model_file, 'both')
 
-__train_lstmcrf(word_vecs_file, train_tok_texts_file, train_sents_file, test_tok_texts_file,
+__train_lstmcrf(word_vecs_file, train_tok_texts_file, train_sents_file, train_valid_split_file, test_tok_texts_file,
                 test_sents_file, rule_model_file, 'both')
 
 # __train_lstmcrf_manual_feat()

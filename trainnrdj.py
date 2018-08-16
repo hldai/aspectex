@@ -398,13 +398,14 @@ def __train_nrdj(word_vecs_file, train_tok_texts_file, train_sents_file, train_v
 
 str_today = datetime.date.today().strftime('%y-%m-%d')
 
-dataset_name = 'restaurant'
-# dataset_name = 'laptops'
+# dataset_name = 'restaurant'
+dataset_name = 'laptops'
 hidden_size_lstm = 100
 n_epochs = 200
 
 if dataset_name == 'laptops':
-    word_vecs_file = config.SE14_LAPTOP_GLOVE_WORD_VEC_FILE
+    # word_vecs_file = config.SE14_LAPTOP_GLOVE_WORD_VEC_FILE
+    word_vecs_file = config.SE14_LAPTOP_AMAZON_WORD_VEC_FILE
     pre_tok_texts_file = config.AMAZON_TOK_TEXTS_FILE
     pre_aspect_terms_file = config.AMAZON_RM_TERMS_FILE
     pre_opinion_terms_file = config.AMAZON_TERMS_TRUE4_FILE
@@ -416,7 +417,8 @@ if dataset_name == 'laptops':
     test_tok_texts_file = config.SE14_LAPTOP_TEST_TOK_TEXTS_FILE
     test_sents_file = config.SE14_LAPTOP_TEST_SENTS_FILE
 else:
-    word_vecs_file = config.SE14_REST_GLOVE_WORD_VEC_FILE
+    # word_vecs_file = config.SE14_REST_GLOVE_WORD_VEC_FILE
+    word_vecs_file = config.SE14_REST_YELP_WORD_VEC_FILE
     pre_aspect_terms_file = 'd:/data/aspect/semeval14/restaurants/yelp-aspect-rm-rule-result.txt'
     # pre_aspect_terms_file = 'd:/data/aspect/semeval14/restaurants/yelp-aspect-rule-result-r.txt'
     # aspect_terms_file = 'd:/data/aspect/semeval14/restaurant/yelp-aspect-rule-result-r1.txt'
@@ -430,10 +432,10 @@ else:
     test_tok_texts_file = config.SE14_REST_TEST_TOK_TEXTS_FILE
     test_sents_file = config.SE14_REST_TEST_SENTS_FILE
 
-# __pre_train_nrdj(word_vecs_file, pre_tok_texts_file, pre_aspect_terms_file,
-#                  pre_opinion_terms_file, rule_model_file, 'both')
-__train_nrdj(word_vecs_file, train_tok_texts_file, train_sents_file, train_valid_split_file,
-             test_tok_texts_file, test_sents_file, rule_model_file, 'both')
+__pre_train_nrdj(word_vecs_file, pre_tok_texts_file, pre_aspect_terms_file,
+                 pre_opinion_terms_file, rule_model_file, 'both')
+# __train_nrdj(word_vecs_file, train_tok_texts_file, train_sents_file, train_valid_split_file,
+#              test_tok_texts_file, test_sents_file, rule_model_file, 'both')
 # __train_nrdj_restaurant_pr()
 # __train_nrdj_joint_restaurant_pr
 # __train_nrdj_mlp_restaurant_pr()
