@@ -281,6 +281,7 @@ def __split_training_set(train_sents_file, dst_file):
 # test_file_json = 'd:/data/aspect/semeval14/Laptops_Test_Gold.json'
 # train_file_xml = 'd:/data/aspect/semeval14/Laptops_Train.xml'
 # train_file_json = 'd:/data/aspect/semeval14/Laptops_Train.json'
+txt_yelp_word_vecs_file = 'd:/data/res/yelp-word-vecs.txt'
 
 # __process_hl04()
 # __rncrf_sample_to_json()
@@ -301,9 +302,13 @@ def __split_training_set(train_sents_file, dst_file):
 # __process_raw_sem_eval_data(config.SE14_REST_TEST_XML_FILE, config.SE14_REST_TEST_OPINIONS_FILE,
 #                             config.SE14_REST_TEST_SENTS_FILE, config.SE14_REST_TEST_SENT_TEXTS_FILE)
 
+# utils.trim_word_vecs_file(
+#     [config.SE14_REST_TRAIN_TOK_TEXTS_FILE, config.SE14_REST_TEST_TOK_TEXTS_FILE],
+#     config.GLOVE_WORD_VEC_FILE, config.SE14_REST_GLOVE_WORD_VEC_FILE
+# )
 utils.trim_word_vecs_file(
     [config.SE14_REST_TRAIN_TOK_TEXTS_FILE, config.SE14_REST_TEST_TOK_TEXTS_FILE],
-    config.GLOVE_WORD_VEC_FILE, config.SE14_REST_GLOVE_WORD_VEC_FILE
+    txt_yelp_word_vecs_file, config.SE14_REST_YELP_WORD_VEC_FILE
 )
 
 yelp_rest_review_sents_file = 'd:/data/res/yelp-review-sents-round-9.txt'

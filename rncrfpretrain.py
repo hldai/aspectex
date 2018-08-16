@@ -209,7 +209,7 @@ def __train(train_data_file, test_data_file, test_sents_file, dst_model_file, ev
     seed_i = 12
     n_classes = 5
     batch_size = 25
-    n_epochs = 5
+    n_epochs = 50
     vec_len_mixed = 50
     adagrad_reset = 30
     use_mixed_word_vec = False
@@ -225,7 +225,6 @@ def __train(train_data_file, test_data_file, test_sents_file, dst_model_file, ev
     with open(test_data_file, 'rb') as f:
         _, trees_test = pickle.load(f)
     word_vecs_dict = utils.load_word_vec_file(config.WORD_VEC_FILE)
-    print(len(word_vecs_dict), 'word vecs')
     __init_fixed_node_word_vecs(trees_test, word_vecs_dict)
     sents_test = utils.load_json_objs(test_sents_file)
     aspect_terms_true = utils.get_apects_true(sents_test)
@@ -233,6 +232,7 @@ def __train(train_data_file, test_data_file, test_sents_file, dst_model_file, ev
     # with open(word_vecs_file, 'rb') as f:
     #     vocab, We_origin = pickle.load(f)
     word_vec_dim = We.shape[0]
+    print(len(word_vecs_dict), 'word vecs', 'dim:', word_vec_dim)
 
     rel_list.remove('root')
 
@@ -290,9 +290,15 @@ if __name__ == '__main__':
     # __train(config.SE14_LAPTOP_TRAIN_RNCRF_DATA_FILE, config.SE14_LAPTOP_TEST_RNCRF_DATA_FILE,
     #         config.SE14_LAPTOP_TEST_SENTS_FILE, config.SE14_LAPTOP_PRE_MODEL_FILE)
 
-    train_data_file = 'd:/data/aspect/semeval14/judge_data/laptops_jtrain_rncrf.pkl'
-    test_data_file = 'd:/data/aspect/semeval14/judge_data/laptops_jtest_rncrf.pkl'
-    model_file = 'd:/data/aspect/semeval14/judge_data/laptops_jtest_pre_model.pkl'
-    test_sents_file = 'd:/data/aspect/semeval14/judge_data/laptops_jtest_sents.json'
-    eval_correctness_file = 'd:/data/aspect/semeval14/judge_data/test_correctness.txt'
+    # train_data_file = 'd:/data/aspect/semeval14/judge_data/laptops_jtrain_rncrf.pkl'
+    # test_data_file = 'd:/data/aspect/semeval14/judge_data/laptops_jtest_rncrf.pkl'
+    # model_file = 'd:/data/aspect/semeval14/judge_data/laptops_jtest_pre_model.pkl'
+    # test_sents_file = 'd:/data/aspect/semeval14/judge_data/laptops_jtest_sents.json'
+    # eval_correctness_file = 'd:/data/aspect/semeval14/judge_data/test_correctness.txt'
+
+    train_data_file = 'd:/data/aspect/semeval14/model-data/laptops_train_rncrf_data.pkl'
+    test_data_file = 'd:/data/aspect/semeval14/model-data/laptops_test_rncrf_data.pkl'
+    model_file = 'd:/data/aspect/semeval14/model-data/laptops_test_pre_model.pkl'
+    test_sents_file = 'd:/data/aspect/semeval14/laptops/laptops_test_sents.json'
+    eval_correctness_file = 'd:/data/aspect/semeval14/test_correctness.txt'
     __train(train_data_file, test_data_file, test_sents_file, model_file, eval_correctness_file)

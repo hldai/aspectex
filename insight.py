@@ -1,3 +1,4 @@
+import json
 from utils import utils
 
 
@@ -149,6 +150,15 @@ def __rule_result_differ():
     print(idxs_neu_only)
     print(len(idxs_neu_only))
 
+
+f = open('d:/data/yelp/srcdata/yelp_academic_dataset_review.json', encoding='utf-8')
+cnt = 0
+for line in f:
+    cnt += 1
+    # print(r)
+    # break
+f.close()
+print(cnt)
 
 # __count_adj_phrases()
 # __semeval_rule_insight()

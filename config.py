@@ -75,6 +75,7 @@ SE14_REST_TEST_OPINIONS_FILE = join(DATA_DIR_SE14, 'restaurants/test_restaurant_
 SE14_REST_TRAIN_VALID_SPLIT_FILE = join(DATA_DIR_SE14, 'restaurants/restaurants_train_valid_split.txt')
 
 SE14_REST_GLOVE_WORD_VEC_FILE = join(DATA_DIR_SE14, 'model-data/restaurants_word_vecs.pkl')
+SE14_REST_YELP_WORD_VEC_FILE = join(DATA_DIR_SE14, 'model-data/restaurants_yelp_word_vecs.pkl')
 
 AMAZON_TOK_TEXTS_FILE = join(AMAZON_DATA_DIR, 'laptops-reivews-sent-tok-text.txt')
 AMAZON_TERMS_TRUE1_FILE = join(AMAZON_DATA_DIR, 'laptops-rule-result1.txt')
