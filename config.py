@@ -16,9 +16,9 @@ if env == 'Windows':
     DATA_DIR = 'd:/data/aspect/'
     AMAZON_DATA_DIR = 'd:/data/amazon'
 else:
-    RES_DIR = '/home/data/hldai/res/'
-    DATA_DIR = '/home/data/hldai/aspect/'
-    AMAZON_DATA_DIR = '/home/data/hldai/amazon'
+    RES_DIR = '/home/hldai/data/res/'
+    DATA_DIR = '/home/hldai/data/aspect/'
+    AMAZON_DATA_DIR = '/home/hldai/data/amazon'
 
 RAW_WORD_VEC_FILE = join(RES_DIR, 'eletronics-vectors-sg-n10.bin')
 WORD_VEC_FILE = join(RES_DIR, 'amazon-eletronics-vectors-sg-n10.txt')
@@ -26,6 +26,7 @@ GLOVE_WORD_VEC_FILE = join(RES_DIR, 'glove.6B/glove.6B.100d.txt')
 
 DATA_DIR_HL04 = join(DATA_DIR, 'huliu04')
 DATA_DIR_SE14 = join(DATA_DIR, 'semeval14')
+DATA_DIR_SE15 = join(DATA_DIR, 'semeval15')
 
 # SE14_LAPTOP_GLOVE_WORD_VEC_FILE = 'd:/data/aspect/semeval14/model-data/glove-word-vecs.pkl'
 SE14_LAPTOP_GLOVE_WORD_VEC_FILE = join(DATA_DIR_SE14, 'model-data/laptops-glove-word-vecs.pkl')
@@ -77,6 +78,18 @@ SE14_REST_TRAIN_VALID_SPLIT_FILE = join(DATA_DIR_SE14, 'restaurants/restaurants_
 
 SE14_REST_GLOVE_WORD_VEC_FILE = join(DATA_DIR_SE14, 'model-data/restaurants_word_vecs.pkl')
 SE14_REST_YELP_WORD_VEC_FILE = join(DATA_DIR_SE14, 'model-data/restaurants_yelp_word_vecs.pkl')
+
+SE15_REST_TRAIN_XML_FILE = join(DATA_DIR_SE15, 'restaurants/ABSA-15_Restaurants_Train_Final.xml')
+SE15_REST_TRAIN_SENTS_FILE = join(DATA_DIR_SE15, 'restaurants/restaurants_train_sents.json')
+SE15_REST_TRAIN_SENT_TEXTS_FILE = join(DATA_DIR_SE15, 'restaurants/restaurants_train_texts.txt')
+SE15_REST_TRAIN_TOK_TEXTS_FILE = join(DATA_DIR_SE15, 'restaurants/restaurants_train_texts_tok.txt')
+SE15_REST_TRAIN_OPINIONS_FILE = join(DATA_DIR_SE15, 'restaurants/opinions_train.txt')
+
+SE15_REST_TEST_XML_FILE = join(DATA_DIR_SE15, 'restaurants/ABSA15_Restaurants_Test.xml')
+SE15_REST_TEST_SENTS_FILE = join(DATA_DIR_SE15, 'restaurants/restaurants_test_sents.json')
+SE15_REST_TEST_SENT_TEXTS_FILE = join(DATA_DIR_SE15, 'restaurants/restaurants_test_texts.txt')
+SE15_REST_TEST_TOK_TEXTS_FILE = join(DATA_DIR_SE15, 'restaurants/restaurants_test_texts_tok.txt')
+SE15_REST_TEST_OPINIONS_FILE = join(DATA_DIR_SE15, 'restaurants/opinions_test.txt')
 
 AMAZON_TOK_TEXTS_FILE = join(AMAZON_DATA_DIR, 'laptops-reivews-sent-tok-text.txt')
 AMAZON_TERMS_TRUE1_FILE = join(AMAZON_DATA_DIR, 'laptops-rule-result1.txt')

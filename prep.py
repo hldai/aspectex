@@ -91,23 +91,20 @@ def __read_opinions_file(filename):
         vals = line.split(',')
         terms = list()
         for v in vals:
-            v = v.strip()
-            term = v[:-2].strip()
-            polarity = v[-2:]
-            terms.append(term)
+            # v = v.strip()
+            # term = v[:-2].strip()
+            # polarity = v[-2:]
+            if v.strip():
+                terms.append(v.strip())
         opinions_sents.append(terms)
     f.close()
     return opinions_sents
 
 
-def __process_raw_sem_eval_data(xml_file, opinions_file, dst_sents_file, dst_sents_text_file):
-    opinions_sents = __read_opinions_file(opinions_file)
-
-    f = open(xml_file, encoding='utf-8')
-    text_all = f.read()
+def __get_sent_objs_se14(file_text, opinions_sents):
     sents = list()
     sent_pattern = '<sentence id="(.*?)">\s*<text>(.*?)</text>\s*(.*?)</sentence>'
-    miter = re.finditer(sent_pattern, text_all, re.DOTALL)
+    miter = re.finditer(sent_pattern, file_text, re.DOTALL)
     for i, m in enumerate(miter):
         sent = {'id': m.group(1), 'text': m.group(2)}
         aspect_terms = list()
@@ -126,6 +123,42 @@ def __process_raw_sem_eval_data(xml_file, opinions_file, dst_sents_file, dst_sen
         if opinions_sents[i] is not None:
             sent['opinions'] = opinions_sents[i]
         sents.append(sent)
+    return sents
+
+
+def __get_sent_objs_se15(file_text, opinions_sents):
+    sents = list()
+    sent_pattern = '<sentence id="(.*?)">\s*<text>(.*?)</text>\s*(.*?)</sentence>'
+    miter = re.finditer(sent_pattern, file_text, re.DOTALL)
+    for i, m in enumerate(miter):
+        sent = {'id': m.group(1), 'text': m.group(2)}
+        aspect_terms = list()
+        aspect_term_pattern = '<Opinion\s*target="(.*)"\s*category=.*?polarity="(.*)"\s*from="(\d*)"\s*to="(\d*)"/>'
+        miter_terms = re.finditer(aspect_term_pattern, m.group(3))
+        for m_terms in miter_terms:
+            # print(m_terms.group(1), m_terms.group(2), m_terms.group(3))
+            # aspect_terms.append(
+            #     {'term': m_terms.group(1), 'polarity': m_terms.group(2), 'from': int(m_terms.group(3)),
+            #      'to': int(m_terms.group(4))})
+            if m_terms.group(1) == 'NULL':
+                continue
+            aspect_terms.append(
+                {'term': m_terms.group(1), 'polarity': m_terms.group(2), 'span': (
+                    int(m_terms.group(3)), int(m_terms.group(4)))})
+        if aspect_terms:
+            sent['terms'] = aspect_terms
+        if opinions_sents[i] is not None:
+            sent['opinions'] = opinions_sents[i]
+        sents.append(sent)
+    return sents
+
+
+def __process_raw_sem_eval_data(xml_file, opinions_file, dst_sents_file, dst_sents_text_file, fn_get_sent_objs):
+    opinions_sents = __read_opinions_file(opinions_file)
+
+    f = open(xml_file, encoding='utf-8')
+    text_all = f.read()
+    sents = fn_get_sent_objs(text_all, opinions_sents)
     f.close()
 
     utils.save_json_objs(sents, dst_sents_file)
@@ -278,6 +311,26 @@ def __split_training_set(train_sents_file, dst_file):
         fout.write('\n')
 
 
+def __gen_se15_opinion_file(sent_text_opinion_file, dst_file):
+    f = open(sent_text_opinion_file, encoding='utf-8')
+    fout = open(dst_file, 'w', encoding='utf-8')
+    for line in f:
+        if '##' not in line:
+            fout.write('\n')
+            continue
+        sent_text, opinion_terms_str = line.strip().split('##')
+        term_strs = opinion_terms_str.split(',')
+        terms = list()
+        for s in term_strs:
+            term = s[:-2].strip()
+            polarity = s[-2:]
+            terms.append(term)
+        fout.write('{}\n'.format(','.join(terms)))
+
+    f.close()
+    fout.close()
+
+
 # test_file_json = 'd:/data/aspect/semeval14/Laptops_Test_Gold.json'
 # train_file_xml = 'd:/data/aspect/semeval14/Laptops_Train.xml'
 # train_file_json = 'd:/data/aspect/semeval14/Laptops_Train.json'
@@ -287,23 +340,26 @@ txt_amazon_word_vecs_file = 'd:/data/res/electronics-word-vecs-100.txt'
 # __process_hl04()
 # __rncrf_sample_to_json()
 
-# __process_raw_sem_eval_data(config.SE14_LAPTOP_TRAIN_XML_FILE, config.SE14_LAPTOP_TRAIN_OPINIONS_FILE,
-#                             config.SE14_LAPTOP_TRAIN_SENTS_FILE, config.SE14_LAPTOP_TRAIN_SENT_TEXTS_FILE)
-# __process_raw_sem_eval_data(config.SE14_LAPTOP_TEST_XML_FILE, config.SE14_LAPTOP_TEST_OPINIONS_FILE,
-#                             config.SE14_LAPTOP_TEST_SENTS_FILE, config.SE14_LAPTOP_TEST_SENT_TEXTS_FILE)
+# __process_raw_sem_eval_data(
+#     config.SE14_LAPTOP_TRAIN_XML_FILE, config.SE14_LAPTOP_TRAIN_OPINIONS_FILE,
+#     config.SE14_LAPTOP_TRAIN_SENTS_FILE, config.SE14_LAPTOP_TRAIN_SENT_TEXTS_FILE, __get_sent_objs_se14)
+# __process_raw_sem_eval_data(
+#     config.SE14_LAPTOP_TEST_XML_FILE, config.SE14_LAPTOP_TEST_OPINIONS_FILE,
+#     config.SE14_LAPTOP_TEST_SENTS_FILE, config.SE14_LAPTOP_TEST_SENT_TEXTS_FILE, __get_sent_objs_se14)
 # __gen_judge_train_data()
 
 # __trim_word_vecs_file(
 #     [config.SE14_LAPTOP_TRAIN_TOK_TEXTS_FILE, config.SE14_LAPTOP_TEST_TOK_TEXTS_FILE],
 #     config.GLOVE_WORD_VEC_FILE, config.SE14_LAPTOP_GLOVE_WORD_VEC_FILE
 # )
-utils.trim_word_vecs_file(
-    [config.SE14_LAPTOP_TRAIN_TOK_TEXTS_FILE, config.SE14_LAPTOP_TEST_TOK_TEXTS_FILE],
-    txt_amazon_word_vecs_file, config.SE14_LAPTOP_AMAZON_WORD_VEC_FILE
-)
+# utils.trim_word_vecs_file(
+#     [config.SE14_LAPTOP_TRAIN_TOK_TEXTS_FILE, config.SE14_LAPTOP_TEST_TOK_TEXTS_FILE],
+#     txt_amazon_word_vecs_file, config.SE14_LAPTOP_AMAZON_WORD_VEC_FILE
+# )
 
-# __process_raw_sem_eval_data(config.SE14_REST_TRAIN_XML_FILE, config.SE14_REST_TRAIN_OPINIONS_FILE,
-#                             config.SE14_REST_TRAIN_SENTS_FILE, config.SE14_REST_TRAIN_SENT_TEXTS_FILE)
+# __process_raw_sem_eval_data(
+#     config.SE14_REST_TRAIN_XML_FILE, config.SE14_REST_TRAIN_OPINIONS_FILE,
+#     config.SE14_REST_TRAIN_SENTS_FILE, config.SE14_REST_TRAIN_SENT_TEXTS_FILE, __get_sent_objs_se14)
 # __process_raw_sem_eval_data(config.SE14_REST_TEST_XML_FILE, config.SE14_REST_TEST_OPINIONS_FILE,
 #                             config.SE14_REST_TEST_SENTS_FILE, config.SE14_REST_TEST_SENT_TEXTS_FILE)
 
@@ -315,6 +371,19 @@ utils.trim_word_vecs_file(
 #     [config.SE14_REST_TRAIN_TOK_TEXTS_FILE, config.SE14_REST_TEST_TOK_TEXTS_FILE],
 #     txt_yelp_word_vecs_file, config.SE14_REST_YELP_WORD_VEC_FILE
 # )
+
+se15_rest_sent_opinions_train_file = '/home/hldai/data/aspect/semeval15/restaurants/sentence_res15_op'
+se15_rest_opinions_train_file = '/home/hldai/data/aspect/semeval15/restaurants/opinions_train.txt'
+se15_rest_sent_opinions_test_file = '/home/hldai/data/aspect/semeval15/restaurants/sentence_restest15_op'
+se15_rest_opinions_test_file = '/home/hldai/data/aspect/semeval15/restaurants/opinions_test.txt'
+# __gen_se15_opinion_file(se15_rest_sent_opinions_train_file, se15_rest_opinions_train_file)
+# __gen_se15_opinion_file(se15_rest_sent_opinions_test_file, se15_rest_opinions_test_file)
+# __process_raw_sem_eval_data(
+#     config.SE15_REST_TRAIN_XML_FILE, se15_rest_opinions_train_file,
+#     config.SE15_REST_TRAIN_SENTS_FILE, config.SE15_REST_TRAIN_SENT_TEXTS_FILE, __get_sent_objs_se15)
+__process_raw_sem_eval_data(
+    config.SE15_REST_TEST_XML_FILE, se15_rest_opinions_test_file,
+    config.SE15_REST_TEST_SENTS_FILE, config.SE15_REST_TEST_SENT_TEXTS_FILE, __get_sent_objs_se15)
 
 yelp_rest_review_sents_file = 'd:/data/res/yelp-review-sents-round-9.txt'
 eng_yelp_rest_review_sents_file = 'd:/data/res/yelp-review-eng-tok-sents-round-9.txt'
