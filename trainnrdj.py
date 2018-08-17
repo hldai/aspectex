@@ -384,6 +384,7 @@ def __train_nrdj(word_vecs_file, train_tok_texts_file, train_sents_file, train_v
     print('loading data ...')
     with open(word_vecs_file, 'rb') as f:
         vocab, word_vecs_matrix = pickle.load(f)
+    print('word vec dim: {}'.format(word_vecs_matrix.shape[1]))
     train_data, valid_data, test_data = datautils.get_data_semeval(
         train_sents_file, train_tok_texts_file, train_valid_split_file, test_sents_file, test_tok_texts_file,
         vocab, n_train, label_opinions)
@@ -398,8 +399,8 @@ def __train_nrdj(word_vecs_file, train_tok_texts_file, train_sents_file, train_v
 
 str_today = datetime.date.today().strftime('%y-%m-%d')
 
-# dataset_name = 'restaurant'
-dataset_name = 'laptops'
+dataset_name = 'restaurant'
+# dataset_name = 'laptops'
 hidden_size_lstm = 100
 n_epochs = 200
 
@@ -432,11 +433,11 @@ else:
     test_tok_texts_file = config.SE14_REST_TEST_TOK_TEXTS_FILE
     test_sents_file = config.SE14_REST_TEST_SENTS_FILE
 
-__pre_train_nrdj(word_vecs_file, pre_tok_texts_file, pre_aspect_terms_file,
-                 pre_opinion_terms_file, rule_model_file, 'both')
-# __train_nrdj(word_vecs_file, train_tok_texts_file, train_sents_file, train_valid_split_file,
-#              test_tok_texts_file, test_sents_file, rule_model_file, 'both')
+# __pre_train_nrdj(word_vecs_file, pre_tok_texts_file, pre_aspect_terms_file,
+#                  pre_opinion_terms_file, rule_model_file, 'both')
+__train_nrdj(word_vecs_file, train_tok_texts_file, train_sents_file, train_valid_split_file,
+             test_tok_texts_file, test_sents_file, rule_model_file, 'both')
 # __train_nrdj_restaurant_pr()
-# __train_nrdj_joint_restaurant_pr
+# __train_nrdj_joint_restaurant_pr()
 # __train_nrdj_mlp_restaurant_pr()
 # __train_nrdj_deep_restaurant_pr()
