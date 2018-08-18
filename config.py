@@ -3,7 +3,7 @@ from platform import platform
 
 # RAW_WORD_VEC_FILE = 'd:/data/res/GoogleNews-vectors-negative300.bin'
 # GOOGLE_NEWS_WORD_VEC_FILE = 'd:/data/res/GoogleNews-vectors-negative300.txt'
-# GNEWS_LIGHT_WORD_VEC_FILE = 'd:/data/res/GoogleNews-light-vectors-negative300.txt'
+GNEWS_LIGHT_WORD_VEC_FILE = 'd:/data/res/GoogleNews-light-vectors-negative300.txt'
 
 # RAW_WORD_VEC_FILE = 'd:/data/amazon/electronics-vectors.bin'
 # WORD_VEC_FILE = 'd:/data/res/amazon-electronics-vectors.txt'
@@ -21,7 +21,7 @@ else:
     AMAZON_DATA_DIR = '/home/hldai/data/amazon'
 
 RAW_WORD_VEC_FILE = join(RES_DIR, 'eletronics-vectors-sg-n10.bin')
-WORD_VEC_FILE = join(RES_DIR, 'amazon-eletronics-vectors-sg-n10.txt')
+AMAZON_WORD_VEC_FILE = join(RES_DIR, 'amazon-eletronics-vectors-sg-n10.txt')
 GLOVE_WORD_VEC_FILE = join(RES_DIR, 'glove.6B/glove.6B.100d.txt')
 
 DATA_DIR_HL04 = join(DATA_DIR, 'huliu04')

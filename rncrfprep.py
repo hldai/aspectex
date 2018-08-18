@@ -243,12 +243,12 @@ def __gen_word_vec_matrix_file(dep_parse_files, dst_file):
         pickle.dump((vocab, word_vec_matrix), fout, pickle.HIGHEST_PROTOCOL)
 
 
-def __proc_word_vecs(vocab):
+def __proc_word_vecs(vocab, word_vec_file):
     # with open(data_file, 'rb') as f:
     #     vocab, _, _ = pickle.load(f)
 
     vocab_set = set(vocab)
-    word_vec_dict = utils.load_word_vec_file(config.WORD_VEC_FILE, vocab_set)
+    word_vec_dict = utils.load_word_vec_file(word_vec_file, vocab_set)
 
     vec_dim = len(next(iter(word_vec_dict.values())))
     word_vec_matrix = np.zeros((vec_dim, len(vocab)), np.float32)
@@ -300,14 +300,14 @@ def __filter_word_vecs():
     print(wcnt)
 
 
-def __gen_data_for_train(sents_file, dep_parse_file, data_file):
+def __gen_data_for_train(sents_file, dep_parse_file, data_file, word_vec_file):
     # with open(config.SE14_LAPTOP_WORD_VECS_FILE, 'rb') as f:
     #     vocab, _ = pickle.load(f)
 
     # __dependency_parse(config.SE14_LAPTOP_TRAIN_SENT_TEXTS_FILE, config.SE14_LAPTOP_TRAIN_DEP_PARSE_FILE)
     vocab, rel_list, trees = __build_tree_obj(dep_parse_file, sents_file)
 
-    We = __proc_word_vecs(vocab)
+    We = __proc_word_vecs(vocab, word_vec_file)
     with open(data_file, 'wb') as fout:
         pickle.dump((vocab, We, rel_list, trees), fout, pickle.HIGHEST_PROTOCOL)
 
@@ -337,16 +337,16 @@ stanford_nlp_en_parse_file = 'd:/lib/stanford-models/englishPCFG.ser.gz'
 # __gen_word_vec_matrix_file([config.SE14_LAPTOP_TRAIN_DEP_PARSE_FILE, config.SE14_LAPTOP_TEST_DEP_PARSE_FILE],
 #                            config.SE14_LAPTOP_WORD_VECS_FILE)
 
-# __gen_data_for_train(config.SE14_LAPTOP_TRAIN_SENTS_FILE, config.SE14_LAPTOP_TRAIN_DEP_PARSE_FILE,
-#                      config.SE14_LAPTOP_TRAIN_RNCRF_DATA_FILE)
-# __gen_data_for_test(config.SE14_LAPTOP_TRAIN_RNCRF_DATA_FILE, config.SE14_LAPTOP_TEST_SENTS_FILE,
-#                     config.SE14_LAPTOP_TEST_DEP_PARSE_FILE, config.SE14_LAPTOP_TEST_RNCRF_DATA_FILE)
+__gen_data_for_train(config.SE14_LAPTOP_TRAIN_SENTS_FILE, config.SE14_LAPTOP_TRAIN_DEP_PARSE_FILE,
+                     config.SE14_LAPTOP_TRAIN_RNCRF_DATA_FILE, config.GNEWS_LIGHT_WORD_VEC_FILE)
+__gen_data_for_test(config.SE14_LAPTOP_TRAIN_RNCRF_DATA_FILE, config.SE14_LAPTOP_TEST_SENTS_FILE,
+                    config.SE14_LAPTOP_TEST_DEP_PARSE_FILE, config.SE14_LAPTOP_TEST_RNCRF_DATA_FILE)
 
-train_sents_file = 'd:/data/aspect/semeval14/judge_data/laptops_jtrain_sents.json'
-train_dep_file = 'd:/data/aspect/semeval14/judge_data/laptops_jtrain_dep.txt'
-train_data_file = 'd:/data/aspect/semeval14/judge_data/laptops_jtrain_rncrf.pkl'
-test_sents_file = 'd:/data/aspect/semeval14/judge_data/laptops_jtest_sents.json'
-test_dep_file = 'd:/data/aspect/semeval14/judge_data/laptops_jtest_dep.txt'
-test_data_file = 'd:/data/aspect/semeval14/judge_data/laptops_jtest_rncrf.pkl'
-__gen_data_for_train(train_sents_file, train_dep_file, train_data_file)
-__gen_data_for_test(train_data_file, test_sents_file, test_dep_file, test_data_file)
+# train_sents_file = 'd:/data/aspect/semeval14/judge_data/laptops_jtrain_sents.json'
+# train_dep_file = 'd:/data/aspect/semeval14/judge_data/laptops_jtrain_dep.txt'
+# train_data_file = 'd:/data/aspect/semeval14/judge_data/laptops_jtrain_rncrf.pkl'
+# test_sents_file = 'd:/data/aspect/semeval14/judge_data/laptops_jtest_sents.json'
+# test_dep_file = 'd:/data/aspect/semeval14/judge_data/laptops_jtest_dep.txt'
+# test_data_file = 'd:/data/aspect/semeval14/judge_data/laptops_jtest_rncrf.pkl'
+# __gen_data_for_train(train_sents_file, train_dep_file, train_data_file)
+# __gen_data_for_test(train_data_file, test_sents_file, test_dep_file, test_data_file)

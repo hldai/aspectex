@@ -205,7 +205,7 @@ def __proc_batch(trees_batch, use_mixed_word_vec, rel_Wr_dict, word_vec_dim, vec
     return err
 
 
-def __train(train_data_file, test_data_file, test_sents_file, dst_model_file, eval_correctness_file):
+def __train(train_data_file, test_data_file, test_sents_file, word_vec_file, dst_model_file, eval_correctness_file):
     seed_i = 12
     n_classes = 5
     batch_size = 25
@@ -224,7 +224,7 @@ def __train(train_data_file, test_data_file, test_sents_file, dst_model_file, ev
 
     with open(test_data_file, 'rb') as f:
         _, trees_test = pickle.load(f)
-    word_vecs_dict = utils.load_word_vec_file(config.WORD_VEC_FILE)
+    word_vecs_dict = utils.load_word_vec_file(word_vec_file)
     __init_fixed_node_word_vecs(trees_test, word_vecs_dict)
     sents_test = utils.load_json_objs(test_sents_file)
     aspect_terms_true = utils.get_apects_true(sents_test)
@@ -301,4 +301,5 @@ if __name__ == '__main__':
     model_file = 'd:/data/aspect/semeval14/model-data/laptops_test_pre_model.pkl'
     test_sents_file = 'd:/data/aspect/semeval14/laptops/laptops_test_sents.json'
     eval_correctness_file = 'd:/data/aspect/semeval14/test_correctness.txt'
-    __train(train_data_file, test_data_file, test_sents_file, model_file, eval_correctness_file)
+    __train(train_data_file, test_data_file, test_sents_file, config.GNEWS_LIGHT_WORD_VEC_FILE,
+            model_file, eval_correctness_file)
