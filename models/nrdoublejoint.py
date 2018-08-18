@@ -408,7 +408,8 @@ class NeuRuleDoubleJoint:
                 epoch, loss, aspect_p, aspect_r, aspect_f1, opinion_p, opinion_r,
                 opinion_f1, best_f1_sum))
 
-            if aspect_f1 + opinion_f1 > best_f1_sum:
+            # if aspect_f1 + opinion_f1 > best_f1_sum:
+            if True:
                 best_f1_sum = aspect_f1 + opinion_f1
 
                 aspect_p, aspect_r, aspect_f1, opinion_p, opinion_r, opinion_f1 = self.evaluate(
@@ -416,7 +417,7 @@ class NeuRuleDoubleJoint:
                     'tar', data_test.opinions_true_list)
                 # print('iter {}, loss={:.4f}, p={:.4f}, r={:.4f}, f1={:.4f}, best_f1={:.4f}'.format(
                 #     epoch, loss_tar, p, r, f1, best_f1))
-                logging.info('Test, p={:.4f}, r={:.4f}, f1={:.4f}, p={:.4f}, r={:.4f}, f1={:.4f}'.format(
+                logging.info('Test, p={:.4f}, r={:.4f}, f1={:.4f}; p={:.4f}, r={:.4f}, f1={:.4f}'.format(
                     aspect_p, aspect_r, aspect_f1, opinion_p, opinion_r,
                     opinion_f1))
 

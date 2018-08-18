@@ -78,12 +78,14 @@ SE14_REST_TRAIN_VALID_SPLIT_FILE = join(DATA_DIR_SE14, 'restaurants/restaurants_
 
 SE14_REST_GLOVE_WORD_VEC_FILE = join(DATA_DIR_SE14, 'model-data/restaurants_word_vecs.pkl')
 SE14_REST_YELP_WORD_VEC_FILE = join(DATA_DIR_SE14, 'model-data/restaurants_yelp_word_vecs.pkl')
+SE15_REST_YELP_WORD_VEC_FILE = join(DATA_DIR_SE15, 'model-data/restaurants_yelp_word_vecs.pkl')
 
 SE15_REST_TRAIN_XML_FILE = join(DATA_DIR_SE15, 'restaurants/ABSA-15_Restaurants_Train_Final.xml')
 SE15_REST_TRAIN_SENTS_FILE = join(DATA_DIR_SE15, 'restaurants/restaurants_train_sents.json')
 SE15_REST_TRAIN_SENT_TEXTS_FILE = join(DATA_DIR_SE15, 'restaurants/restaurants_train_texts.txt')
 SE15_REST_TRAIN_TOK_TEXTS_FILE = join(DATA_DIR_SE15, 'restaurants/restaurants_train_texts_tok.txt')
 SE15_REST_TRAIN_OPINIONS_FILE = join(DATA_DIR_SE15, 'restaurants/opinions_train.txt')
+SE15_REST_TRAIN_VALID_SPLIT_FILE = join(DATA_DIR_SE15, 'restaurants/restaurants_train_valid_split.txt')
 
 SE15_REST_TEST_XML_FILE = join(DATA_DIR_SE15, 'restaurants/ABSA15_Restaurants_Test.xml')
 SE15_REST_TEST_SENTS_FILE = join(DATA_DIR_SE15, 'restaurants/restaurants_test_sents.json')

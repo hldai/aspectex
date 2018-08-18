@@ -334,7 +334,8 @@ def __gen_se15_opinion_file(sent_text_opinion_file, dst_file):
 # test_file_json = 'd:/data/aspect/semeval14/Laptops_Test_Gold.json'
 # train_file_xml = 'd:/data/aspect/semeval14/Laptops_Train.xml'
 # train_file_json = 'd:/data/aspect/semeval14/Laptops_Train.json'
-txt_yelp_word_vecs_file = 'd:/data/res/yelp-word-vecs-100.txt'
+# txt_yelp_word_vecs_file = 'd:/data/res/yelp-word-vecs-100.txt'
+txt_yelp_word_vecs_file = 'd:/data/res/yelp-word-vecs-sg-100-n10-i20.txt'
 txt_amazon_word_vecs_file = 'd:/data/res/electronics-word-vecs-100.txt'
 
 # __process_hl04()
@@ -367,10 +368,10 @@ txt_amazon_word_vecs_file = 'd:/data/res/electronics-word-vecs-100.txt'
 #     [config.SE14_REST_TRAIN_TOK_TEXTS_FILE, config.SE14_REST_TEST_TOK_TEXTS_FILE],
 #     config.GLOVE_WORD_VEC_FILE, config.SE14_REST_GLOVE_WORD_VEC_FILE
 # )
-utils.trim_word_vecs_file(
-    [config.SE14_REST_TRAIN_TOK_TEXTS_FILE, config.SE14_REST_TEST_TOK_TEXTS_FILE],
-    txt_yelp_word_vecs_file, config.SE14_REST_YELP_WORD_VEC_FILE
-)
+# utils.trim_word_vecs_file(
+#     [config.SE14_REST_TRAIN_TOK_TEXTS_FILE, config.SE14_REST_TEST_TOK_TEXTS_FILE],
+#     txt_yelp_word_vecs_file, config.SE14_REST_YELP_WORD_VEC_FILE
+# )
 
 se15_rest_sent_opinions_train_file = '/home/hldai/data/aspect/semeval15/restaurants/sentence_res15_op'
 se15_rest_opinions_train_file = '/home/hldai/data/aspect/semeval15/restaurants/opinions_train.txt'
@@ -384,18 +385,27 @@ se15_rest_opinions_test_file = '/home/hldai/data/aspect/semeval15/restaurants/op
 # __process_raw_sem_eval_data(
 #     config.SE15_REST_TEST_XML_FILE, se15_rest_opinions_test_file,
 #     config.SE15_REST_TEST_SENTS_FILE, config.SE15_REST_TEST_SENT_TEXTS_FILE, __get_sent_objs_se15)
+utils.trim_word_vecs_file(
+    [config.SE15_REST_TRAIN_TOK_TEXTS_FILE, config.SE15_REST_TEST_TOK_TEXTS_FILE,
+     config.SE14_REST_TRAIN_TOK_TEXTS_FILE, config.SE14_REST_TEST_TOK_TEXTS_FILE],
+    txt_yelp_word_vecs_file, config.SE15_REST_YELP_WORD_VEC_FILE
+)
 
 yelp_rest_review_sents_file = 'd:/data/res/yelp-review-sents-round-9.txt'
-eng_yelp_rest_review_sents_file = 'd:/data/res/yelp-review-eng-tok-sents-round-9.txt'
+eng_yelp_rest_review_sents_file = 'd:/data/res/yelp-review-eng-tok-sents-round-9-full.txt'
 # __gen_yelp_review_sents('d:/data/yelp/srcdata/yelp_academic_dataset_review.json',
 #                         yelp_rest_review_sents_file)
 # __select_random_yelp_review_sents(yelp_rest_review_sents_file,
 #                                   'd:/data/res/yelp-review-sents-round-9-rand-part.txt')
-# __filter_non_english_sents('d:/data/res/yelp-review-tok-sents-round-9.txt', eng_yelp_rest_review_sents_file)
+# __filter_non_english_sents('d:/data/res/yelp-review-tok-sents-round-9-full.txt', eng_yelp_rest_review_sents_file)
 
 # laptops_train_word_cnts_file = 'd:/data/aspect/semeval14/laptops/word_cnts.txt'
 # __gen_word_cnts_file(config.SE14_LAPTOP_TRAIN_TOK_TEXTS_FILE, laptops_train_word_cnts_file)
-restaurants_train_word_cnts_file = 'd:/data/aspect/semeval14/restaurant/word_cnts.txt'
+restaurants_train_word_cnts_file = 'd:/data/aspect/semeval14/restaurants/word_cnts.txt'
 # __gen_word_cnts_file(config.SE14_REST_TRAIN_TOK_TEXTS_FILE, restaurants_train_word_cnts_file)
+rest15_train_word_cnts_file = 'd:/data/aspect/semeval15/restaurants/word_cnts.txt'
+# __gen_word_cnts_file(config.SE15_REST_TRAIN_TOK_TEXTS_FILE, rest15_train_word_cnts_file)
+
 # __split_training_set(config.SE14_LAPTOP_TRAIN_SENTS_FILE, config.SE14_LAPTOP_TRAIN_VALID_SPLIT_FILE)
 # __split_training_set(config.SE14_REST_TRAIN_SENTS_FILE, config.SE14_REST_TRAIN_VALID_SPLIT_FILE)
+# __split_training_set(config.SE15_REST_TRAIN_SENTS_FILE, config.SE15_REST_TRAIN_VALID_SPLIT_FILE)

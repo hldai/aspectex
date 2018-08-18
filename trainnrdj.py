@@ -8,6 +8,7 @@ from models.nrdjdeep import NeuRuleDoubleJointDeep
 from utils import utils, modelutils, datautils
 from utils.loggingutils import init_logging
 import tensorflow as tf
+import logging
 
 
 def __train_nrdj_restaurant_pr():
@@ -384,7 +385,7 @@ def __train_nrdj(word_vecs_file, train_tok_texts_file, train_sents_file, train_v
     print('loading data ...')
     with open(word_vecs_file, 'rb') as f:
         vocab, word_vecs_matrix = pickle.load(f)
-    print('word vec dim: {}'.format(word_vecs_matrix.shape[1]))
+    logging.info('word vec dim: {}, n_words={}'.format(word_vecs_matrix.shape[1], word_vecs_matrix.shape[0]))
     train_data, valid_data, test_data = datautils.get_data_semeval(
         train_sents_file, train_tok_texts_file, train_valid_split_file, test_sents_file, test_tok_texts_file,
         vocab, n_train, label_opinions)
@@ -399,6 +400,7 @@ def __train_nrdj(word_vecs_file, train_tok_texts_file, train_sents_file, train_v
 
 str_today = datetime.date.today().strftime('%y-%m-%d')
 
+dm = 'semeval15'
 dataset_name = 'restaurant'
 # dataset_name = 'laptops'
 hidden_size_lstm = 100
@@ -419,24 +421,33 @@ if dataset_name == 'laptops':
     test_sents_file = config.SE14_LAPTOP_TEST_SENTS_FILE
 else:
     # word_vecs_file = config.SE14_REST_GLOVE_WORD_VEC_FILE
-    word_vecs_file = config.SE14_REST_YELP_WORD_VEC_FILE
-    pre_aspect_terms_file = 'd:/data/aspect/semeval14/restaurants/yelp-aspect-rm-rule-result.txt'
     # pre_aspect_terms_file = 'd:/data/aspect/semeval14/restaurants/yelp-aspect-rule-result-r.txt'
     # aspect_terms_file = 'd:/data/aspect/semeval14/restaurant/yelp-aspect-rule-result-r1.txt'
-    pre_opinion_terms_file = 'd:/data/aspect/semeval14/restaurants/yelp-opinion-rule-result.txt'
+    pre_aspect_terms_file = 'd:/data/aspect/{}/restaurants/yelp-aspect-rm-rule-result.txt'.format(dm)
+    pre_opinion_terms_file = 'd:/data/aspect/{}/restaurants/yelp-opinion-rule-result.txt'.format(dm)
     pre_tok_texts_file = 'd:/data/res/yelp-review-eng-tok-sents-round-9.txt'
-    rule_model_file = 'd:/data/aspect/semeval14/tf-model/drest/yelp-nrdj.ckpl'
+    rule_model_file = 'd:/data/aspect/{}/tf-model/drest/yelp-nrdj.ckpl'.format(dm)
+    # rule_model_file = 'd:/data/aspect/semeval14/tf-model/drest/yelp-nrdj.ckpl'
 
-    train_valid_split_file = config.SE14_REST_TRAIN_VALID_SPLIT_FILE
-    train_tok_texts_file = config.SE14_REST_TRAIN_TOK_TEXTS_FILE
-    train_sents_file = config.SE14_REST_TRAIN_SENTS_FILE
-    test_tok_texts_file = config.SE14_REST_TEST_TOK_TEXTS_FILE
-    test_sents_file = config.SE14_REST_TEST_SENTS_FILE
+    if dm == 'semeval14':
+        train_valid_split_file = config.SE14_REST_TRAIN_VALID_SPLIT_FILE
+        train_tok_texts_file = config.SE14_REST_TRAIN_TOK_TEXTS_FILE
+        train_sents_file = config.SE14_REST_TRAIN_SENTS_FILE
+        test_tok_texts_file = config.SE14_REST_TEST_TOK_TEXTS_FILE
+        test_sents_file = config.SE14_REST_TEST_SENTS_FILE
+        word_vecs_file = config.SE14_REST_YELP_WORD_VEC_FILE
+    else:
+        train_valid_split_file = config.SE15_REST_TRAIN_VALID_SPLIT_FILE
+        train_tok_texts_file = config.SE15_REST_TRAIN_TOK_TEXTS_FILE
+        train_sents_file = config.SE15_REST_TRAIN_SENTS_FILE
+        test_tok_texts_file = config.SE15_REST_TEST_TOK_TEXTS_FILE
+        test_sents_file = config.SE15_REST_TEST_SENTS_FILE
+        word_vecs_file = config.SE15_REST_YELP_WORD_VEC_FILE
 
-# __pre_train_nrdj(word_vecs_file, pre_tok_texts_file, pre_aspect_terms_file,
-#                  pre_opinion_terms_file, rule_model_file, 'both')
-__train_nrdj(word_vecs_file, train_tok_texts_file, train_sents_file, train_valid_split_file,
-             test_tok_texts_file, test_sents_file, rule_model_file, 'both')
+__pre_train_nrdj(word_vecs_file, pre_tok_texts_file, pre_aspect_terms_file,
+                 pre_opinion_terms_file, rule_model_file, 'both')
+# __train_nrdj(word_vecs_file, train_tok_texts_file, train_sents_file, train_valid_split_file,
+#              test_tok_texts_file, test_sents_file, rule_model_file, 'both')
 # __train_nrdj_restaurant_pr()
 # __train_nrdj_joint_restaurant_pr()
 # __train_nrdj_mlp_restaurant_pr()
