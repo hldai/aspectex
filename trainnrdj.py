@@ -444,10 +444,10 @@ else:
         test_sents_file = config.SE15_REST_TEST_SENTS_FILE
         word_vecs_file = config.SE15_REST_YELP_WORD_VEC_FILE
 
-__pre_train_nrdj(word_vecs_file, pre_tok_texts_file, pre_aspect_terms_file,
-                 pre_opinion_terms_file, rule_model_file, 'both')
-# __train_nrdj(word_vecs_file, train_tok_texts_file, train_sents_file, train_valid_split_file,
-#              test_tok_texts_file, test_sents_file, rule_model_file, 'both')
+# __pre_train_nrdj(word_vecs_file, pre_tok_texts_file, pre_aspect_terms_file,
+#                  pre_opinion_terms_file, rule_model_file, 'both')
+__train_nrdj(word_vecs_file, train_tok_texts_file, train_sents_file, train_valid_split_file,
+             test_tok_texts_file, test_sents_file, rule_model_file, 'both')
 # __train_nrdj_restaurant_pr()
 # __train_nrdj_joint_restaurant_pr()
 # __train_nrdj_mlp_restaurant_pr()

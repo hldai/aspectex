@@ -403,13 +403,14 @@ class NeuRuleDoubleJoint:
             aspect_p, aspect_r, aspect_f1, opinion_p, opinion_r, opinion_f1 = self.evaluate(
                 data_valid.word_idxs_list, data_valid.tok_texts, data_valid.aspects_true_list,
                 'tar', data_valid.opinions_true_list)
+
             logging.info('iter {}, loss={:.4f}, p={:.4f}, r={:.4f}, f1={:.4f};'
                          ' p={:.4f}, r={:.4f}, f1={:.4f}; best_f1_sum={:.4f}'.format(
                 epoch, loss, aspect_p, aspect_r, aspect_f1, opinion_p, opinion_r,
                 opinion_f1, best_f1_sum))
 
-            # if aspect_f1 + opinion_f1 > best_f1_sum:
-            if True:
+            if aspect_f1 + opinion_f1 > best_f1_sum:
+            # if True:
                 best_f1_sum = aspect_f1 + opinion_f1
 
                 aspect_p, aspect_r, aspect_f1, opinion_p, opinion_r, opinion_f1 = self.evaluate(

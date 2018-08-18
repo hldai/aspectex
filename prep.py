@@ -334,8 +334,8 @@ def __gen_se15_opinion_file(sent_text_opinion_file, dst_file):
 # test_file_json = 'd:/data/aspect/semeval14/Laptops_Test_Gold.json'
 # train_file_xml = 'd:/data/aspect/semeval14/Laptops_Train.xml'
 # train_file_json = 'd:/data/aspect/semeval14/Laptops_Train.json'
-# txt_yelp_word_vecs_file = 'd:/data/res/yelp-word-vecs-100.txt'
-txt_yelp_word_vecs_file = 'd:/data/res/yelp-word-vecs-sg-100-n10-i20.txt'
+txt_yelp_word_vecs_file = 'd:/data/res/yelp-word-vecs-100.txt'
+# txt_yelp_word_vecs_file = 'd:/data/res/yelp-word-vecs-sg-100-n10-i20.txt'
 txt_amazon_word_vecs_file = 'd:/data/res/electronics-word-vecs-100.txt'
 
 # __process_hl04()
