@@ -338,3 +338,9 @@ def get_apects_true(sents, to_lower=False):
                 else:
                     aspect_terms.add(t['term'])
     return aspect_terms
+
+
+def bin_word_vec_file_to_txt(bin_word_vec_file, dst_file):
+    from gensim.models.keyedvectors import KeyedVectors
+    model = KeyedVectors.load_word2vec_format(bin_word_vec_file, binary=True)
+    model.save_word2vec_format(dst_file, binary=False)
