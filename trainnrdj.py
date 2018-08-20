@@ -350,7 +350,7 @@ def __pre_train_nrdj(word_vecs_file, tok_texts_file, aspect_terms_file, opinion_
 
     nrdj = NeuRuleDoubleJoint(n_tags, word_vecs_matrix, share_lstm,
                               hidden_size_lstm=hidden_size_lstm,
-                              model_file=None)
+                              model_file=None, batch_size=batch_size)
 
     nrj_train_data_src1 = nrj_train_data_src2 = None
     # if train_mode != 'target-only':
@@ -378,7 +378,7 @@ def __train_nrdj(word_vecs_file, train_tok_texts_file, train_sents_file, train_v
     # label_opinions = False
     n_tags = 5 if label_opinions else 3
     # n_tags = 5 if task == 'train' else 3
-    batch_size = 20
+    batch_size = 5
     lr = 0.001
     share_lstm = False
 
@@ -393,14 +393,16 @@ def __train_nrdj(word_vecs_file, train_tok_texts_file, train_sents_file, train_v
 
     nrdj = NeuRuleDoubleJoint(n_tags, word_vecs_matrix, share_lstm,
                               hidden_size_lstm=hidden_size_lstm,
-                              model_file=load_model_file)
+                              model_file=load_model_file,
+                              batch_size=batch_size)
 
     nrdj.train(train_data, valid_data, test_data, vocab, n_epochs=n_epochs, lr=lr)
 
 
 str_today = datetime.date.today().strftime('%y-%m-%d')
 
-dm = 'semeval15'
+# dm = 'semeval15'
+dm = 'semeval14'
 dataset_name = 'restaurant'
 # dataset_name = 'laptops'
 hidden_size_lstm = 100
