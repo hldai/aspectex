@@ -245,6 +245,27 @@ def __gen_yelp_review_sents(yelp_review_file, dst_file):
     fout.close()
 
 
+def __split_to_sents(txt_file, dst_file):
+    import nltk
+    f = open(txt_file, encoding='utf-8')
+    fout = open(dst_file, 'w', encoding='utf-8', newline='\n')
+    for i, line in enumerate(f):
+        sents = nltk.sent_tokenize(line.strip())
+        # print(sents)
+        for sent in sents:
+            sent = sent.strip()
+            if not sent:
+                continue
+            sent = re.sub('\s+', ' ', sent)
+            fout.write('{}\n'.format(sent))
+        if i % 10000 == 0:
+            print(i)
+        # if i > 10000:
+        #     break
+    f.close()
+    fout.close()
+
+
 def __select_random_yelp_review_sents(sents_file, dst_file):
     f = open(sents_file, encoding='utf-8')
     fout = open(dst_file, 'w', encoding='utf-8', newline='\n')
@@ -385,11 +406,11 @@ se15_rest_opinions_test_file = '/home/hldai/data/aspect/semeval15/restaurants/op
 # __process_raw_sem_eval_data(
 #     config.SE15_REST_TEST_XML_FILE, se15_rest_opinions_test_file,
 #     config.SE15_REST_TEST_SENTS_FILE, config.SE15_REST_TEST_SENT_TEXTS_FILE, __get_sent_objs_se15)
-utils.trim_word_vecs_file(
-    [config.SE15_REST_TRAIN_TOK_TEXTS_FILE, config.SE15_REST_TEST_TOK_TEXTS_FILE,
-     config.SE14_REST_TRAIN_TOK_TEXTS_FILE, config.SE14_REST_TEST_TOK_TEXTS_FILE],
-    txt_yelp_word_vecs_file, config.SE15_REST_YELP_WORD_VEC_FILE
-)
+# utils.trim_word_vecs_file(
+#     [config.SE15_REST_TRAIN_TOK_TEXTS_FILE, config.SE15_REST_TEST_TOK_TEXTS_FILE,
+#      config.SE14_REST_TRAIN_TOK_TEXTS_FILE, config.SE14_REST_TEST_TOK_TEXTS_FILE],
+#     txt_yelp_word_vecs_file, config.SE15_REST_YELP_WORD_VEC_FILE
+# )
 
 yelp_rest_review_sents_file = 'd:/data/res/yelp-review-sents-round-9.txt'
 eng_yelp_rest_review_sents_file = 'd:/data/res/yelp-review-eng-tok-sents-round-9-full.txt'
@@ -412,3 +433,14 @@ rest15_train_word_cnts_file = 'd:/data/aspect/semeval15/restaurants/word_cnts.tx
 # utils.bin_word_vec_file_to_txt(
 #     'd:/data/res/yelp-word-vecs-sg-100-n10-i20-w5.bin', 'd:/data/res/yelp-word-vecs-sg-100-n10-i20-w5.txt'
 # )
+# utils.bin_word_vec_file_to_txt(
+#     '/home/hldai/data/amazon/electronics-word-vecs-100-sg-n10-i20-w5.bin',
+#     '/home/hldai/data/amazon/electronics-word-vecs-100-sg-n10-i20-w5.txt'
+# )
+utils.bin_word_vec_file_to_txt(
+    '/home/hldai/data/amazon/elec-w2v-nr-100-sg-n10-w8-i30.bin',
+    '/home/hldai/data/amazon/elec-w2v-nr-100-sg-n10-w8-i30.txt'
+)
+
+# __split_to_sents('/home/hldai/data/amazon/electronics_5_text.txt',
+#                  '/home/hldai/data/amazon/electronics_5_tok_sent_texts.txt')
