@@ -344,3 +344,24 @@ def bin_word_vec_file_to_txt(bin_word_vec_file, dst_file):
     from gensim.models.keyedvectors import KeyedVectors
     model = KeyedVectors.load_word2vec_format(bin_word_vec_file, binary=True)
     model.save_word2vec_format(dst_file, binary=False)
+
+
+def get_terms_from_label_list(labels, tok_text, label_beg, label_in):
+    terms = list()
+    words = tok_text.split(' ')
+    # print(labels_pred)
+    # print(len(words), len(labels_pred))
+    assert len(words) == len(labels)
+
+    p = 0
+    while p < len(words):
+        yi = labels[p]
+        if yi == label_beg:
+            pright = p
+            while pright + 1 < len(words) and labels[pright + 1] == label_in:
+                pright += 1
+            terms.append(' '.join(words[p: pright + 1]))
+            p = pright + 1
+        else:
+            p += 1
+    return terms
