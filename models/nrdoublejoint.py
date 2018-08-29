@@ -409,8 +409,8 @@ class NeuRuleDoubleJoint:
                 epoch, loss, aspect_p, aspect_r, aspect_f1, opinion_p, opinion_r,
                 opinion_f1, best_f1_sum))
 
-            # if aspect_f1 + opinion_f1 > best_f1_sum:
-            if True:
+            if aspect_f1 + opinion_f1 > best_f1_sum:
+            # if True:
                 best_f1_sum = aspect_f1 + opinion_f1
 
                 aspect_p, aspect_r, aspect_f1, opinion_p, opinion_r, opinion_f1 = self.evaluate(

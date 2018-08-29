@@ -357,7 +357,8 @@ def __gen_se15_opinion_file(sent_text_opinion_file, dst_file):
 # train_file_json = 'd:/data/aspect/semeval14/Laptops_Train.json'
 txt_yelp_word_vecs_file = 'd:/data/res/yelp-word-vecs-sg-100-n10-i20-w5.txt'
 # txt_yelp_word_vecs_file = 'd:/data/res/yelp-word-vecs-sg-100-n10-i20.txt'
-txt_amazon_word_vecs_file = 'd:/data/res/electronics-word-vecs-100.txt'
+# txt_amazon_word_vecs_file = 'd:/data/res/electronics-word-vecs-100.txt'
+txt_amazon_word_vecs_file = 'd:/data/amazon/elec-w2v-nr-100-sg-n10-w8-i30.txt'
 
 # __process_hl04()
 # __rncrf_sample_to_json()
@@ -374,10 +375,10 @@ txt_amazon_word_vecs_file = 'd:/data/res/electronics-word-vecs-100.txt'
 #     [config.SE14_LAPTOP_TRAIN_TOK_TEXTS_FILE, config.SE14_LAPTOP_TEST_TOK_TEXTS_FILE],
 #     config.GLOVE_WORD_VEC_FILE, config.SE14_LAPTOP_GLOVE_WORD_VEC_FILE
 # )
-# utils.trim_word_vecs_file(
-#     [config.SE14_LAPTOP_TRAIN_TOK_TEXTS_FILE, config.SE14_LAPTOP_TEST_TOK_TEXTS_FILE],
-#     txt_amazon_word_vecs_file, config.SE14_LAPTOP_AMAZON_WORD_VEC_FILE
-# )
+utils.trim_word_vecs_file(
+    [config.SE14_LAPTOP_TRAIN_TOK_TEXTS_FILE, config.SE14_LAPTOP_TEST_TOK_TEXTS_FILE],
+    txt_amazon_word_vecs_file, config.SE14_LAPTOP_AMAZON_WORD_VEC_FILE
+)
 
 # __process_raw_sem_eval_data(
 #     config.SE14_REST_TRAIN_XML_FILE, config.SE14_REST_TRAIN_OPINIONS_FILE,
@@ -437,10 +438,10 @@ rest15_train_word_cnts_file = 'd:/data/aspect/semeval15/restaurants/word_cnts.tx
 #     '/home/hldai/data/amazon/electronics-word-vecs-100-sg-n10-i20-w5.bin',
 #     '/home/hldai/data/amazon/electronics-word-vecs-100-sg-n10-i20-w5.txt'
 # )
-utils.bin_word_vec_file_to_txt(
-    '/home/hldai/data/amazon/elec-w2v-nr-100-sg-n10-w8-i30.bin',
-    '/home/hldai/data/amazon/elec-w2v-nr-100-sg-n10-w8-i30.txt'
-)
+# utils.bin_word_vec_file_to_txt(
+#     '/home/hldai/data/amazon/elec-w2v-nr-100-sg-n10-w8-i30.bin',
+#     '/home/hldai/data/amazon/elec-w2v-nr-100-sg-n10-w8-i30.txt'
+# )
 
 # __split_to_sents('/home/hldai/data/amazon/electronics_5_text.txt',
 #                  '/home/hldai/data/amazon/electronics_5_tok_sent_texts.txt')

@@ -403,8 +403,8 @@ str_today = datetime.date.today().strftime('%y-%m-%d')
 
 # dm = 'semeval15'
 dm = 'semeval14'
-dataset_name = 'restaurant'
-# dataset_name = 'laptops'
+# dataset_name = 'restaurant'
+dataset_name = 'laptops'
 hidden_size_lstm = 100
 n_epochs = 200
 
