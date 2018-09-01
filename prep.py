@@ -352,6 +352,22 @@ def __gen_se15_opinion_file(sent_text_opinion_file, dst_file):
     fout.close()
 
 
+def __get_yelp_review_texts_file():
+    reviews_file = 'd:/data/yelp/srcdata/yelp_academic_dataset_review.json'
+    dst_file = 'd:/data/res/yelp-reivew-texts.txt'
+    f = open(reviews_file, encoding='utf-8')
+    fout = open(dst_file, 'w', encoding='utf-8')
+    for i, line in enumerate(f):
+        r = json.loads(line)
+        fout.write('{}\n'.format(re.sub('\s+', ' ', r['text'])))
+        if i % 100000 == 0:
+            print(i)
+        # if i > 10:
+        #     break
+    f.close()
+    fout.close()
+
+
 # test_file_json = 'd:/data/aspect/semeval14/Laptops_Test_Gold.json'
 # train_file_xml = 'd:/data/aspect/semeval14/Laptops_Train.xml'
 # train_file_json = 'd:/data/aspect/semeval14/Laptops_Train.json'
@@ -375,10 +391,10 @@ txt_amazon_word_vecs_file = 'd:/data/amazon/elec-w2v-nr-100-sg-n10-w8-i30.txt'
 #     [config.SE14_LAPTOP_TRAIN_TOK_TEXTS_FILE, config.SE14_LAPTOP_TEST_TOK_TEXTS_FILE],
 #     config.GLOVE_WORD_VEC_FILE, config.SE14_LAPTOP_GLOVE_WORD_VEC_FILE
 # )
-utils.trim_word_vecs_file(
-    [config.SE14_LAPTOP_TRAIN_TOK_TEXTS_FILE, config.SE14_LAPTOP_TEST_TOK_TEXTS_FILE],
-    txt_amazon_word_vecs_file, config.SE14_LAPTOP_AMAZON_WORD_VEC_FILE
-)
+# utils.trim_word_vecs_file(
+#     [config.SE14_LAPTOP_TRAIN_TOK_TEXTS_FILE, config.SE14_LAPTOP_TEST_TOK_TEXTS_FILE],
+#     txt_amazon_word_vecs_file, config.SE14_LAPTOP_AMAZON_WORD_VEC_FILE
+# )
 
 # __process_raw_sem_eval_data(
 #     config.SE14_REST_TRAIN_XML_FILE, config.SE14_REST_TRAIN_OPINIONS_FILE,
@@ -419,6 +435,9 @@ eng_yelp_rest_review_sents_file = 'd:/data/res/yelp-review-eng-tok-sents-round-9
 #                         yelp_rest_review_sents_file)
 # __select_random_yelp_review_sents(yelp_rest_review_sents_file,
 #                                   'd:/data/res/yelp-review-sents-round-9-rand-part.txt')
+# __get_yelp_review_texts_file()
+__filter_non_english_sents('d:/data/res/yelp-review-tok-texts.txt',
+                           'd:/data/res/yelp-review-eng-tok-texts.txt')
 # __filter_non_english_sents('d:/data/res/yelp-review-tok-sents-round-9-full.txt', eng_yelp_rest_review_sents_file)
 
 # laptops_train_word_cnts_file = 'd:/data/aspect/semeval14/laptops/word_cnts.txt'

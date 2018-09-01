@@ -151,14 +151,39 @@ def __rule_result_differ():
     print(len(idxs_neu_only))
 
 
-f = open('d:/data/yelp/srcdata/yelp_academic_dataset_review.json', encoding='utf-8')
-cnt = 0
-for line in f:
-    cnt += 1
-    # print(r)
-    # break
-f.close()
-print(cnt)
+def __dataset_statistics():
+    # sents_file = 'd:/data/aspect/semeval14/laptops/laptops_test_sents.json'
+    # sents_file = 'd:/data/aspect/semeval14/restaurants/restaurants_test_sents.json'
+    # sents_file = 'd:/data/aspect/semeval14/restaurants/restaurants_train_sents.json'
+    # sents_file = 'd:/data/aspect/semeval15/restaurants/restaurants_train_sents.json'
+    sents_file = 'd:/data/aspect/semeval15/restaurants/restaurants_test_sents.json'
+    sents = utils.load_json_objs(sents_file)
+    print(len(sents), 'sentences')
+    at_cnt, ot_cnt = 0, 0
+    for s in sents:
+        at_cnt += len(s.get('terms', list()))
+        ot_cnt += len(s.get('opinions', list()))
+    print(at_cnt, 'aspect terms')
+    print(ot_cnt, 'opinion terms')
+
+
+def __amazon_statistics():
+    reviews_file = 'd:/data/amazon/Electronics_5.json'
+    f = open(reviews_file, encoding='utf-8')
+    rcnt = 0
+    asin_set = set()
+    for line in f:
+        r = json.loads(line)
+        asin_set.add(r['asin'])
+        # print(r)
+        rcnt += 1
+        # if rcnt > 5:
+        #     break
+    f.close()
+    print(len(asin_set), 'asins')
+
 
 # __count_adj_phrases()
 # __semeval_rule_insight()
+# __dataset_statistics()
+__amazon_statistics()
