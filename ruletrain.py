@@ -137,43 +137,6 @@ def __train_lstmcrf(word_vecs_file, train_tok_texts_file, train_sents_file, trai
                   n_epochs=n_epochs, save_file=save_model_file, error_file=error_file)
 
 
-def __train_neurule_joint():
-    # n_train = 1000
-    n_train = -1
-
-    # model_file = 'd:/data/amazon/model/lstmcrfrule.ckpt'
-    rule_model_file = config.LAPTOP_RULE_MODEL2_FILE
-    save_model_file = None
-    print('done')
-    n_tags = 3
-    batch_size = 20
-    hidden_size_lstm = 100
-    n_epochs = 500
-
-    print('loading data ...')
-    with open(config.SE14_LAPTOP_GLOVE_WORD_VEC_FILE, 'rb') as f:
-        vocab, word_vecs_matrix = pickle.load(f)
-
-    # train_data_src, valid_data_src = __get_data_amazon(vocab, config.AMAZON_TERMS_TRUE1_FILE)
-    train_data_src, valid_data_src = datautils.get_data_amazon(vocab, config.AMAZON_TERMS_TRUE2_FILE)
-    nrj_train_data_src = NRJTrainData(
-        train_data_src.word_idxs_list, train_data_src.labels_list, valid_data_src.word_idxs_list,
-        valid_data_src.labels_list, valid_data_src.tok_texts, valid_data_src.terms_true_list
-    )
-
-    train_data_tar, valid_data_tar = datautils.get_data_semeval(
-        config.SE14_LAPTOP_TRAIN_SENTS_FILE, config.SE14_LAPTOP_TRAIN_TOK_TEXTS_FILE,
-        config.SE14_LAPTOP_TEST_SENTS_FILE, config.SE14_LAPTOP_TEST_TOK_TEXTS_FILE,
-        vocab, n_train)
-    nrj_train_data_tar = NRJTrainData(
-        train_data_tar.word_idxs_list, train_data_tar.labels_list, valid_data_tar.word_idxs_list,
-        valid_data_tar.labels_list, valid_data_tar.tok_texts, valid_data_tar.terms_true_list
-    )
-
-    nrc = NeuRuleJoint(n_tags, word_vecs_matrix, hidden_size_lstm=hidden_size_lstm, model_file=None)
-    nrc.train(nrj_train_data_src, nrj_train_data_tar, vocab, n_epochs=n_epochs)
-
-
 def __train_neurule_double_joint():
     init_logging('log/nrdj-{}.log'.format(str_today), mode='a', to_stdout=True)
 

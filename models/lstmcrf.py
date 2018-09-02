@@ -1,7 +1,8 @@
 import tensorflow as tf
 import logging
-from utils.utils import pad_sequences, pad_feat_sequence
+from utils import utils
 from utils.modelutils import evaluate_ao_extraction
+from utils.datautils import TrainData, ValidData
 
 
 class LSTMCRF:
@@ -101,8 +102,8 @@ class LSTMCRF:
             log_likelihood, trans_params = tf.contrib.crf.crf_log_likelihood(
                     self.logits, self.labels, self.sequence_lengths)
             self.trans_params = trans_params  # need to evaluate it for decoding
-            # self.loss = tf.reduce_mean(-log_likelihood)
-            self.loss = tf.reduce_mean(-log_likelihood) + 0.001 * tf.nn.l2_loss(self.W)
+            self.loss = tf.reduce_mean(-log_likelihood)
+            # self.loss = tf.reduce_mean(-log_likelihood) + 0.001 * tf.nn.l2_loss(self.W)
         else:
             losses = tf.nn.sparse_softmax_cross_entropy_with_logits(
                     logits=self.logits, labels=self.labels)
@@ -159,7 +160,7 @@ class LSTMCRF:
 
     def get_feed_dict(self, word_idx_seqs, label_seqs=None, lr=None, dropout=None, manual_feat=None):
         word_idx_seqs = [list(word_idxs) for word_idxs in word_idx_seqs]
-        word_ids, sequence_lengths = pad_sequences(word_idx_seqs, 0)
+        word_ids, sequence_lengths = utils.pad_sequences(word_idx_seqs, 0)
 
         # print(len(word_ids))
         # build feed dictionary
@@ -170,11 +171,11 @@ class LSTMCRF:
 
         if label_seqs is not None:
             label_seqs = [list(labels) for labels in label_seqs]
-            labels, _ = pad_sequences(label_seqs, 0)
+            labels, _ = utils.pad_sequences(label_seqs, 0)
             feed[self.labels] = labels
 
         if self.manual_feat is not None:
-            manual_feat, lens = pad_feat_sequence(manual_feat, manual_feat[0].shape[1])
+            manual_feat, lens = utils.pad_feat_sequence(manual_feat, manual_feat[0].shape[1])
             feed[self.manual_feat] = manual_feat
 
         feed[self.lr] = lr
@@ -229,7 +230,8 @@ class LSTMCRF:
                     epoch, loss_val, a_p, a_r, a_f1, best_f1_a, o_p, o_r, o_f1, best_f1_o))
                 losses_seg = list()
 
-                if a_f1 + o_f1 > best_f1_sum:
+                # if a_f1 + o_f1 > best_f1_sum:
+                if a_f1 > best_f1_a and o_f1 > best_f1_o:
                     best_f1_sum = a_f1 + o_f1
                     best_f1_a = a_f1
                     best_f1_o = o_f1
@@ -257,7 +259,8 @@ class LSTMCRF:
         logging.info('iter={}, loss={:.4f}, p={:.4f}, r={:.4f}, f1={:.4f}, best_f1={:.4f}; '
                      'p={:.4f}, r={:.4f}, f1={:.4f}, best_f1={:.4f}'.format(
             epoch, loss_val, a_p, a_r, a_f1, best_f1_a, o_p, o_r, o_f1, best_f1_o))
-        if a_f1 + o_f1 > best_f1_sum:
+        # if a_f1 + o_f1 > best_f1_sum:
+        if a_f1 > best_f1_a and o_f1 > best_f1_o:
             best_f1_sum = a_f1 + o_f1
             best_f1_a = a_f1
             best_f1_o = o_f1
@@ -271,7 +274,67 @@ class LSTMCRF:
 
         return best_f1_a, best_f1_o, best_f1_sum
 
-    def train(self, word_idxs_list_train, labels_list_train, word_idxs_list_valid, labels_list_valid,
+    def __train_batch(self, word_idxs_list_train, labels_list_train, batch_idx, lr, dropout):
+        word_idxs_list_batch = word_idxs_list_train[batch_idx * self.batch_size: (batch_idx + 1) * self.batch_size]
+        labels_list_batch = labels_list_train[batch_idx * self.batch_size: (batch_idx + 1) * self.batch_size]
+        feed_dict, _ = self.get_feed_dict(word_idxs_list_batch,
+                                          label_seqs=labels_list_batch, lr=lr, dropout=dropout)
+
+        _, train_loss = self.sess.run(
+            [self.train_op, self.loss], feed_dict=feed_dict)
+        return train_loss
+
+    def train(self, data_train: TrainData, data_valid: ValidData, data_test: ValidData,
+              n_epochs=10, lr=0.001, dropout=0.5, save_file=None):
+        logging.info('n_epochs={}, lr={}, dropout={}'.format(n_epochs, lr, dropout))
+        if save_file is not None and self.saver is None:
+            self.saver = tf.train.Saver()
+
+        n_train = len(data_train.word_idxs_list)
+        n_batches = (n_train + self.batch_size - 1) // self.batch_size
+
+        best_f1_sum = 0
+        best_a_f1, best_o_f1 = 0, 0
+        for epoch in range(n_epochs):
+            losses, losses_seg = list(), list()
+            for i in range(n_batches):
+                train_loss_tar = self.__train_batch(
+                    data_train.word_idxs_list, data_train.labels_list, i, lr, dropout)
+                losses.append(train_loss_tar)
+
+            loss = sum(losses)
+            # metrics = self.run_evaluate(dev)
+            aspect_p, aspect_r, aspect_f1, opinion_p, opinion_r, opinion_f1 = self.evaluate(
+                data_valid.word_idxs_list, data_valid.tok_texts, data_valid.aspects_true_list,
+                'tar', data_valid.opinions_true_list)
+
+            logging.info('iter {}, loss={:.4f}, p={:.4f}, r={:.4f}, f1={:.4f};'
+                         ' p={:.4f}, r={:.4f}, f1={:.4f}; best_f1_sum={:.4f}'.format(
+                epoch, loss, aspect_p, aspect_r, aspect_f1, opinion_p, opinion_r,
+                opinion_f1, best_f1_sum))
+
+            # if True:
+            # if aspect_f1 + opinion_f1 > best_f1_sum:
+            if aspect_f1 > best_a_f1 and opinion_f1 > best_o_f1:
+                best_f1_sum = aspect_f1 + opinion_f1
+                best_a_f1 = aspect_f1
+                best_o_f1 = opinion_f1
+
+                aspect_p, aspect_r, aspect_f1, opinion_p, opinion_r, opinion_f1 = self.evaluate(
+                    data_test.word_idxs_list, data_test.tok_texts, data_test.aspects_true_list,
+                    'tar', data_test.opinions_true_list)
+                # print('iter {}, loss={:.4f}, p={:.4f}, r={:.4f}, f1={:.4f}, best_f1={:.4f}'.format(
+                #     epoch, loss_tar, p, r, f1, best_f1))
+                logging.info('Test, p={:.4f}, r={:.4f}, f1={:.4f}; p={:.4f}, r={:.4f}, f1={:.4f}'.format(
+                    aspect_p, aspect_r, aspect_f1, opinion_p, opinion_r,
+                    opinion_f1))
+
+                if self.saver is not None:
+                    self.saver.save(self.sess, save_file)
+                    # print('model saved to {}'.format(save_file))
+                    logging.info('model saved to {}'.format(save_file))
+
+    def train_ob(self, word_idxs_list_train, labels_list_train, word_idxs_list_valid, labels_list_valid,
               vocab, valid_texts, aspects_true_list, opinions_true_list, train_feat_list=None, valid_feat_list=None,
               n_epochs=10, lr=0.001, dropout=0.5, save_file=None, error_file=None):
         if save_file is not None and self.saver is None:
@@ -312,3 +375,69 @@ class LSTMCRF:
             viterbi_sequences += [viterbi_seq]
 
         return viterbi_sequences, sequence_lengths
+
+    def get_terms_from_label_list(self, labels, tok_text, label_beg, label_in):
+        terms = list()
+        words = tok_text.split(' ')
+        # print(labels_pred)
+        # print(len(words), len(labels_pred))
+        assert len(words) == len(labels)
+
+        p = 0
+        while p < len(words):
+            yi = labels[p]
+            if yi == label_beg:
+                pright = p
+                while pright + 1 < len(words) and labels[pright + 1] == label_in:
+                    pright += 1
+                terms.append(' '.join(words[p: pright + 1]))
+                p = pright + 1
+            else:
+                p += 1
+        return terms
+
+    def evaluate(self, word_idxs_list_valid, test_texts, terms_true_list, task,
+                 opinions_ture_list=None):
+        aspect_true_cnt, aspect_sys_cnt, aspect_hit_cnt = 0, 0, 0
+        opinion_true_cnt, opinion_sys_cnt, opinion_hit_cnt = 0, 0, 0
+        error_sents, error_terms = list(), list()
+        correct_sent_idxs = list()
+        for sent_idx, (word_idxs, text, terms_true) in enumerate(zip(
+                word_idxs_list_valid, test_texts, terms_true_list)):
+            labels_pred, sequence_lengths = self.predict_batch([word_idxs], task)
+            labels_pred = labels_pred[0]
+
+            aspect_terms_sys = self.get_terms_from_label_list(labels_pred, text, 1, 2)
+
+            new_hit_cnt = utils.count_hit(terms_true, aspect_terms_sys)
+            aspect_true_cnt += len(terms_true)
+            aspect_sys_cnt += len(aspect_terms_sys)
+            aspect_hit_cnt += new_hit_cnt
+            if new_hit_cnt == aspect_true_cnt:
+                correct_sent_idxs.append(sent_idx)
+
+            if opinions_ture_list is None:
+                continue
+
+            opinion_terms_sys = self.get_terms_from_label_list(labels_pred, text, 3, 4)
+            opinion_terms_true = opinions_ture_list[sent_idx]
+
+            new_hit_cnt = utils.count_hit(opinion_terms_true, opinion_terms_sys)
+            opinion_hit_cnt += new_hit_cnt
+            opinion_true_cnt += len(opinion_terms_true)
+            opinion_sys_cnt += len(opinion_terms_sys)
+
+        # save_json_objs(error_sents, 'd:/data/aspect/semeval14/error-sents.txt')
+        # with open('d:/data/aspect/semeval14/error-sents.txt', 'w', encoding='utf-8') as fout:
+        #     for sent, terms in zip(error_sents, error_terms):
+                # terms_true = [t['term'].lower() for t in sent['terms']] if 'terms' in sent else list()
+                # fout.write('{}\n{}\n\n'.format(sent['text'], terms))
+        # with open('d:/data/aspect/semeval14/lstmcrf-correct.txt', 'w', encoding='utf-8') as fout:
+        #     fout.write('\n'.join([str(i) for i in correct_sent_idxs]))
+
+        aspect_p, aspect_r, aspect_f1 = utils.prf1(aspect_true_cnt, aspect_sys_cnt, aspect_hit_cnt)
+        if opinions_ture_list is None:
+            return aspect_p, aspect_r, aspect_f1, 0, 0, 0
+
+        opinion_p, opinion_r, opinion_f1 = utils.prf1(opinion_true_cnt, opinion_sys_cnt, opinion_hit_cnt)
+        return aspect_p, aspect_r, aspect_f1, opinion_p, opinion_r, opinion_f1

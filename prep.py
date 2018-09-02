@@ -423,11 +423,11 @@ se15_rest_opinions_test_file = '/home/hldai/data/aspect/semeval15/restaurants/op
 # __process_raw_sem_eval_data(
 #     config.SE15_REST_TEST_XML_FILE, se15_rest_opinions_test_file,
 #     config.SE15_REST_TEST_SENTS_FILE, config.SE15_REST_TEST_SENT_TEXTS_FILE, __get_sent_objs_se15)
-# utils.trim_word_vecs_file(
-#     [config.SE15_REST_TRAIN_TOK_TEXTS_FILE, config.SE15_REST_TEST_TOK_TEXTS_FILE,
-#      config.SE14_REST_TRAIN_TOK_TEXTS_FILE, config.SE14_REST_TEST_TOK_TEXTS_FILE],
-#     txt_yelp_word_vecs_file, config.SE15_REST_YELP_WORD_VEC_FILE
-# )
+utils.trim_word_vecs_file(
+    [config.SE15_REST_TRAIN_TOK_TEXTS_FILE, config.SE15_REST_TEST_TOK_TEXTS_FILE,
+     config.SE14_REST_TRAIN_TOK_TEXTS_FILE, config.SE14_REST_TEST_TOK_TEXTS_FILE],
+    txt_yelp_word_vecs_file, config.SE15_REST_YELP_WORD_VEC_FILE
+)
 
 yelp_rest_review_sents_file = 'd:/data/res/yelp-review-sents-round-9.txt'
 eng_yelp_rest_review_sents_file = 'd:/data/res/yelp-review-eng-tok-sents-round-9-full.txt'
@@ -436,8 +436,8 @@ eng_yelp_rest_review_sents_file = 'd:/data/res/yelp-review-eng-tok-sents-round-9
 # __select_random_yelp_review_sents(yelp_rest_review_sents_file,
 #                                   'd:/data/res/yelp-review-sents-round-9-rand-part.txt')
 # __get_yelp_review_texts_file()
-__filter_non_english_sents('d:/data/res/yelp-review-tok-texts.txt',
-                           'd:/data/res/yelp-review-eng-tok-texts.txt')
+# __filter_non_english_sents('d:/data/res/yelp-review-tok-texts.txt',
+#                            'd:/data/res/yelp-review-eng-tok-texts.txt')
 # __filter_non_english_sents('d:/data/res/yelp-review-tok-sents-round-9-full.txt', eng_yelp_rest_review_sents_file)
 
 # laptops_train_word_cnts_file = 'd:/data/aspect/semeval14/laptops/word_cnts.txt'
