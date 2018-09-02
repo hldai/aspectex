@@ -83,10 +83,15 @@ def find_terms_by_l1_pattern(pattern, dep_tags, pos_tags, mine_helper, filter_te
         if term in filter_terms_vocab:
             continue
         terms.append(term)
+        # print(pattern)
+        # print(term)
+        # print(dep_tags)
+        # print([t[2][1] for t in dep_tags])
+        # print()
     return terms
 
 
-def find_terms_by_l2_pattern(pattern, dep_tags, pos_tags, mine_helper, filter_terms_vocab):
+def find_terms_by_l2_pattern(pattern, dep_tags, pos_tags, mine_helper, filter_terms_vocab, existing_terms=None):
     (pl, ipl), (pr, ipr) = pattern
     terms = list()
     matched_dep_tag_idxs = __get_l1_pattern_matched_dep_tags(pl, dep_tags, pos_tags, mine_helper)
@@ -106,6 +111,13 @@ def find_terms_by_l2_pattern(pattern, dep_tags, pos_tags, mine_helper, filter_te
             if term is None or term in filter_terms_vocab:
                 # print(p, 'term not found')
                 continue
+
+            # if term not in existing_terms:
+            #     print(pattern)
+            #     print(term)
+            #     print([t[2][1] for t in dep_tags])
+            #     print(dep_tags)
+            #     print()
 
             terms.append(term)
     return terms

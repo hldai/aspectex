@@ -1,7 +1,7 @@
 import json
 from singularizer import Singularizer
 from collections import Counter
-import utils
+from utils import utils
 import config
 
 
@@ -21,6 +21,8 @@ impossible_set = {'optical setting', 'key', 'flip switch', 'manual mode', 'vibra
                   'on-line support', 'sound', 'navigational system', 'raw format', 'audio', 'digital zoom',
                   'creative', '8mb card', 'online service', 'optical zoom', 'universal remote control', 'lip-sync',
                   'continuous shot mode'}
+
+BAD_TERMS = {'problem', 'question', 'pain', 'card', 'thing', 'way', 'day', 'reason', 'time', 'level', 'name'}
 
 
 def __is_word(w):
@@ -87,9 +89,10 @@ def __get_phrase(w_idx, pos_list, sent_words, opinion_words):
 
 def __find_r11(dep_tags, pos_tags, opinions):
     ao_idx_pairs = set()
-    for gov, dep, reln in dep_tags:
-        w_gov, w_gov_idx = __parse_indexed_word(gov)
-        w_dep, w_dep_idx = __parse_indexed_word(dep)
+    for reln, (w_gov_idx, w_gov), (w_dep_idx, w_dep) in dep_tags:
+        # print(gov, dep, reln)
+        # w_gov, w_gov_idx = __parse_indexed_word(gov)
+        # w_dep, w_dep_idx = __parse_indexed_word(dep)
         if reln in SET_MR:
             if w_dep in opinions and __is_word(w_gov) and pos_tags[w_gov_idx] in SET_NN:
                 ao_idx_pairs.add((w_gov_idx, w_dep_idx))
@@ -104,25 +107,25 @@ def __find_r11(dep_tags, pos_tags, opinions):
 
 def __find_r12(dep_tags, pos_tags, opinions, sent_words):
     aspect_word_idxs = set()
-    for i, (gov1, dep1, reln1) in enumerate(dep_tags):
+    for i, (reln1, (w_gov_idx1, w_gov1), (w_dep_idx1, w_dep1)) in enumerate(dep_tags):
         if reln1 not in SET_MR:
             continue
 
         # find O->O-Dep->H
-        w_gov1, w_gov_idx1 = __parse_indexed_word(gov1)
-        w_dep1, w_dep_idx1 = __parse_indexed_word(dep1)
+        # w_gov1, w_gov_idx1 = __parse_indexed_word(gov1)
+        # w_dep1, w_dep_idx1 = __parse_indexed_word(dep1)
         if w_dep1 not in opinions:
             continue
 
-        for j, (gov2, dep2, reln2) in enumerate(dep_tags):
+        for j, (reln2, (w_gov_idx2, w_gov2), (w_dep_idx2, w_dep2)) in enumerate(dep_tags):
             if i == j or reln2 not in SET_MR:
                 continue
 
-            w_gov2, w_gov_idx2 = __parse_indexed_word(gov2)
+            # w_gov2, w_gov_idx2 = __parse_indexed_word(gov2)
             if w_gov_idx2 != w_gov_idx1:
                 continue
 
-            w_dep2, w_dep_idx2 = __parse_indexed_word(dep2)
+            # w_dep2, w_dep_idx2 = __parse_indexed_word(dep2)
             if pos_tags[w_dep_idx2] not in SET_NN or sent_words[w_dep_idx2] in ILLEGAL_WORDS:
                 continue
 
@@ -131,9 +134,9 @@ def __find_r12(dep_tags, pos_tags, opinions, sent_words):
 
 
 def __find_r21(dep_tags, pos_tags, aspects, opinions):
-    for gov, dep, reln in dep_tags:
-        w_gov, w_gov_idx = __parse_indexed_word(gov)
-        w_dep, w_dep_idx = __parse_indexed_word(dep)
+    for reln, (w_gov_idx, w_gov), (w_dep_idx, w_dep) in dep_tags:
+        # w_gov, w_gov_idx = __parse_indexed_word(gov)
+        # w_dep, w_dep_idx = __parse_indexed_word(dep)
 
         if reln in SET_MR:
             if w_gov in aspects and __is_word(w_dep) and pos_tags[w_dep_idx] in SET_JJ:
@@ -141,25 +144,25 @@ def __find_r21(dep_tags, pos_tags, aspects, opinions):
 
 
 def __find_r22(dep_tags, pos_tags, aspects, opinions):
-    for i, (gov1, dep1, reln1) in enumerate(dep_tags):
+    for i, (reln1, (w_gov_idx1, w_gov1), (w_dep_idx1, w_dep1)) in enumerate(dep_tags):
         if reln1 not in SET_MR:
             continue
 
         # find O->O-Dep->H
-        w_gov1, w_gov_idx1 = __parse_indexed_word(gov1)
-        w_dep1, w_dep_idx1 = __parse_indexed_word(dep1)
+        # w_gov1, w_gov_idx1 = __parse_indexed_word(gov1)
+        # w_dep1, w_dep_idx1 = __parse_indexed_word(dep1)
         if w_dep1 not in aspects:
             continue
 
-        for j, (gov2, dep2, reln2) in enumerate(dep_tags):
+        for j, (reln2, (w_gov_idx2, w_gov2), (w_dep_idx2, w_dep2)) in enumerate(dep_tags):
             if i == j or reln2 not in SET_MR:
                 continue
 
-            w_gov2, w_gov_idx2 = __parse_indexed_word(gov2)
+            # w_gov2, w_gov_idx2 = __parse_indexed_word(gov2)
             if w_gov_idx2 != w_gov_idx1:
                 continue
 
-            w_dep2, w_dep_idx2 = __parse_indexed_word(dep2)
+            # w_dep2, w_dep_idx2 = __parse_indexed_word(dep2)
             if pos_tags[w_dep_idx2] not in SET_JJ:
                 continue
 
@@ -168,9 +171,9 @@ def __find_r22(dep_tags, pos_tags, aspects, opinions):
 
 def __find_r31(dep_tags, pos_tags, aspects):
     aspect_word_idxs = set()
-    for gov, dep, reln in dep_tags:
-        w_gov, w_gov_idx = __parse_indexed_word(gov)
-        w_dep, w_dep_idx = __parse_indexed_word(dep)
+    for reln, (w_gov_idx, w_gov), (w_dep_idx, w_dep) in dep_tags:
+        # w_gov, w_gov_idx = __parse_indexed_word(gov)
+        # w_dep, w_dep_idx = __parse_indexed_word(dep)
 
         if reln != 'conj':
             continue
@@ -183,21 +186,22 @@ def __find_r31(dep_tags, pos_tags, aspects):
 
 def __find_r32(dep_tags, pos_tags, aspects):
     aspect_word_idxs = set()
-    for i, (gov1, dep1, reln1) in enumerate(dep_tags):
+    for i, (reln1, (w_gov_idx1, w_gov1), (w_dep_idx1, w_dep1)) in enumerate(dep_tags):
+        # print(gov1, dep1, reln1)
         if reln1 not in {'dobj', 'nsubj'}:
             continue
 
-        w_gov1, w_gov_idx1 = __parse_indexed_word(gov1)
-        w_dep1, w_dep_idx1 = __parse_indexed_word(dep1)
+        # w_gov1, w_gov_idx1 = __parse_indexed_word(gov1)
+        # w_dep1, w_dep_idx1 = __parse_indexed_word(dep1)
         if w_dep1 not in aspects:
             continue
 
-        for j, (gov2, dep2, reln2) in enumerate(dep_tags):
+        for j, (reln2, (w_gov_idx2, w_gov2), (w_dep_idx2, w_dep2)) in enumerate(dep_tags):
             if i == j or reln2 not in {'dobj', 'nsubj'}:
                 continue
             # print(dep_tags)
             # print(gov2, dep2, reln2)
-            w_dep2, w_dep_idx2 = __parse_indexed_word(dep2)
+            # w_dep2, w_dep_idx2 = __parse_indexed_word(dep2)
             if pos_tags[w_dep_idx2] in SET_NN and w_dep2 not in ILLEGAL_WORDS:
                 aspect_word_idxs.add(w_dep_idx2)
     return aspect_word_idxs
@@ -205,9 +209,9 @@ def __find_r32(dep_tags, pos_tags, aspects):
 
 def __find_r41(dep_tags, pos_tags, opinions):
     new_opinions = set()
-    for gov, dep, reln in dep_tags:
-        w_gov, w_gov_idx = __parse_indexed_word(gov)
-        w_dep, w_dep_idx = __parse_indexed_word(dep)
+    for reln, (w_gov_idx, w_gov), (w_dep_idx, w_dep) in dep_tags:
+        # w_gov, w_gov_idx = __parse_indexed_word(gov)
+        # w_dep, w_dep_idx = __parse_indexed_word(dep)
         if reln == 'conj':
             if w_gov in opinions and pos_tags[w_dep_idx] in SET_JJ and w_dep not in opinions:
                 # print(w_dep)
@@ -219,15 +223,15 @@ def __find_r41(dep_tags, pos_tags, opinions):
 
 def __find_r42(dep_tags, pos_tags, opinions):
     opinions_new = set()
-    for i, (gov1, dep1, reln1) in enumerate(dep_tags):
-        w_dep1, w_dep_idx1 = __parse_indexed_word(dep1)
+    for i, (reln1, (w_gov_idx1, w_gov1), (w_dep_idx1, w_dep1)) in enumerate(dep_tags):
+        # w_dep1, w_dep_idx1 = __parse_indexed_word(dep1)
         if w_dep1 not in opinions:
             continue
 
-        for j, (gov2, dep2, reln2) in enumerate(dep_tags):
+        for j, (reln2, (w_gov_idx2, w_gov2), (w_dep_idx2, w_dep2)) in enumerate(dep_tags):
             if i == j or reln1 != reln2:
                 continue
-            w_dep2, w_dep_idx2 = __parse_indexed_word(dep2)
+            # w_dep2, w_dep_idx2 = __parse_indexed_word(dep2)
             if pos_tags[w_dep_idx2] not in SET_JJ:
                 continue
             opinions_new.add(w_dep2)
@@ -278,6 +282,8 @@ def __get_sent_aspects_from_aspect_word_idxs(aspect_word_idxs_dict, sents, pos_t
         aspects_dict[i] = cur_aspects = set()
         for widx in aspect_word_idxs:
             aspect_phrase = __get_phrase(widx, pos_tags_list[i], sent_words, opinion_words)
+            if aspect_phrase in BAD_TERMS:
+                continue
             cur_aspects.add(aspect_phrase)
     return aspects_dict
 
@@ -436,7 +442,8 @@ def __dp_new(sents, dep_tags_list, pos_tags_list, seed_opinions):
             #     print(pos_tags_list[i])
         # update aspects & opinions
 
-        aspect_word_idxs_dict_pruned1 = __prune_aspects_new(aspect_word_idxs_dict, sents, pos_tags_list, seed_opinions)
+        aspect_word_idxs_dict_pruned1 = __prune_aspects_new(
+            aspect_word_idxs_dict, sents, pos_tags_list, seed_opinions)
         # print(ao_pairs_dict[664])
         # print(ao_pairs_dict_pruned[664])
 

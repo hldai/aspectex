@@ -104,13 +104,13 @@ def __evaluate(terms_sys_list, terms_true_list, dep_tags_list, pos_tags_list, se
         if new_hit_cnt == len(terms_true) and new_hit_cnt == len(terms_sys):
             correct_sent_idxs.append(sent_idx)
         hit_cnt += new_hit_cnt
-        if len(terms_true) and new_hit_cnt < len(terms_true):
-            print(terms_true)
-            print(terms_sys)
-            print(sent_texts[sent_idx])
-            print(pos_tags)
-            print(dep_tags)
-            print()
+        # if len(terms_true) and new_hit_cnt < len(terms_true):
+        #     print(terms_true)
+        #     print(terms_sys)
+        #     print(sent_texts[sent_idx])
+        #     print(pos_tags)
+        #     print(dep_tags)
+        #     print()
 
     # __save_never_hit_terms(sents, terms_sys_list, 'd:/data/aspect/semeval14/tmp.txt')
 
@@ -284,13 +284,15 @@ def __run_with_mined_rules(mine_helper, rule_patterns_file, term_hit_rate_file, 
     terms_sys_list = list()
     for sent_idx, (dep_tag_seq, pos_tag_seq, sent_text) in enumerate(zip(dep_tags_list, pos_tags_list, sent_texts)):
         terms = set()
+        l1_terms_new = set()
         for p in l1_rules:
             terms_new = rulescommon.find_terms_by_l1_pattern(
                 p, dep_tag_seq, pos_tag_seq, mine_helper, filter_terms_vocab)
             terms.update(terms_new)
+            l1_terms_new.update(terms_new)
         for p in l2_rules:
             terms_new = rulescommon.find_terms_by_l2_pattern(
-                p, dep_tag_seq, pos_tag_seq, mine_helper, filter_terms_vocab)
+                p, dep_tag_seq, pos_tag_seq, mine_helper, filter_terms_vocab, l1_terms_new)
             terms.update(terms_new)
 
         terms_new = mine_helper.get_terms_by_matching(dep_tag_seq, pos_tag_seq, sent_text, term_vocab)
@@ -323,8 +325,8 @@ rest_filter_nouns_file = 'd:/data/aspect/semeval14/restaurants/aspect-nouns-filt
 dm = 'semeval15'
 # dataset = 'laptops-test'
 # dataset = 'laptops-amazon'
-# dataset = 'restaurants-test'
-dataset = 'restaurants-yelp'
+dataset = 'restaurants-test'
+# dataset = 'restaurants-yelp'
 # task = 'aspect'
 task = 'opinion'
 
