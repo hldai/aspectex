@@ -365,3 +365,9 @@ def get_terms_from_label_list(labels, tok_text, label_beg, label_in):
         else:
             p += 1
     return terms
+
+
+def get_filename(filepath: str):
+    pb = filepath.rfind('/')
+    pe = filepath.rfind('.')
+    print(filepath[pb + 1:pe])
