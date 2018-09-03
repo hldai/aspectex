@@ -6,7 +6,7 @@ from utils.datautils import TrainData, ValidData
 
 
 class LSTMCRF:
-    def __init__(self, n_tags, word_embeddings, hidden_size_lstm=300, batch_size=20, train_word_embeddings=False,
+    def __init__(self, n_tags, word_embeddings, hidden_size_lstm=300, batch_size=5, train_word_embeddings=False,
                  lr_method='adam', clip=-1, use_crf=True, manual_feat_len=0, model_file=None):
         self.n_tags = n_tags
         self.vals_word_embeddings = word_embeddings

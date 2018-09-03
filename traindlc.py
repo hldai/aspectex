@@ -49,7 +49,7 @@ def __pre_train_dlc(word_vecs_file, tok_texts_file, aspect_terms_file, opinion_t
     # )
 
     nrdj.pre_train(train_data_src1, valid_data_src1, train_data_src2, valid_data_src2, vocab,
-                   n_epochs=n_epochs, lr=lr, save_file=dst_model_file)
+                   n_epochs=5, lr=lr, save_file=dst_model_file)
 
 
 def __train_dlc(word_vecs_file, train_tok_texts_file, train_sents_file, train_valid_split_file, test_tok_texts_file,
@@ -82,10 +82,10 @@ def __train_dlc(word_vecs_file, train_tok_texts_file, train_sents_file, train_va
 
 str_today = datetime.date.today().strftime('%y-%m-%d')
 
-# dm = 'semeval15'
-dm = 'semeval14'
-# dataset_name = 'restaurant'
-dataset_name = 'laptops'
+dm = 'semeval15'
+# dm = 'semeval14'
+dataset_name = 'restaurant'
+# dataset_name = 'laptops'
 hidden_size_lstm = 100
 n_epochs = 200
 
@@ -111,6 +111,7 @@ else:
     pre_opinion_terms_file = 'd:/data/aspect/{}/restaurants/yelp-opinion-rule-result.txt'.format(dm)
     pre_tok_texts_file = 'd:/data/res/yelp-review-eng-tok-sents-round-9.txt'
     rule_model_file = 'd:/data/aspect/{}/tf-model/dlc/yelp-dlc.ckpl'.format(dm)
+    # rule_model_file = 'd:/data/aspect/semeval14/tf-model/dlc/yelp-dlc.ckpl'
     # rule_model_file = 'd:/data/aspect/semeval14/tf-model/drest/yelp-nrdj.ckpl'
 
     if dm == 'semeval14':
@@ -128,7 +129,7 @@ else:
         test_sents_file = config.SE15_REST_TEST_SENTS_FILE
         word_vecs_file = config.SE15_REST_YELP_WORD_VEC_FILE
 
-# __pre_train_dlc(word_vecs_file, pre_tok_texts_file, pre_aspect_terms_file,
-#                 pre_opinion_terms_file, rule_model_file, 'both')
+__pre_train_dlc(word_vecs_file, pre_tok_texts_file, pre_aspect_terms_file,
+                pre_opinion_terms_file, rule_model_file, 'both')
 __train_dlc(word_vecs_file, train_tok_texts_file, train_sents_file, train_valid_split_file,
             test_tok_texts_file, test_sents_file, rule_model_file, 'both')

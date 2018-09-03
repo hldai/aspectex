@@ -401,10 +401,10 @@ def __train_nrdj(word_vecs_file, train_tok_texts_file, train_sents_file, train_v
 
 str_today = datetime.date.today().strftime('%y-%m-%d')
 
-# dm = 'semeval15'
-dm = 'semeval14'
-# dataset_name = 'restaurant'
-dataset_name = 'laptops'
+dm = 'semeval15'
+# dm = 'semeval14'
+dataset_name = 'restaurant'
+# dataset_name = 'laptops'
 hidden_size_lstm = 100
 n_epochs = 200
 
