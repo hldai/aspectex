@@ -1,7 +1,6 @@
 import os
 import numpy as np
 import re
-import pandas as pd
 import pickle
 import random
 import json
@@ -299,6 +298,8 @@ def __filter_non_english_sents(tok_sents_file, dst_file):
 
 
 def __gen_word_cnts_file(tok_texts_file, dst_file):
+    import pandas as pd
+
     texts = utils.read_lines(tok_texts_file)
     word_cnts_dict = dict()
     total_word_cnt = 0
