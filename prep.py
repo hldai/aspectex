@@ -7,6 +7,7 @@ import random
 import json
 import config
 from utils import utils
+from platform import platform
 
 N_HEADER_LINES = 11
 TAG_STRS = ['u', 'p', 's', 'cs', 'cc']
@@ -368,15 +369,23 @@ def __get_yelp_review_texts_file():
     fout.close()
 
 
+env = 'Windows' if platform().startswith('Windows') else 'Linux'
+
+if env == 'Windows':
+    # txt_yelp_word_vecs_file = 'd:/data/res/yelp-word-vecs-sg-100-n10-i20-w5.txt'
+    txt_yelp_word_vecs_file = 'd:/data/res/yelp-w2v-sg-100-n10-i30-w5.txt'
+    # txt_yelp_word_vecs_file = 'd:/data/res/yelp-word-vecs-sg-100-n10-i20.txt'
+    # txt_amazon_word_vecs_file = 'd:/data/res/electronics-word-vecs-100.txt'
+    # txt_amazon_word_vecs_file = 'd:/data/amazon/elec-w2v-nr-100-sg-n10-w8-i30.txt'
+    txt_amazon_word_vecs_file = 'd:/data/amazon/elec-w2v-100-sg-n10-w8-i30.txt'
+    se14_laptop_wv_file = 'd:/data/aspect/semeval14/model-data/amazon-wv-100-sg-n10-w8-i30.pkl'
+else:
+    txt_amazon_word_vecs_file = '/home/hldai/data/amazon/elec-w2v-100-sg-n10-w8-i30.txt'
+    se14_laptop_wv_file = '/home/hldai/data/aspect/semeval14/model-data/amazon-wv-100-sg-n10-w8-i30.pkl'
+
 # test_file_json = 'd:/data/aspect/semeval14/Laptops_Test_Gold.json'
 # train_file_xml = 'd:/data/aspect/semeval14/Laptops_Train.xml'
 # train_file_json = 'd:/data/aspect/semeval14/Laptops_Train.json'
-# txt_yelp_word_vecs_file = 'd:/data/res/yelp-word-vecs-sg-100-n10-i20-w5.txt'
-txt_yelp_word_vecs_file = 'd:/data/res/yelp-w2v-sg-100-n10-i30-w5.txt'
-# txt_yelp_word_vecs_file = 'd:/data/res/yelp-word-vecs-sg-100-n10-i20.txt'
-# txt_amazon_word_vecs_file = 'd:/data/res/electronics-word-vecs-100.txt'
-# txt_amazon_word_vecs_file = 'd:/data/amazon/elec-w2v-nr-100-sg-n10-w8-i30.txt'
-txt_amazon_word_vecs_file = 'd:/data/amazon/elec-w2v-100-sg-n10-w8-i30.txt'
 
 # __process_hl04()
 # __rncrf_sample_to_json()
@@ -395,7 +404,7 @@ txt_amazon_word_vecs_file = 'd:/data/amazon/elec-w2v-100-sg-n10-w8-i30.txt'
 # )
 utils.trim_word_vecs_file(
     [config.SE14_LAPTOP_TRAIN_TOK_TEXTS_FILE, config.SE14_LAPTOP_TEST_TOK_TEXTS_FILE],
-    txt_amazon_word_vecs_file, config.SE14_LAPTOP_AMAZON_WORD_VEC_FILE
+    txt_amazon_word_vecs_file, se14_laptop_wv_file
 )
 
 # __process_raw_sem_eval_data(
