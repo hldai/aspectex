@@ -343,6 +343,7 @@ class DSLSTMCRF:
         n_batches = (n_train + self.batch_size - 1) // self.batch_size
 
         best_f1_sum = 0
+        best_a_f1, best_o_f1 = 0, 0
         for epoch in range(n_epochs):
             losses, losses_seg = list(), list()
             for i in range(n_batches):
@@ -361,8 +362,11 @@ class DSLSTMCRF:
                 epoch, loss, aspect_p, aspect_r, aspect_f1, opinion_p, opinion_r,
                 opinion_f1, best_f1_sum))
 
-            if aspect_f1 + opinion_f1 > best_f1_sum:
             # if True:
+            # if aspect_f1 + opinion_f1 > best_f1_sum:
+            if aspect_f1 > best_a_f1 and opinion_f1 > best_o_f1:
+                best_a_f1 = aspect_f1
+                best_o_f1 = opinion_f1
                 best_f1_sum = aspect_f1 + opinion_f1
 
                 aspect_p, aspect_r, aspect_f1, opinion_p, opinion_r, opinion_f1 = self.evaluate(

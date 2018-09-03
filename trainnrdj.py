@@ -323,7 +323,7 @@ def __train_nrdj_deep_restaurant_pr():
 
 
 def __pre_train_nrdj(word_vecs_file, tok_texts_file, aspect_terms_file, opinion_terms_file,
-                     dst_model_file, task):
+                     dst_model_file, task, load_model_file=None):
     init_logging('log/nrdj-pre-{}.log'.format(str_today), mode='a', to_stdout=True)
 
     # n_train = 1000
@@ -350,7 +350,7 @@ def __pre_train_nrdj(word_vecs_file, tok_texts_file, aspect_terms_file, opinion_
 
     nrdj = NeuRuleDoubleJoint(n_tags, word_vecs_matrix, share_lstm,
                               hidden_size_lstm=hidden_size_lstm,
-                              model_file=None, batch_size=batch_size)
+                              model_file=load_model_file, batch_size=batch_size)
 
     nrj_train_data_src1 = nrj_train_data_src2 = None
     # if train_mode != 'target-only':
@@ -365,7 +365,7 @@ def __pre_train_nrdj(word_vecs_file, tok_texts_file, aspect_terms_file, opinion_
     # )
 
     nrdj.pre_train(train_data_src1, valid_data_src1, train_data_src2, valid_data_src2, vocab,
-                   n_epochs=n_epochs, lr=lr, save_file=dst_model_file)
+                   n_epochs=30, lr=lr, save_file=dst_model_file)
 
 
 def __train_nrdj(word_vecs_file, train_tok_texts_file, train_sents_file, train_valid_split_file, test_tok_texts_file,
@@ -378,7 +378,7 @@ def __train_nrdj(word_vecs_file, train_tok_texts_file, train_sents_file, train_v
     # label_opinions = False
     n_tags = 5 if label_opinions else 3
     # n_tags = 5 if task == 'train' else 3
-    batch_size = 5
+    batch_size = 10
     lr = 0.001
     share_lstm = False
 
@@ -401,10 +401,10 @@ def __train_nrdj(word_vecs_file, train_tok_texts_file, train_sents_file, train_v
 
 str_today = datetime.date.today().strftime('%y-%m-%d')
 
-dm = 'semeval15'
-# dm = 'semeval14'
-dataset_name = 'restaurant'
-# dataset_name = 'laptops'
+# dm = 'semeval15'
+dm = 'semeval14'
+# dataset_name = 'restaurant'
+dataset_name = 'laptops'
 hidden_size_lstm = 100
 n_epochs = 200
 
@@ -446,10 +446,12 @@ else:
         test_sents_file = config.SE15_REST_TEST_SENTS_FILE
         word_vecs_file = config.SE15_REST_YELP_WORD_VEC_FILE
 
+__pre_train_nrdj(word_vecs_file, pre_tok_texts_file, pre_aspect_terms_file,
+                 pre_opinion_terms_file, rule_model_file, 'both', load_model_file=rule_model_file)
 # __pre_train_nrdj(word_vecs_file, pre_tok_texts_file, pre_aspect_terms_file,
 #                  pre_opinion_terms_file, rule_model_file, 'both')
-__train_nrdj(word_vecs_file, train_tok_texts_file, train_sents_file, train_valid_split_file,
-             test_tok_texts_file, test_sents_file, rule_model_file, 'both')
+# __train_nrdj(word_vecs_file, train_tok_texts_file, train_sents_file, train_valid_split_file,
+#              test_tok_texts_file, test_sents_file, rule_model_file, 'both')
 # __train_nrdj_restaurant_pr()
 # __train_nrdj_joint_restaurant_pr()
 # __train_nrdj_mlp_restaurant_pr()

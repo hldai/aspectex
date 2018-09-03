@@ -82,10 +82,10 @@ def __train_dlc(word_vecs_file, train_tok_texts_file, train_sents_file, train_va
 
 str_today = datetime.date.today().strftime('%y-%m-%d')
 
-dm = 'semeval15'
-# dm = 'semeval14'
-dataset_name = 'restaurant'
-# dataset_name = 'laptops'
+# dm = 'semeval15'
+dm = 'semeval14'
+# dataset_name = 'restaurant'
+dataset_name = 'laptops'
 hidden_size_lstm = 100
 n_epochs = 200
 
@@ -131,5 +131,5 @@ else:
 
 __pre_train_dlc(word_vecs_file, pre_tok_texts_file, pre_aspect_terms_file,
                 pre_opinion_terms_file, rule_model_file, 'both')
-__train_dlc(word_vecs_file, train_tok_texts_file, train_sents_file, train_valid_split_file,
-            test_tok_texts_file, test_sents_file, rule_model_file, 'both')
+# __train_dlc(word_vecs_file, train_tok_texts_file, train_sents_file, train_valid_split_file,
+#             test_tok_texts_file, test_sents_file, rule_model_file, 'both')
