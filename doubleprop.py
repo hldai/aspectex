@@ -3,6 +3,9 @@ from singularizer import Singularizer
 from collections import Counter
 from utils import utils
 import config
+from models import rulescommon
+from models.aspectminehelper import AspectMineHelper
+from models.opinionminehelper import OpinionMineHelper
 
 
 SET_MR = {'amod', 'prep', 'csubj', 'xsubj', 'dobj', 'iobj', 'conj', 'nsubj'}
@@ -259,9 +262,9 @@ def __proc_sent_based_on_opinion(sent_words, dep_tags, pos_tags, opinions, aspec
     return aspect_word_idxs
 
 
-def __proc_sent_based_on_aspect_new(sent, dep_tags, pos_tags, opinions, aspects):
+def __proc_sent_based_on_aspect_new(sent_words, dep_tags, pos_tags, opinions, aspects):
     # dep_list = utils.next_sent_dependency(f_dep)
-    sent_words = sent['text'].split(' ')
+    # sent_words = sent['text'].split(' ')
     assert len(sent_words) == len(dep_tags)
 
     aspect_word_idxs = __find_r31(dep_tags, pos_tags, aspects)
@@ -274,10 +277,10 @@ def __proc_sent_based_on_aspect_new(sent, dep_tags, pos_tags, opinions, aspects)
     return aspect_word_idxs
 
 
-def __get_sent_aspects_from_aspect_word_idxs(aspect_word_idxs_dict, sents, pos_tags_list, opinion_words):
+def __get_sent_aspects_from_aspect_word_idxs(aspect_word_idxs_dict, sent_words_list, pos_tags_list, opinion_words):
     aspects_dict = dict()
-    for i, sent in enumerate(sents):
-        sent_words = sent['text'].split(' ')
+    for i, sent_words in enumerate(sent_words_list):
+        # sent_words = sent['text'].split(' ')
         aspect_word_idxs = aspect_word_idxs_dict[i]
         aspects_dict[i] = cur_aspects = set()
         for widx in aspect_word_idxs:
@@ -288,10 +291,10 @@ def __get_sent_aspects_from_aspect_word_idxs(aspect_word_idxs_dict, sents, pos_t
     return aspects_dict
 
 
-def __prune_aspects_new(aspect_word_idxs_dict, sents, pos_tags_list, opinion_words):
+def __prune_aspects_new(aspect_word_idxs_dict, sent_words_list, pos_tags_list, opinion_words):
     aspects = list()
-    for i, sent in enumerate(sents):
-        sent_words = sent['text'].split(' ')
+    for i, sent_words in enumerate(sent_words_list):
+        # sent_words = sent['text'].split(' ')
         aspect_word_idxs = aspect_word_idxs_dict[i]
         for widx in aspect_word_idxs:
             aspect_phrase = __get_phrase(widx, pos_tags_list[i], sent_words, opinion_words)
@@ -417,12 +420,40 @@ def __error_analysis(aspect_words_sys, aspects_dict_sys, sents, dep_tags_list, p
             print()
 
 
-def __dp_new(sents, dep_tags_list, pos_tags_list, seed_opinions):
-    aspect_set_true = __get_true_aspect_word_set(sents)
+def __match_opinions(sent_texts, opinion_terms_vocab, opinions_list_true):
+    terms_list_sys = list()
+    hit_cnt = 0
+    cnt_true, cnt_sys = 0, 0
+    for i, sent_text in enumerate(sent_texts):
+        terms_sys = OpinionMineHelper.get_terms_by_matching(None, None, sent_text, opinion_terms_vocab)
+        terms_list_sys.append(terms_sys)
+        # print(terms_sys)
+        # print(opinions_list_true[i])
+        terms_true = opinions_list_true[i]
+        for term in terms_true:
+            if term in terms_sys:
+                hit_cnt += 1
+        cnt_sys += len(terms_sys)
+        cnt_true += len(terms_true)
+    p = hit_cnt / cnt_sys
+    r = hit_cnt / cnt_true
+    print('opinion', p, r, 2 * p * r / (p + r))
+
+
+def __dp_new(aspect_terms_list, opinion_terms_list, sent_tok_texts_file, sent_texts_file, dep_tags_list, pos_tags_list,
+             seed_opinions, terms_vocab):
+    # aspect_set_true = __get_true_aspect_word_set(sents)
+    tok_texts = utils.read_lines(sent_tok_texts_file)
+    sent_texts = utils.read_lines(sent_texts_file)
+
+    sent_words_list = list()
+    for tok_text in tok_texts:
+        sent_words_list.append(tok_text.split(' '))
 
     opinions = set(seed_opinions)
     aspects = set()
-    hit_cnt, true_ao_pairs_cnt, aspects_sys_cnt = 0, __get_n_true_ao_pairs(sents), 0
+    hit_cnt, true_aspects_cnt, aspects_sys_cnt = 0, 0, 0
+    true_aspects_cnt = sum([len(terms) for terms in aspect_terms_list])
     prev_opinion_size, prev_aspect_size = 0, 0
     aspect_words_sys = set()
     aspects_dict = None
@@ -430,8 +461,8 @@ def __dp_new(sents, dep_tags_list, pos_tags_list, seed_opinions):
         # print(len(opinions))
         prev_opinion_size, prev_aspect_size = len(opinions), len(aspects)
         aspect_word_idxs_dict = dict()
-        for i, sent in enumerate(sents):
-            sent_words = sent['text'].split(' ')
+        for i, sent_words in enumerate(sent_words_list):
+            # sent_words = sent['text'].split(' ')
             aspect_word_idxs = __proc_sent_based_on_opinion(
                 sent_words, dep_tags_list[i], pos_tags_list[i], opinions, aspects)
             aspect_word_idxs_dict[i] = aspect_word_idxs
@@ -443,28 +474,28 @@ def __dp_new(sents, dep_tags_list, pos_tags_list, seed_opinions):
         # update aspects & opinions
 
         aspect_word_idxs_dict_pruned1 = __prune_aspects_new(
-            aspect_word_idxs_dict, sents, pos_tags_list, seed_opinions)
+            aspect_word_idxs_dict, sent_words_list, pos_tags_list, seed_opinions)
         # print(ao_pairs_dict[664])
         # print(ao_pairs_dict_pruned[664])
 
         for sent_idx, aspect_word_idxs in aspect_word_idxs_dict_pruned1.items():
-            sent_words = sents[sent_idx]['text'].split(' ')
+            sent_words = sent_words_list[sent_idx]
             for widx in aspect_word_idxs:
                 aspects.add(sent_words[widx])
 
         aspect_word_idxs_dict2 = dict()
-        for i, sent in enumerate(sents):
+        for i, sent_words in enumerate(sent_words_list):
             aspect_word_idxs = __proc_sent_based_on_aspect_new(
-                sent, dep_tags_list[i], pos_tags_list[i], opinions, aspects)
+                sent_words, dep_tags_list[i], pos_tags_list[i], opinions, aspects)
             aspect_word_idxs_dict2[i] = aspect_word_idxs
 
         aspect_word_idxs_dict_pruned2 = __prune_aspects_new(
-            aspect_word_idxs_dict, sents, pos_tags_list, seed_opinions)
+            aspect_word_idxs_dict, sent_words_list, pos_tags_list, seed_opinions)
 
         aspect_word_idxs_dict = __merge_aspect_word_idxs_dicts(
             aspect_word_idxs_dict_pruned1, aspect_word_idxs_dict_pruned2)
         aspects_dict = __get_sent_aspects_from_aspect_word_idxs(
-            aspect_word_idxs_dict, sents, pos_tags_list, seed_opinions)
+            aspect_word_idxs_dict, sent_words_list, pos_tags_list, seed_opinions)
 
         aspects_sys_cnt = 0
         aspect_words_sys = set()
@@ -472,7 +503,7 @@ def __dp_new(sents, dep_tags_list, pos_tags_list, seed_opinions):
             aspects_sys_cnt += len(aspects)
             for a in aspects:
                 aspect_words_sys.add(a)
-        __get_word_extraction_perf(aspect_set_true, aspect_words_sys)
+        # __get_word_extraction_perf(aspect_set_true, aspect_words_sys)
 
         # print(aspect_set_true)
         # print(aspect_words_sys)
@@ -483,24 +514,31 @@ def __dp_new(sents, dep_tags_list, pos_tags_list, seed_opinions):
         # print()
 
         hit_cnt = 0
-        for i, sent in enumerate(sents):
-            aos_true = sent.get('aspects', None)
+        for i, (aspect_terms_true, dep_tag_seq, pos_tag_seq, sent_text) in enumerate(
+                zip(aspect_terms_list, dep_tags_list, pos_tags_list, sent_texts)):
+            # aos_true = sent.get('aspects', None)
             aspects_sys = aspects_dict.get(i, None)
-            if aos_true is not None and aspects_sys is not None:
-                targets_true = {x['target'] for x in aos_true}
+
+            terms_new = AspectMineHelper.get_terms_by_matching(
+                dep_tag_seq, pos_tag_seq, sent_text, terms_vocab)
+            aspects_sys.update(terms_new)
+
+            if aspect_terms_true is not None and aspects_sys is not None:
+                targets_true = {x for x in aspect_terms_true}
                 for target in aspects_sys:
                     if target in targets_true:
                         hit_cnt += 1
 
-        print(aspects_dict[3202])
+        # print(aspects_dict[3202])
 
         prec = hit_cnt / aspects_sys_cnt
-        recall = hit_cnt / true_ao_pairs_cnt
+        recall = hit_cnt / true_aspects_cnt
         f1 = 0 if prec + recall == 0 else 2 * prec * recall / (prec + recall)
         # print('tuples', prec, recall, f1)
-    print()
-    __error_analysis(aspect_words_sys, aspects_dict, sents, dep_tags_list, pos_tags_list)
-    return hit_cnt, aspects_sys_cnt, true_ao_pairs_cnt
+    # print()
+    __match_opinions(sent_texts, opinions, opinion_terms_list)
+    # __error_analysis(aspect_words_sys, aspects_dict, sents, dep_tags_list, pos_tags_list)
+    return hit_cnt, aspects_sys_cnt, true_aspects_cnt
 
 
 def __read_seed_opinions():
@@ -562,5 +600,42 @@ def __dp_hl04():
     #         print(sent_opinions)
 
 
+def __get_true_terms_se(sents):
+    aspect_terms_list, opinion_terms_list = list(), list()
+    for s in sents:
+        terms = s.get('terms', list())
+        aspect_terms_list.append([t['term'] for t in terms])
+        opinion_terms_list.append(s.get('opinions', list()))
+    return aspect_terms_list, opinion_terms_list
+
+
+def __dp_se():
+    dataset = 'semeval14'
+    # dataset = 'semeval15'
+    # sub_dataset = 'restaurants'
+    sub_dataset = 'laptops'
+    sents_file = 'd:/data/aspect/{}/{}/{}_test_sents.json'.format(dataset, sub_dataset, sub_dataset)
+    tok_texts_file = 'd:/data/aspect/{}/{}/{}_test_texts_tok.txt'.format(dataset, sub_dataset, sub_dataset)
+    sent_texts_file = 'd:/data/aspect/{}/{}/{}_test_texts.txt'.format(dataset, sub_dataset, sub_dataset)
+    dep_file = 'd:/data/aspect/{}/{}/{}-test-rule-dep.txt'.format(dataset, sub_dataset, sub_dataset)
+    pos_file = 'd:/data/aspect/{}/{}/{}-test-rule-pos.txt'.format(dataset, sub_dataset, sub_dataset)
+    term_hit_rate_file = 'd:/data/aspect/{}/{}/opinion-term-hit-rate.txt'.format(dataset, sub_dataset)
+    sents = utils.load_json_objs(sents_file)
+    seed_opinions = __read_seed_opinions()
+    pos_tags_list = utils.load_pos_tags(pos_file)
+    dep_tags_list = utils.load_dep_tags_list(dep_file)
+
+    aspect_terms_list, opinion_terms_list = __get_true_terms_se(sents)
+    term_vocab = rulescommon.get_term_vocab(term_hit_rate_file, 0.6)
+
+    cnt_hit, cnt_sys, cnt_true = __dp_new(
+        aspect_terms_list, opinion_terms_list, tok_texts_file, sent_texts_file, dep_tags_list,
+        pos_tags_list, seed_opinions, term_vocab)
+    prec = cnt_hit / cnt_sys
+    recall = cnt_hit / cnt_true
+    print(prec, recall, 2 * prec * recall / (prec + recall), cnt_hit, cnt_sys, cnt_true)
+
+
 if __name__ == '__main__':
-    __dp_hl04()
+    # __dp_hl04()
+    __dp_se()
