@@ -295,8 +295,8 @@ class NeuRuleDoubleJoint:
                         data_valid_s2.word_idxs_list, data_valid_s2.tok_texts,
                         data_valid_s2.opinions_true_list, 'src2')
 
-                    logging.info('src1, p={:.4f}, r={:.4f}, f1={:.4f}; src2, p={:.4f}, r={:.4f}, f1={:.4f}'.format(
-                        p1, r1, f11, p2, r2, f12
+                    logging.info('it={}, p={:.4f}, r={:.4f}, f1={:.4f}; src2, p={:.4f}, r={:.4f}, f1={:.4f}'.format(
+                        epoch, p1, r1, f11, p2, r2, f12
                     ))
 
                     if f11 + f12 > best_f1:
