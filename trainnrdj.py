@@ -417,12 +417,12 @@ if dataset_name == 'laptops':
     pre_tok_texts_file = config.AMAZON_TOK_TEXTS_FILE
     pre_aspect_terms_file = config.AMAZON_RM_TERMS_FILE
     pre_opinion_terms_file = config.AMAZON_TERMS_TRUE4_FILE
-    rule_model_file = config.LAPTOP_RULE_MODEL2_FILE
 
     wv_dim = '100'
     if os_env == 'Windows':
         word_vecs_file = 'd:/data/aspect/semeval14/model-data/amazon-wv-{}-sg-n10-w8-i30.pkl'.format(wv_dim)
-        rule_model_file = 'd:/data/aspect/semeval14/model-data/d{}/wv-{}.ckpl'.format(wv_dim, wv_dim)
+        # rule_model_file = 'd:/data/aspect/semeval14/model-data/d{}/wv-{}.ckpl'.format(wv_dim, wv_dim)
+        rule_model_file = config.LAPTOP_RULE_MODEL2_FILE
     else:
         word_vecs_file = '/home/hldai/data/aspect/semeval14/model-data/amazon-wv-{}-sg-n10-w8-i30.pkl'.format(wv_dim)
         rule_model_file = '/home/hldai/data/aspect/semeval14/model-data/d{}/wv-{}.ckpl'.format(wv_dim, wv_dim)
