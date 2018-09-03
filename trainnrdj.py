@@ -2,6 +2,7 @@ import numpy as np
 import pickle
 import config
 import datetime
+from platform import platform
 from models.nrdoublejoint import NeuRuleDoubleJoint
 from models.nrdjmlp import NeuRuleDoubleJointMLP
 from models.nrdjdeep import NeuRuleDoubleJointDeep
@@ -408,13 +409,19 @@ dataset_name = 'laptops'
 hidden_size_lstm = 100
 n_epochs = 200
 
+os_env = 'Windows' if platform().startswith('Windows') else 'Linux'
+
 if dataset_name == 'laptops':
     # word_vecs_file = config.SE14_LAPTOP_GLOVE_WORD_VEC_FILE
-    word_vecs_file = config.SE14_LAPTOP_AMAZON_WORD_VEC_FILE
+    # word_vecs_file = config.SE14_LAPTOP_AMAZON_WORD_VEC_FILE
     pre_tok_texts_file = config.AMAZON_TOK_TEXTS_FILE
     pre_aspect_terms_file = config.AMAZON_RM_TERMS_FILE
     pre_opinion_terms_file = config.AMAZON_TERMS_TRUE4_FILE
     rule_model_file = config.LAPTOP_RULE_MODEL2_FILE
+    if os_env == 'Windows':
+        word_vecs_file = 'd:/data/aspect/semeval14/model-data/amazon-wv-100-sg-n10-w8-i30.pkl'
+    else:
+        word_vecs_file = '/home/hldai/data/aspect/semeval14/model-data/amazon-wv-100-sg-n10-w8-i30.pkl'
 
     train_valid_split_file = config.SE14_LAPTOP_TRAIN_VALID_SPLIT_FILE
     train_tok_texts_file = config.SE14_LAPTOP_TRAIN_TOK_TEXTS_FILE
