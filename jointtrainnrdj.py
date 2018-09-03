@@ -370,8 +370,8 @@ def __pre_train_nrdj(word_vecs_file, tok_texts_file, aspect_terms_file, opinion_
 
 
 def __train_nrdj(word_vecs_file, train_tok_texts_file, train_sents_file, train_valid_split_file, test_tok_texts_file,
-                 test_sents_file, load_model_file, task):
-    init_logging('log/nrdj-train-{}.log'.format(str_today), mode='a', to_stdout=True)
+                 test_sents_file):
+    init_logging('log/nrdj-jtrain-{}.log'.format(str_today), mode='a', to_stdout=True)
 
     # n_train = 1000
     n_train = -1
@@ -387,6 +387,12 @@ def __train_nrdj(word_vecs_file, train_tok_texts_file, train_sents_file, train_v
     with open(word_vecs_file, 'rb') as f:
         vocab, word_vecs_matrix = pickle.load(f)
     logging.info('word vec dim: {}, n_words={}'.format(word_vecs_matrix.shape[1], word_vecs_matrix.shape[0]))
+
+    train_data_src1, valid_data_src1 = datautils.get_data_amazon(
+        vocab, pre_aspect_terms_file, pre_tok_texts_file, 'aspect')
+    train_data_src2, valid_data_src2 = datautils.get_data_amazon(
+        vocab, pre_opinion_terms_file, pre_tok_texts_file, 'opinion')
+
     train_data, valid_data, test_data = datautils.get_data_semeval(
         train_sents_file, train_tok_texts_file, train_valid_split_file, test_sents_file, test_tok_texts_file,
         vocab, n_train, label_opinions)
@@ -394,20 +400,21 @@ def __train_nrdj(word_vecs_file, train_tok_texts_file, train_sents_file, train_v
 
     nrdj = NeuRuleDoubleJoint(n_tags, word_vecs_matrix, share_lstm,
                               hidden_size_lstm=hidden_size_lstm,
-                              model_file=load_model_file,
+                              model_file=None,
                               batch_size=batch_size)
 
-    nrdj.train(train_data, valid_data, test_data, vocab, n_epochs=n_epochs, lr=lr)
+    nrdj.join_train(train_data_src1, valid_data_src1, train_data_src2, valid_data_src2,
+                    train_data, valid_data, test_data, n_epochs=n_epochs, lr=lr)
 
 
 str_today = datetime.date.today().strftime('%y-%m-%d')
 
 # dm = 'semeval15'
 dm = 'semeval14'
-# dataset_name = 'restaurant'
-dataset_name = 'laptops'
+dataset_name = 'restaurant'
+# dataset_name = 'laptops'
 hidden_size_lstm = 100
-n_epochs = 200
+n_epochs = 400
 
 os_env = 'Windows' if platform().startswith('Windows') else 'Linux'
 
@@ -421,11 +428,8 @@ if dataset_name == 'laptops':
     wv_dim = '100'
     if os_env == 'Windows':
         word_vecs_file = 'd:/data/aspect/semeval14/model-data/amazon-wv-{}-sg-n10-w8-i30.pkl'.format(wv_dim)
-        # rule_model_file = 'd:/data/aspect/semeval14/model-data/d{}/wv-{}.ckpl'.format(wv_dim, wv_dim)
-        rule_model_file = config.LAPTOP_RULE_MODEL2_FILE
     else:
         word_vecs_file = '/home/hldai/data/aspect/semeval14/model-data/amazon-wv-{}-sg-n10-w8-i30.pkl'.format(wv_dim)
-        rule_model_file = '/home/hldai/data/aspect/semeval14/model-data/d{}/wv-{}.ckpl'.format(wv_dim, wv_dim)
 
     train_valid_split_file = config.SE14_LAPTOP_TRAIN_VALID_SPLIT_FILE
     train_tok_texts_file = config.SE14_LAPTOP_TRAIN_TOK_TEXTS_FILE
@@ -439,8 +443,6 @@ else:
     pre_aspect_terms_file = 'd:/data/aspect/{}/restaurants/yelp-aspect-rm-rule-result.txt'.format(dm)
     pre_opinion_terms_file = 'd:/data/aspect/{}/restaurants/yelp-opinion-rule-result.txt'.format(dm)
     pre_tok_texts_file = 'd:/data/res/yelp-review-eng-tok-sents-round-9.txt'
-    rule_model_file = 'd:/data/aspect/{}/tf-model/drest/yelp-nrdj.ckpl'.format(dm)
-    # rule_model_file = 'd:/data/aspect/semeval14/tf-model/drest/yelp-nrdj.ckpl'
 
     if dm == 'semeval14':
         train_valid_split_file = config.SE14_REST_TRAIN_VALID_SPLIT_FILE
@@ -457,9 +459,5 @@ else:
         test_sents_file = config.SE15_REST_TEST_SENTS_FILE
         word_vecs_file = config.SE15_REST_YELP_WORD_VEC_FILE
 
-__pre_train_nrdj(word_vecs_file, pre_tok_texts_file, pre_aspect_terms_file,
-                 pre_opinion_terms_file, rule_model_file, 'both', load_model_file=rule_model_file)
-# __pre_train_nrdj(word_vecs_file, pre_tok_texts_file, pre_aspect_terms_file,
-#                  pre_opinion_terms_file, rule_model_file, 'both')
-# __train_nrdj(word_vecs_file, train_tok_texts_file, train_sents_file, train_valid_split_file,
-#              test_tok_texts_file, test_sents_file, rule_model_file, 'both')
+__train_nrdj(word_vecs_file, train_tok_texts_file, train_sents_file, train_valid_split_file,
+             test_tok_texts_file, test_sents_file)

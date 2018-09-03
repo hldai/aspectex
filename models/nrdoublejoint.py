@@ -333,14 +333,14 @@ class NeuRuleDoubleJoint:
             losses_tar, losses_seg_tar = list(), list()
             for i in range(n_batches_tar):
                 train_loss_tar = self.__train_batch(
-                    data_train_t.word_idxs_list_train, data_train_t.labels_list_train, i, lr, dropout, 'tar')
+                    data_train_t.word_idxs_list, data_train_t.labels_list, i, lr, dropout, 'tar')
                 losses_tar.append(train_loss_tar)
 
                 train_loss_src1 = self.__train_batch(
                     data_train_s1.word_idxs_list, data_train_s1.labels_list, batch_idx_src1,
                     lr, dropout, 'src1'
                 )
-                batch_idx_src1 = batch_idx_src1 + 1 if batch_idx_src1 + 1 < n_batches_src1 else 0.
+                batch_idx_src1 = batch_idx_src1 + 1 if batch_idx_src1 + 1 < n_batches_src1 else 0
                 train_loss_src2 = self.__train_batch(
                     data_train_s2.word_idxs_list, data_train_s2.labels_list, batch_idx_src2,
                     lr, dropout, 'src2'
@@ -350,7 +350,7 @@ class NeuRuleDoubleJoint:
 
             # metrics = self.run_evaluate(dev)
             aspect_p, aspect_r, aspect_f1, opinion_p, opinion_r, opinion_f1 = self.evaluate(
-                data_valid_t.word_idxs_list_valid, data_valid_t.valid_texts, data_valid_t.aspects_true_list,
+                data_valid_t.word_idxs_list, data_valid_t.tok_texts, data_valid_t.aspects_true_list,
                 'tar', data_valid_t.opinions_true_list)
             # print('iter {}, loss={:.4f}, p={:.4f}, r={:.4f}, f1={:.4f}, best_f1={:.4f}'.format(
             #     epoch, loss_tar, p, r, f1, best_f1))
@@ -359,24 +359,32 @@ class NeuRuleDoubleJoint:
                 epoch, loss_tar, aspect_p, aspect_r, aspect_f1, best_f1_a, opinion_p, opinion_r,
                 opinion_f1, best_f1_o))
 
-            if aspect_f1 > best_f1_a:
+            # if aspect_f1 + opinion_f1 > best_f1:
+            if aspect_f1 > best_f1_a and opinion_f1 > best_f1_o:
                 best_f1_a = aspect_f1
-            if opinion_f1 > best_f1_o:
                 best_f1_o = opinion_f1
-            if aspect_f1 + opinion_f1 > best_f1:
                 best_f1 = aspect_f1 + opinion_f1
+
+                aspect_p, aspect_r, aspect_f1, opinion_p, opinion_r, opinion_f1 = self.evaluate(
+                    data_test_t.word_idxs_list, data_test_t.tok_texts, data_test_t.aspects_true_list,
+                    'tar', data_test_t.opinions_true_list)
+
+                logging.info('Test, p={:.4f}, r={:.4f}, f1={:.4f},'
+                             ' p={:.4f}, r={:.4f}, f1={:.4f}'.format(
+                    aspect_p, aspect_r, aspect_f1, opinion_p, opinion_r, opinion_f1))
+
                 if self.saver is not None:
                     self.saver.save(self.sess, save_file)
                     # print('model saved to {}'.format(save_file))
                     logging.info('model saved to {}'.format(save_file))
 
             p1, r1, f11, _, _, _ = self.evaluate(
-                data_valid_s1.word_idxs_list, data_valid_s1.labels_list,
-                data_valid_s1.tok_texts, data_valid_s1.aspects_true_list, 'src1')
+                data_valid_s1.word_idxs_list, data_valid_s1.tok_texts,
+                data_valid_s1.aspects_true_list, 'src1')
 
             p2, r2, f12, _, _, _ = self.evaluate(
-                data_valid_s2.word_idxs_list, data_valid_s2.labels_list,
-                data_valid_s2.tok_texts, data_valid_s2.aspects_true_list, 'src2')
+                data_valid_s2.word_idxs_list, data_valid_s2.tok_texts,
+                data_valid_s2.opinions_true_list, 'src2')
             logging.info('src1, p={:.4f}, r={:.4f}, f1={:.4f}; src2, p={:.4f}, r={:.4f}, f1={:.4f}'.format(
                 p1, r1, f11, p2, r2, f12
             ))
