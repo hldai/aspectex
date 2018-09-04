@@ -79,9 +79,14 @@ else:
     # word_vecs_file = config.SE14_REST_GLOVE_WORD_VEC_FILE
     # pre_aspect_terms_file = 'd:/data/aspect/semeval14/restaurants/yelp-aspect-rule-result-r.txt'
     # aspect_terms_file = 'd:/data/aspect/semeval14/restaurant/yelp-aspect-rule-result-r1.txt'
-    pre_aspect_terms_file = 'd:/data/aspect/{}/restaurants/yelp-aspect-rm-rule-result.txt'.format(dm)
-    pre_opinion_terms_file = 'd:/data/aspect/{}/restaurants/yelp-opinion-rule-result.txt'.format(dm)
-    pre_tok_texts_file = 'd:/data/res/yelp-review-eng-tok-sents-round-9.txt'
+    if os_env == 'Windows':
+        pre_aspect_terms_file = 'd:/data/aspect/{}/restaurants/yelp-aspect-rm-rule-result.txt'.format(dm)
+        pre_opinion_terms_file = 'd:/data/aspect/{}/restaurants/yelp-opinion-rule-result.txt'.format(dm)
+        pre_tok_texts_file = 'd:/data/res/yelp-review-eng-tok-sents-round-9.txt'
+    else:
+        pre_aspect_terms_file = '/home/hldai/data/aspect/{}/restaurants/yelp-aspect-rm-rule-result.txt'.format(dm)
+        pre_opinion_terms_file = '/home/hldai/data/aspect/{}/restaurants/yelp-opinion-rule-result.txt'.format(dm)
+        pre_tok_texts_file = '/home/hldai/data/yelp/yelp-review-eng-tok-sents-round-9.txt'
 
     if dm == 'semeval14':
         train_valid_split_file = config.SE14_REST_TRAIN_VALID_SPLIT_FILE
