@@ -383,6 +383,8 @@ if env == 'Windows':
     txt_amazon_word_vecs_file = 'd:/data/amazon/elec-w2v-nr-100-sg-n10-w8-i30.txt'
     se14_laptop_wv_file = 'd:/data/aspect/semeval14/model-data/amazon-wv-nr-100-sg-n10-w8-i30.pkl'
 else:
+    txt_yelp_word_vecs_file = '/home/hldai/data/yelp/yelp-word-vecs-sg-100-n10-i20-w5.txt'
+    se14_rest_wv_file = '/home/hldai/data/aspect/semeval14/model-data/yelp-word-vecs-sg-100-n10-i20-w5.pkl'
     txt_amazon_word_vecs_file = '/home/hldai/data/amazon/elec-w2v-300-sg-n10-w8-i30.txt'
     se14_laptop_wv_file = '/home/hldai/data/aspect/semeval14/model-data/amazon-wv-300-sg-n10-w8-i30.pkl'
     # txt_amazon_word_vecs_file = '/home/hldai/data/amazon/elec-w2v-nr-100-sg-n10-w8-i30.txt'
@@ -407,10 +409,10 @@ else:
 #     [config.SE14_LAPTOP_TRAIN_TOK_TEXTS_FILE, config.SE14_LAPTOP_TEST_TOK_TEXTS_FILE],
 #     config.GLOVE_WORD_VEC_FILE, config.SE14_LAPTOP_GLOVE_WORD_VEC_FILE
 # )
-utils.trim_word_vecs_file(
-    [config.SE14_LAPTOP_TRAIN_TOK_TEXTS_FILE, config.SE14_LAPTOP_TEST_TOK_TEXTS_FILE],
-    txt_amazon_word_vecs_file, se14_laptop_wv_file
-)
+# utils.trim_word_vecs_file(
+#     [config.SE14_LAPTOP_TRAIN_TOK_TEXTS_FILE, config.SE14_LAPTOP_TEST_TOK_TEXTS_FILE],
+#     txt_amazon_word_vecs_file, se14_laptop_wv_file
+# )
 
 # __process_raw_sem_eval_data(
 #     config.SE14_REST_TRAIN_XML_FILE, config.SE14_REST_TRAIN_OPINIONS_FILE,
@@ -422,10 +424,10 @@ utils.trim_word_vecs_file(
 #     [config.SE14_REST_TRAIN_TOK_TEXTS_FILE, config.SE14_REST_TEST_TOK_TEXTS_FILE],
 #     config.GLOVE_WORD_VEC_FILE, config.SE14_REST_GLOVE_WORD_VEC_FILE
 # )
-# utils.trim_word_vecs_file(
-#     [config.SE14_REST_TRAIN_TOK_TEXTS_FILE, config.SE14_REST_TEST_TOK_TEXTS_FILE],
-#     txt_yelp_word_vecs_file, config.SE14_REST_YELP_WORD_VEC_FILE
-# )
+utils.trim_word_vecs_file(
+    [config.SE14_REST_TRAIN_TOK_TEXTS_FILE, config.SE14_REST_TEST_TOK_TEXTS_FILE],
+    txt_yelp_word_vecs_file, se14_rest_wv_file
+)
 
 se15_rest_sent_opinions_train_file = '/home/hldai/data/aspect/semeval15/restaurants/sentence_res15_op'
 se15_rest_opinions_train_file = '/home/hldai/data/aspect/semeval15/restaurants/opinions_train.txt'

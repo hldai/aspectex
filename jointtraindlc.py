@@ -89,14 +89,16 @@ else:
         train_sents_file = config.SE14_REST_TRAIN_SENTS_FILE
         test_tok_texts_file = config.SE14_REST_TEST_TOK_TEXTS_FILE
         test_sents_file = config.SE14_REST_TEST_SENTS_FILE
-        word_vecs_file = config.SE14_REST_YELP_WORD_VEC_FILE
+        # word_vecs_file = config.SE14_REST_YELP_WORD_VEC_FILE
+        word_vecs_file = '/home/hldai/data/aspect/semeval14/model-data/yelp-word-vecs-sg-100-n10-i20-w5.pkl'
     else:
         train_valid_split_file = config.SE15_REST_TRAIN_VALID_SPLIT_FILE
         train_tok_texts_file = config.SE15_REST_TRAIN_TOK_TEXTS_FILE
         train_sents_file = config.SE15_REST_TRAIN_SENTS_FILE
         test_tok_texts_file = config.SE15_REST_TEST_TOK_TEXTS_FILE
         test_sents_file = config.SE15_REST_TEST_SENTS_FILE
-        word_vecs_file = config.SE15_REST_YELP_WORD_VEC_FILE
+        # word_vecs_file = config.SE15_REST_YELP_WORD_VEC_FILE
+        word_vecs_file = '/home/hldai/data/aspect/semeval15/model-data/yelp-word-vecs-sg-100-n10-i20-w5.pkl'
 
 __train_dlc(word_vecs_file, train_tok_texts_file, train_sents_file, train_valid_split_file,
             test_tok_texts_file, test_sents_file)
