@@ -12,7 +12,7 @@ import logging
 
 def __train_dlc(word_vecs_file, train_tok_texts_file, train_sents_file, train_valid_split_file, test_tok_texts_file,
                 test_sents_file):
-    init_logging('log/nrdj-jtrain-{}.log'.format(str_today), mode='a', to_stdout=True)
+    init_logging('log/dlc-jtrain-{}.log'.format(str_today), mode='a', to_stdout=True)
 
     # n_train = 1000
     n_train = -1
