@@ -1,4 +1,5 @@
 import pandas as pd
+from time import time
 from collections import namedtuple
 import config
 from utils import utils
@@ -473,12 +474,12 @@ def __gen_term_hit_rate_file(mine_helper, train_sents_file, dep_tags_file, pos_t
         )
 
 
-# dataset = 'semeval14'
-dataset = 'semeval15'
-# sub_dataset = 'laptops'
-sub_dataset = 'restaurants'
-target = 'opinion'
-# target = 'aspect'
+dataset = 'semeval14'
+# dataset = 'semeval15'
+sub_dataset = 'laptops'
+# sub_dataset = 'restaurants'
+# target = 'opinion'
+target = 'aspect'
 
 if target == 'aspect':
     term_filter_rate = 0.1
@@ -495,12 +496,12 @@ sent_texts_file = 'd:/data/aspect/{}/{}/{}_train_texts.txt'.format(dataset, sub_
 word_cnts_file = 'd:/data/aspect/{}/{}/word_cnts.txt'.format(dataset, sub_dataset)
 
 if target == 'aspect':
-    patterns_file = 'd:/data/aspect/{}/{}/aspect_mined_rule_patterns.txt'.format(dataset, sub_dataset)
+    patterns_file = 'd:/data/aspect/{}/{}/aspect_mined_rule_patterns_tmp.txt'.format(dataset, sub_dataset)
     term_hit_rate_file = 'd:/data/aspect/{}/{}/aspect-term-hit-rate.txt'.format(dataset, sub_dataset)
     full_train_term_filter_file = 'd:/data/aspect/{}/{}/aspect_filter_vocab_full.txt'.format(
         dataset, sub_dataset)
 else:
-    patterns_file = 'd:/data/aspect/{}/{}/opinion_mined_rule_patterns.txt'.format(dataset, sub_dataset)
+    patterns_file = 'd:/data/aspect/{}/{}/opinion_mined_rule_patterns_tmp.txt'.format(dataset, sub_dataset)
     term_hit_rate_file = 'd:/data/aspect/{}/{}/opinion-term-hit-rate.txt'.format(dataset, sub_dataset)
     full_train_term_filter_file = 'd:/data/aspect/{}/{}/opinion_filter_vocab_full.txt'.format(
         dataset, sub_dataset)
@@ -520,7 +521,9 @@ if target == 'aspect':
 else:
     mine_helper = OpinionMineHelper()
 
+tbeg = time()
 __gen_aspect_patterns(mine_helper, dep_tags_file, pos_tags_file, sents_file, train_valid_split_file,
                       word_cnts_file, patterns_file)
-__gen_filter_terms_vocab_file(mine_helper, dep_tags_file, pos_tags_file, sents_file, full_train_term_filter_file)
-__gen_term_hit_rate_file(mine_helper, sents_file, dep_tags_file, pos_tags_file, term_hit_rate_file)
+print(time() - tbeg, 'seconds')
+# __gen_filter_terms_vocab_file(mine_helper, dep_tags_file, pos_tags_file, sents_file, full_train_term_filter_file)
+# __gen_term_hit_rate_file(mine_helper, sents_file, dep_tags_file, pos_tags_file, term_hit_rate_file)

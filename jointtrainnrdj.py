@@ -411,8 +411,8 @@ str_today = datetime.date.today().strftime('%y-%m-%d')
 
 # dm = 'semeval15'
 dm = 'semeval14'
-dataset_name = 'restaurant'
-# dataset_name = 'laptops'
+# dataset_name = 'restaurant'
+dataset_name = 'laptops'
 hidden_size_lstm = 100
 n_epochs = 400
 
@@ -427,9 +427,9 @@ if dataset_name == 'laptops':
 
     wv_dim = '100'
     if os_env == 'Windows':
-        word_vecs_file = 'd:/data/aspect/semeval14/model-data/amazon-wv-{}-sg-n10-w8-i30.pkl'.format(wv_dim)
+        word_vecs_file = 'd:/data/aspect/semeval14/model-data/amazon-wv-nr-{}-sg-n10-w8-i30.pkl'.format(wv_dim)
     else:
-        word_vecs_file = '/home/hldai/data/aspect/semeval14/model-data/amazon-wv-{}-sg-n10-w8-i30.pkl'.format(wv_dim)
+        word_vecs_file = '/home/hldai/data/aspect/semeval14/model-data/amazon-wv-nr-{}-sg-n10-w8-i30.pkl'.format(wv_dim)
 
     train_valid_split_file = config.SE14_LAPTOP_TRAIN_VALID_SPLIT_FILE
     train_tok_texts_file = config.SE14_LAPTOP_TRAIN_TOK_TEXTS_FILE

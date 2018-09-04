@@ -259,80 +259,6 @@ class DSLSTMCRF:
                             # print('model saved to {}'.format(save_file))
                             logging.info('model saved to {}'.format(save_file))
 
-    # def __train_epoch(self, data_train: TrainData, data_valid: ValidData, data_test: ValidData, vocab,
-    #                   n_epochs=10, lr=0.001, dropout=0.5, save_file=None):
-    #     losses, losses_seg = list(), list()
-    #     for i in range(n_batches):
-    #         word_idxs_list_batch = word_idxs_list_train[i * self.batch_size: (i + 1) * self.batch_size]
-    #         feat_list_batch = None
-    #         if train_feat_list is not None:
-    #             feat_list_batch = train_feat_list[i * self.batch_size: (i + 1) * self.batch_size]
-    #         labels_list_batch = labels_list_train[i * self.batch_size: (i + 1) * self.batch_size]
-    #         feed_dict, _ = self.get_feed_dict(word_idxs_list_batch, labels_list_batch, lr, dropout, feat_list_batch)
-    #         # _, train_loss = self.sess.run(
-    #         #     [self.train_op, self.loss], feed_dict=feed_dict)
-    #         _, train_loss, lstm_output = self.sess.run(
-    #             [self.train_op, self.loss, self.lstm_output], feed_dict=feed_dict)
-    #         losses.append(train_loss)
-    #         losses_seg.append(train_loss)
-    #
-    #         if (i + 1) % (5000 // self.batch_size) == 0:
-    #             loss_val = sum(losses_seg)
-    #             pred_label_seq_list = self.predict_all(word_idxs_list_valid, valid_feat_list)
-    #             tmp_result = evaluate_ao_extraction(
-    #                 labels_list_valid, pred_label_seq_list, valid_texts, aspects_true_list, opinions_true_list,
-    #                 error_file
-    #             )
-    #             a_p, a_r, a_f1, o_p, o_r, o_f1 = tmp_result
-    #             # p, r, f1 = self.evaluate(word_idxs_list_valid, labels_list_valid, vocab,
-    #             #                          valid_texts, aspects_true_list)
-    #             logging.info('iter={}, loss={:.4f}, p={:.4f}, r={:.4f}, f1={:.4f}, best_f1={:.4f}; '
-    #                          'p={:.4f}, r={:.4f}, f1={:.4f}, best_f1={:.4f}'.format(
-    #                 epoch, loss_val, a_p, a_r, a_f1, best_f1_a, o_p, o_r, o_f1, best_f1_o))
-    #             losses_seg = list()
-    #
-    #             if a_f1 + o_f1 > best_f1_sum:
-    #                 best_f1_sum = a_f1 + o_f1
-    #                 best_f1_a = a_f1
-    #                 best_f1_o = o_f1
-    #                 if self.saver is not None:
-    #                     self.saver.save(self.sess, save_model_file)
-    #                     # print('model saved to {}'.format(save_file))
-    #                     logging.info('model saved to {}'.format(save_model_file))
-    #             # if a_f1 > best_f1_a:
-    #             #     best_f1_a = a_f1
-    #             # if o_f1 > best_f1_o:
-    #             #     best_f1_o = o_f1
-    #     # print('iter {}, loss={}'.format(epoch, sum(losses)))
-    #     # metrics = self.run_evaluate(dev)
-    #     loss_val = sum(losses)
-    #     pred_label_seq_list = self.predict_all(word_idxs_list_valid, valid_feat_list)
-    #     tmp_result = evaluate_ao_extraction(
-    #         labels_list_valid, pred_label_seq_list, valid_texts, aspects_true_list, opinions_true_list, error_file
-    #     )
-    #     # if opinions_true_list is None:
-    #     #     a_p, a_r, a_f1 = tmp_result
-    #     #     o_p, o_r, o_f1 = 0, 0, 0
-    #     # else:
-    #     a_p, a_r, a_f1, o_p, o_r, o_f1 = tmp_result
-    #     # p, r, f1 = self.evaluate(word_idxs_list_valid, labels_list_valid, vocab, valid_texts, aspects_true_list)
-    #     logging.info('iter={}, loss={:.4f}, p={:.4f}, r={:.4f}, f1={:.4f}, best_f1={:.4f}; '
-    #                  'p={:.4f}, r={:.4f}, f1={:.4f}, best_f1={:.4f}'.format(
-    #         epoch, loss_val, a_p, a_r, a_f1, best_f1_a, o_p, o_r, o_f1, best_f1_o))
-    #     if a_f1 + o_f1 > best_f1_sum:
-    #         best_f1_sum = a_f1 + o_f1
-    #         best_f1_a = a_f1
-    #         best_f1_o = o_f1
-    #         if self.saver is not None:
-    #             self.saver.save(self.sess, save_model_file)
-    #             logging.info('model saved to {}'.format(save_model_file))
-    #     # if a_f1 > best_f1_a:
-    #     #     best_f1_a = a_f1
-    #     # if o_f1 > best_f1_o:
-    #     #     best_f1_o = o_f1
-    #
-    #     return best_f1_a, best_f1_o, best_f1_sum
-
     def train(self, data_train: TrainData, data_valid: ValidData, data_test: ValidData, vocab,
               n_epochs=10, lr=0.001, dropout=0.5, save_file=None):
         logging.info('n_epochs={}, lr={}, dropout={}'.format(n_epochs, lr, dropout))
@@ -382,6 +308,86 @@ class DSLSTMCRF:
                     self.saver.save(self.sess, save_file)
                     # print('model saved to {}'.format(save_file))
                     logging.info('model saved to {}'.format(save_file))
+
+    def joint_train(self, data_train_s1: TrainData, data_valid_s1: ValidData, data_train_s2: TrainData,
+                   data_valid_s2: ValidData, data_train_t: TrainData, data_valid_t: ValidData,
+                   data_test_t: ValidData, n_epochs=10, lr=0.001, dropout=0.5, save_file=None):
+        logging.info('n_epochs={}, lr={}, dropout={}'.format(n_epochs, lr, dropout))
+        if save_file is not None and self.saver is None:
+            self.saver = tf.train.Saver()
+
+        n_train_src1, n_batches_src1, n_train_src2, n_batches_src2 = 0, 0, 0, 0
+        n_train_src1 = len(data_train_s1.word_idxs_list)
+        n_batches_src1 = (n_train_src1 + self.batch_size - 1) // self.batch_size
+
+        n_train_src2 = len(data_train_s2.word_idxs_list)
+        n_batches_src2 = (n_train_src2 + self.batch_size - 1) // self.batch_size
+
+        n_train_tar = len(data_train_t.word_idxs_list)
+        n_batches_tar = (n_train_tar + self.batch_size - 1) // self.batch_size
+
+        best_f1_a, best_f1_o, best_f1 = 0, 0, 0
+        batch_idx_src1, batch_idx_src2 = 0, 0
+        for epoch in range(n_epochs):
+            # losses_src, losses_seg_src = list(), list()
+            losses_tar, losses_seg_tar = list(), list()
+            for i in range(n_batches_tar):
+                train_loss_tar = self.__train_batch(
+                    data_train_t.word_idxs_list, data_train_t.labels_list, i, lr, dropout, 'tar')
+                losses_tar.append(train_loss_tar)
+
+                train_loss_src1 = self.__train_batch(
+                    data_train_s1.word_idxs_list, data_train_s1.labels_list, batch_idx_src1,
+                    lr, dropout, 'src-a'
+                )
+                batch_idx_src1 = batch_idx_src1 + 1 if batch_idx_src1 + 1 < n_batches_src1 else 0
+                train_loss_src2 = self.__train_batch(
+                    data_train_s2.word_idxs_list, data_train_s2.labels_list, batch_idx_src2,
+                    lr, dropout, 'src-o'
+                )
+                batch_idx_src2 = batch_idx_src2 + 1 if batch_idx_src2 + 1 < n_batches_src2 else 0
+            loss_tar = sum(losses_tar)
+
+            # metrics = self.run_evaluate(dev)
+            aspect_p, aspect_r, aspect_f1, opinion_p, opinion_r, opinion_f1 = self.evaluate(
+                data_valid_t.word_idxs_list, data_valid_t.tok_texts, data_valid_t.aspects_true_list,
+                'tar', data_valid_t.opinions_true_list)
+            # print('iter {}, loss={:.4f}, p={:.4f}, r={:.4f}, f1={:.4f}, best_f1={:.4f}'.format(
+            #     epoch, loss_tar, p, r, f1, best_f1))
+            logging.info('iter {}, loss={:.4f}, p={:.4f}, r={:.4f}, f1={:.4f}, best_f1={:.4f},'
+                         ' p={:.4f}, r={:.4f}, f1={:.4f}, best_f1={:.4f}'.format(
+                epoch, loss_tar, aspect_p, aspect_r, aspect_f1, best_f1_a, opinion_p, opinion_r,
+                opinion_f1, best_f1_o))
+
+            # if aspect_f1 + opinion_f1 > best_f1:
+            if aspect_f1 > best_f1_a and opinion_f1 > best_f1_o:
+                best_f1_a = aspect_f1
+                best_f1_o = opinion_f1
+                best_f1 = aspect_f1 + opinion_f1
+
+                aspect_p, aspect_r, aspect_f1, opinion_p, opinion_r, opinion_f1 = self.evaluate(
+                    data_test_t.word_idxs_list, data_test_t.tok_texts, data_test_t.aspects_true_list,
+                    'tar', data_test_t.opinions_true_list)
+
+                logging.info('Test, p={:.4f}, r={:.4f}, f1={:.4f},'
+                             ' p={:.4f}, r={:.4f}, f1={:.4f}'.format(
+                    aspect_p, aspect_r, aspect_f1, opinion_p, opinion_r, opinion_f1))
+
+                if self.saver is not None:
+                    self.saver.save(self.sess, save_file)
+                    # print('model saved to {}'.format(save_file))
+                    logging.info('model saved to {}'.format(save_file))
+
+            p1, r1, f11, _, _, _ = self.evaluate(
+                data_valid_s1.word_idxs_list, data_valid_s1.tok_texts,
+                data_valid_s1.aspects_true_list, 'src-a')
+
+            p2, r2, f12, _, _, _ = self.evaluate(
+                data_valid_s2.word_idxs_list, data_valid_s2.tok_texts,
+                data_valid_s2.opinions_true_list, 'src-o')
+            logging.info('src1, p={:.4f}, r={:.4f}, f1={:.4f}; src2, p={:.4f}, r={:.4f}, f1={:.4f}'.format(
+                p1, r1, f11, p2, r2, f12
+            ))
 
     # def train(self, word_idxs_list_train, labels_list_train, word_idxs_list_valid, labels_list_valid,
     #           vocab, valid_texts, aspects_true_list, opinions_true_list, train_feat_list=None, valid_feat_list=None,
