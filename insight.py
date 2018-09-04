@@ -183,7 +183,45 @@ def __amazon_statistics():
     print(len(asin_set), 'asins')
 
 
+def __is_correct(terms_sys, terms_true):
+    for t in terms_true:
+        if t not in terms_sys:
+            return False
+    for t in terms_sys:
+        if t not in terms_true:
+            return False
+    return True
+
+
+def __check_errors():
+    sents_file = 'd:/data/aspect/semeval14/laptops/laptops_test_sents.json'
+    lstmcrf_aspects_file = 'd:/data/aspect/semeval14/lstmcrf-aspects.txt'
+    lstmcrf_opinions_file = 'd:/data/aspect/semeval14/lstmcrf-opinions.txt'
+    nrdj_aspects_file = 'd:/data/aspect/semeval14/nrdj-aspects.txt'
+    nrdj_opinions_file = 'd:/data/aspect/semeval14/nrdj-opinions.txt'
+    rule_aspects_file = 'd:/data/aspect/semeval14/laptops/laptops-test-aspect-rule-result.txt'
+
+    sents = utils.load_json_objs(sents_file)
+    lc_aspects_list = utils.load_json_objs(lstmcrf_aspects_file)
+    nrdj_aspects_list = utils.load_json_objs(nrdj_aspects_file)
+    rule_aspects_list = utils.load_json_objs(rule_aspects_file)
+    for sent, lc_aspects, nrdj_aspects, rule_aspects in zip(
+            sents, lc_aspects_list, nrdj_aspects_list, rule_aspects_list):
+        terms = [t['term'].lower() for t in sent.get('terms', list())]
+        lc_correct = __is_correct(lc_aspects, terms)
+        nrdj_correct = __is_correct(nrdj_aspects, terms)
+        rule_correct = __is_correct(rule_aspects, terms)
+        if not lc_correct and not rule_correct and nrdj_correct:
+            print(sent['text'])
+            print(terms)
+            print(lc_aspects)
+            print(rule_aspects)
+            print(nrdj_aspects)
+            print()
+
+
 # __count_adj_phrases()
 # __semeval_rule_insight()
 # __dataset_statistics()
-__amazon_statistics()
+# __amazon_statistics()
+__check_errors()

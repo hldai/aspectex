@@ -373,8 +373,8 @@ def __train_nrdj(word_vecs_file, train_tok_texts_file, train_sents_file, train_v
                  test_sents_file, load_model_file, task):
     init_logging('log/nrdj-train-{}.log'.format(str_today), mode='a', to_stdout=True)
 
-    dst_aspects_file = 'd:/data/semeval14/nrdj-aspects.txt'
-    dst_opinions_file = 'd:/data/semeval14/nrdj-opinions.txt'
+    dst_aspects_file = 'd:/data/aspect/semeval14/nrdj-aspects.txt'
+    dst_opinions_file = 'd:/data/aspect/semeval14/nrdj-opinions.txt'
 
     # n_train = 1000
     n_train = -1

@@ -10,8 +10,8 @@ def __train_lstmcrf(word_vecs_file, train_tok_texts_file, train_sents_file, trai
                     test_tok_texts_file, test_sents_file, task, load_model_file=None, error_file=None):
     init_logging('log/lstmcrf-{}.log'.format(str_today), mode='a', to_stdout=True)
 
-    dst_aspects_file = 'd:/data/semeval14/lstmcrf-aspects.txt'
-    dst_opinions_file = 'd:/data/semeval14/lstmcrf-opinions.txt'
+    dst_aspects_file = 'd:/data/aspect/semeval14/lstmcrf-aspects.txt'
+    dst_opinions_file = 'd:/data/aspect/semeval14/lstmcrf-opinions.txt'
 
     n_tags = 5 if task == 'both' else 3
     n_epochs = 100
