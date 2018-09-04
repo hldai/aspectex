@@ -285,7 +285,7 @@ class LSTMCRF:
         return train_loss
 
     def train(self, data_train: TrainData, data_valid: ValidData, data_test: ValidData,
-              n_epochs=10, lr=0.001, dropout=0.5, save_file=None):
+              n_epochs=10, lr=0.001, dropout=0.5, save_file=None, dst_aspects_file=None, dst_opinions_file=None):
         logging.info('n_epochs={}, lr={}, dropout={}'.format(n_epochs, lr, dropout))
         if save_file is not None and self.saver is None:
             self.saver = tf.train.Saver()
@@ -397,11 +397,12 @@ class LSTMCRF:
         return terms
 
     def evaluate(self, word_idxs_list_valid, test_texts, terms_true_list, task,
-                 opinions_ture_list=None):
+                 opinions_ture_list=None, dst_aspects_file=None, dst_opinions_file=None):
         aspect_true_cnt, aspect_sys_cnt, aspect_hit_cnt = 0, 0, 0
         opinion_true_cnt, opinion_sys_cnt, opinion_hit_cnt = 0, 0, 0
         error_sents, error_terms = list(), list()
         correct_sent_idxs = list()
+        aspect_terms_sys_list, opinion_terms_sys_list = list(), list()
         for sent_idx, (word_idxs, text, terms_true) in enumerate(zip(
                 word_idxs_list_valid, test_texts, terms_true_list)):
             labels_pred, sequence_lengths = self.predict_batch([word_idxs], task)
@@ -427,13 +428,10 @@ class LSTMCRF:
             opinion_true_cnt += len(opinion_terms_true)
             opinion_sys_cnt += len(opinion_terms_sys)
 
-        # save_json_objs(error_sents, 'd:/data/aspect/semeval14/error-sents.txt')
-        # with open('d:/data/aspect/semeval14/error-sents.txt', 'w', encoding='utf-8') as fout:
-        #     for sent, terms in zip(error_sents, error_terms):
-                # terms_true = [t['term'].lower() for t in sent['terms']] if 'terms' in sent else list()
-                # fout.write('{}\n{}\n\n'.format(sent['text'], terms))
-        # with open('d:/data/aspect/semeval14/lstmcrf-correct.txt', 'w', encoding='utf-8') as fout:
-        #     fout.write('\n'.join([str(i) for i in correct_sent_idxs]))
+        if dst_aspects_file is not None:
+            utils.write_terms_list(aspect_terms_sys_list, dst_aspects_file)
+        if dst_opinions_file is not None:
+            utils.write_terms_list(opinion_terms_sys_list, dst_opinions_file)
 
         aspect_p, aspect_r, aspect_f1 = utils.prf1(aspect_true_cnt, aspect_sys_cnt, aspect_hit_cnt)
         if opinions_ture_list is None:

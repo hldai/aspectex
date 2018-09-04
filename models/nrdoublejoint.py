@@ -390,7 +390,7 @@ class NeuRuleDoubleJoint:
             ))
 
     def train(self, data_train: TrainData, data_valid: ValidData, data_test: ValidData, vocab,
-              n_epochs=10, lr=0.001, dropout=0.5, save_file=None):
+              n_epochs=10, lr=0.001, dropout=0.5, save_file=None, dst_aspects_file=None, dst_opinions_file=None):
         logging.info('n_epochs={}, lr={}, dropout={}'.format(n_epochs, lr, dropout))
         if save_file is not None and self.saver is None:
             self.saver = tf.train.Saver()
@@ -427,7 +427,8 @@ class NeuRuleDoubleJoint:
 
                 aspect_p, aspect_r, aspect_f1, opinion_p, opinion_r, opinion_f1 = self.evaluate(
                     data_test.word_idxs_list, data_test.tok_texts, data_test.aspects_true_list,
-                    'tar', data_test.opinions_true_list)
+                    'tar', data_test.opinions_true_list, dst_aspects_result_file=dst_aspects_file,
+                    dst_opinion_result_file=dst_opinions_file)
                 # print('iter {}, loss={:.4f}, p={:.4f}, r={:.4f}, f1={:.4f}, best_f1={:.4f}'.format(
                 #     epoch, loss_tar, p, r, f1, best_f1))
                 logging.info('Test, p={:.4f}, r={:.4f}, f1={:.4f}; p={:.4f}, r={:.4f}, f1={:.4f}'.format(
@@ -487,17 +488,19 @@ class NeuRuleDoubleJoint:
         return terms
 
     def evaluate(self, word_idxs_list_valid, test_texts, terms_true_list, task,
-                 opinions_ture_list=None):
+                 opinions_ture_list=None, dst_aspects_result_file=None, dst_opinion_result_file=None):
         aspect_true_cnt, aspect_sys_cnt, aspect_hit_cnt = 0, 0, 0
         opinion_true_cnt, opinion_sys_cnt, opinion_hit_cnt = 0, 0, 0
         error_sents, error_terms = list(), list()
         correct_sent_idxs = list()
+        aspect_terms_sys_list, opinion_terms_sys_list = list(), list()
         for sent_idx, (word_idxs, text, terms_true) in enumerate(zip(
                 word_idxs_list_valid, test_texts, terms_true_list)):
             labels_pred, sequence_lengths = self.predict_batch([word_idxs], task)
             labels_pred = labels_pred[0]
 
             aspect_terms_sys = self.get_terms_from_label_list(labels_pred, text, 1, 2)
+            aspect_terms_sys_list.append(aspect_terms_sys)
 
             new_hit_cnt = utils.count_hit(terms_true, aspect_terms_sys)
             aspect_true_cnt += len(terms_true)
@@ -510,6 +513,7 @@ class NeuRuleDoubleJoint:
                 continue
 
             opinion_terms_sys = self.get_terms_from_label_list(labels_pred, text, 3, 4)
+            opinion_terms_sys_list.append(opinion_terms_sys)
             opinion_terms_true = opinions_ture_list[sent_idx]
 
             new_hit_cnt = utils.count_hit(opinion_terms_true, opinion_terms_sys)
@@ -524,6 +528,10 @@ class NeuRuleDoubleJoint:
                 # fout.write('{}\n{}\n\n'.format(sent['text'], terms))
         # with open('d:/data/aspect/semeval14/lstmcrf-correct.txt', 'w', encoding='utf-8') as fout:
         #     fout.write('\n'.join([str(i) for i in correct_sent_idxs]))
+        if dst_aspects_result_file is not None:
+            utils.write_terms_list(aspect_terms_sys_list, dst_aspects_result_file)
+        if dst_opinion_result_file is not None:
+            utils.write_terms_list(opinion_terms_sys_list, dst_opinion_result_file)
 
         aspect_p, aspect_r, aspect_f1 = utils.prf1(aspect_true_cnt, aspect_sys_cnt, aspect_hit_cnt)
         if opinions_ture_list is None:

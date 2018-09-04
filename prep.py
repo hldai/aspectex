@@ -373,8 +373,10 @@ def __get_yelp_review_texts_file():
 env = 'Windows' if platform().startswith('Windows') else 'Linux'
 
 if env == 'Windows':
-    # txt_yelp_word_vecs_file = 'd:/data/res/yelp-word-vecs-sg-100-n10-i20-w5.txt'
-    txt_yelp_word_vecs_file = 'd:/data/res/yelp-w2v-sg-100-n10-i30-w5.txt'
+    txt_yelp_word_vecs_file = 'd:/data/res/yelp-word-vecs-sg-100-n10-i20-w5.txt'
+    # txt_yelp_word_vecs_file = 'd:/data/res/yelp-w2v-sg-100-n10-i30-w5.txt'
+    se14_rest_wv_file = 'd:/data/aspect/semeval14/model-data/yelp-word-vecs-sg-100-n10-i20-w5.pkl'
+    se15_rest_wv_file = 'd:/data/aspect/semeval15/model-data/yelp-word-vecs-sg-100-n10-i20-w5.pkl'
     # txt_yelp_word_vecs_file = 'd:/data/res/yelp-word-vecs-sg-100-n10-i20.txt'
     # txt_amazon_word_vecs_file = 'd:/data/res/electronics-word-vecs-100.txt'
     # txt_amazon_word_vecs_file = 'd:/data/amazon/elec-w2v-nr-100-sg-n10-w8-i30.txt'
@@ -387,6 +389,7 @@ else:
     se14_rest_wv_file = '/home/hldai/data/aspect/semeval14/model-data/yelp-word-vecs-sg-100-n10-i20-w5.pkl'
     txt_amazon_word_vecs_file = '/home/hldai/data/amazon/elec-w2v-300-sg-n10-w8-i30.txt'
     se14_laptop_wv_file = '/home/hldai/data/aspect/semeval14/model-data/amazon-wv-300-sg-n10-w8-i30.pkl'
+    se15_rest_wv_file = '/home/hldai/data/aspect/semeval15/model-data/yelp-word-vecs-sg-100-n10-i20-w5.pkl'
     # txt_amazon_word_vecs_file = '/home/hldai/data/amazon/elec-w2v-nr-100-sg-n10-w8-i30.txt'
     # se14_laptop_wv_file = '/home/hldai/data/aspect/semeval14/model-data/amazon-wv-nr-100-sg-n10-w8-i30.pkl'
 
@@ -424,10 +427,10 @@ else:
 #     [config.SE14_REST_TRAIN_TOK_TEXTS_FILE, config.SE14_REST_TEST_TOK_TEXTS_FILE],
 #     config.GLOVE_WORD_VEC_FILE, config.SE14_REST_GLOVE_WORD_VEC_FILE
 # )
-utils.trim_word_vecs_file(
-    [config.SE14_REST_TRAIN_TOK_TEXTS_FILE, config.SE14_REST_TEST_TOK_TEXTS_FILE],
-    txt_yelp_word_vecs_file, se14_rest_wv_file
-)
+# utils.trim_word_vecs_file(
+#     [config.SE14_REST_TRAIN_TOK_TEXTS_FILE, config.SE14_REST_TEST_TOK_TEXTS_FILE],
+#     txt_yelp_word_vecs_file, se14_rest_wv_file
+# )
 
 se15_rest_sent_opinions_train_file = '/home/hldai/data/aspect/semeval15/restaurants/sentence_res15_op'
 se15_rest_opinions_train_file = '/home/hldai/data/aspect/semeval15/restaurants/opinions_train.txt'
@@ -441,11 +444,11 @@ se15_rest_opinions_test_file = '/home/hldai/data/aspect/semeval15/restaurants/op
 # __process_raw_sem_eval_data(
 #     config.SE15_REST_TEST_XML_FILE, se15_rest_opinions_test_file,
 #     config.SE15_REST_TEST_SENTS_FILE, config.SE15_REST_TEST_SENT_TEXTS_FILE, __get_sent_objs_se15)
-# utils.trim_word_vecs_file(
-#     [config.SE15_REST_TRAIN_TOK_TEXTS_FILE, config.SE15_REST_TEST_TOK_TEXTS_FILE,
-#      config.SE14_REST_TRAIN_TOK_TEXTS_FILE, config.SE14_REST_TEST_TOK_TEXTS_FILE],
-#     txt_yelp_word_vecs_file, config.SE15_REST_YELP_WORD_VEC_FILE
-# )
+utils.trim_word_vecs_file(
+    [config.SE15_REST_TRAIN_TOK_TEXTS_FILE, config.SE15_REST_TEST_TOK_TEXTS_FILE,
+     config.SE14_REST_TRAIN_TOK_TEXTS_FILE, config.SE14_REST_TEST_TOK_TEXTS_FILE],
+    txt_yelp_word_vecs_file, se15_rest_wv_file
+)
 
 yelp_rest_review_sents_file = 'd:/data/res/yelp-review-sents-round-9.txt'
 eng_yelp_rest_review_sents_file = 'd:/data/res/yelp-review-eng-tok-sents-round-9-full.txt'

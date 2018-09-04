@@ -2,6 +2,13 @@ import json
 import numpy as np
 
 
+def write_terms_list(terms_list, dst_file):
+    fout = open(dst_file, 'w', encoding='utf-8')
+    for terms in terms_list:
+        fout.write('{}\n'.format(json.dumps(terms, ensure_ascii=False)))
+    fout.close()
+
+
 def aspect_terms_list_from_sents(sents):
     aspect_terms_list = list()
     for sent in sents:

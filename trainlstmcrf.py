@@ -10,6 +10,9 @@ def __train_lstmcrf(word_vecs_file, train_tok_texts_file, train_sents_file, trai
                     test_tok_texts_file, test_sents_file, task, load_model_file=None, error_file=None):
     init_logging('log/lstmcrf-{}.log'.format(str_today), mode='a', to_stdout=True)
 
+    dst_aspects_file = 'd:/data/semeval14/lstmcrf-aspects.txt'
+    dst_opinions_file = 'd:/data/semeval14/lstmcrf-opinions.txt'
+
     n_tags = 5 if task == 'both' else 3
     n_epochs = 100
     lr = 0.001
@@ -36,7 +39,8 @@ def __train_lstmcrf(word_vecs_file, train_tok_texts_file, train_sents_file, trai
     #               valid_data.labels_list, vocab, valid_data.tok_texts, valid_data.aspects_true_list,
     #               valid_data.opinions_true_list,
     #               n_epochs=n_epochs, save_file=save_model_file, error_file=error_file)
-    lstmcrf.train(train_data, valid_data, test_data, n_epochs=n_epochs, lr=lr)
+    lstmcrf.train(train_data, valid_data, test_data, n_epochs=n_epochs, lr=lr, dst_aspects_file=dst_aspects_file,
+                  dst_opinions_file=dst_opinions_file)
 
 
 str_today = datetime.date.today().strftime('%y-%m-%d')
