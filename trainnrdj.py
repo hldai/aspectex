@@ -476,7 +476,7 @@ else:
 
 # __pre_train_nrdj(word_vecs_file, pre_tok_texts_file, pre_aspect_terms_file,
 #                  pre_opinion_terms_file, rule_model_file, 'both', load_model_file=rule_model_file)
-__pre_train_nrdj(word_vecs_file, pre_tok_texts_file, pre_aspect_terms_file,
-                 pre_opinion_terms_file, rule_model_file, 'both')
-# __train_nrdj(word_vecs_file, train_tok_texts_file, train_sents_file, train_valid_split_file,
-#              test_tok_texts_file, test_sents_file, rule_model_file, 'both')
+# __pre_train_nrdj(word_vecs_file, pre_tok_texts_file, pre_aspect_terms_file,
+#                  pre_opinion_terms_file, rule_model_file, 'both')
+__train_nrdj(word_vecs_file, train_tok_texts_file, train_sents_file, train_valid_split_file,
+             test_tok_texts_file, test_sents_file, rule_model_file, 'both')
