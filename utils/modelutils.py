@@ -31,6 +31,7 @@ def __find_sub_words_seq(words, sub_words):
     return -1
 
 
+# TODO EMPTY and UNKNOWN tokens for vocab
 def __get_word_idx_sequence(words_list, vocab):
     seq_list = list()
     word_idx_dict = {w: i + 1 for i, w in enumerate(vocab)}
@@ -39,8 +40,8 @@ def __get_word_idx_sequence(words_list, vocab):
     return seq_list
 
 
-def data_from_sents_file(sents, texts, vocab, task):
-    words_list = [text.split(' ') for text in texts]
+def data_from_sents_file(sents, tok_texts, vocab, task):
+    words_list = [text.split(' ') for text in tok_texts]
     len_max = max([len(words) for words in words_list])
     print('max sentence len:', len_max)
 
