@@ -10,7 +10,7 @@ if __name__ == '__main__':
     str_today = datetime.date.today().strftime('%y-%m-%d')
     init_logging('log/ncrfae-train-{}.log'.format(str_today), mode='a', to_stdout=True)
 
-    word_vecs_file = 'd:/data/aspect/semeval14/model-data/amazon-wv-100-sg-n10-w8-i30.pkl'
+    word_vecs_file = config.SE14_LAPTOP_AMAZON_WORD_VEC_FILE
     n_tags = 5
     n_train = -1
     label_opinions = True
