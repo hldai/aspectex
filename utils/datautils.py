@@ -9,6 +9,15 @@ ValidData = namedtuple("ValidData", [
     "labels_list", "word_idxs_list", "tok_texts", "aspects_true_list", "opinions_true_list"])
 
 
+def read_sents_to_word_idx_seqs(tok_texts_file, word_idx_dict):
+    texts = utils.read_lines(tok_texts_file)
+    word_idx_seq_list = list()
+    for sent_text in texts:
+        words = sent_text.strip().split(' ')
+        word_idx_seq_list.append([word_idx_dict.get(w, 0) for w in words])
+    return word_idx_seq_list
+
+
 def __get_valid_data(sents, tok_texts, vocab, task):
     labels_list_test, word_idxs_list_test = modelutils.data_from_sents_file(sents, tok_texts, vocab, task)
     # exit()

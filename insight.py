@@ -220,8 +220,25 @@ def __check_errors():
             print()
 
 
+def __count_rule_extracted_terms():
+    # aspect_terms_file = 'd:/data/aspect/semeval14/laptops/laptops-test-aspect-rule-result.txt'
+    # opinion_terms_file = 'd:/data/aspect/semeval14/laptops/laptops-test-opinion-rule-result.txt'
+    aspect_terms_file = 'd:/data/aspect/semeval15/restaurants/restaurants-test-aspect-rule-result.txt'
+    opinion_terms_file = 'd:/data/aspect/semeval15/restaurants/restaurants-test-opinion-rule-result.txt'
+
+    aspect_terms_list = utils.load_json_objs(aspect_terms_file)
+    opinion_terms_list = utils.load_json_objs(opinion_terms_file)
+
+    num_aspect_terms = sum([len(terms) for terms in aspect_terms_list])
+    print(num_aspect_terms)
+
+    num_opinion_terms = sum([len(terms) for terms in opinion_terms_list])
+    print(num_opinion_terms)
+
+
 # __count_adj_phrases()
 # __semeval_rule_insight()
 # __dataset_statistics()
 # __amazon_statistics()
-__check_errors()
+# __check_errors()
+__count_rule_extracted_terms()

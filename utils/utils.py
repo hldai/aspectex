@@ -61,14 +61,17 @@ def get_max_len(sequences):
     return max_len
 
 
-def pad_sequences(sequences, pad_token):
+def pad_sequences(sequences, pad_token, fixed_len=False):
     max_len = get_max_len(sequences)
 
     padded_seqs, seq_lens = list(), list()
     for seq in sequences:
         padded_seq = seq + [pad_token for _ in range(max_len - len(seq))]
         padded_seqs.append(padded_seq)
-        seq_lens.append(len(seq))
+        if fixed_len:
+            seq_lens.append(max_len)
+        else:
+            seq_lens.append(len(seq))
     return padded_seqs, seq_lens
 
 
