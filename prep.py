@@ -373,10 +373,12 @@ def __get_yelp_review_texts_file():
 env = 'Windows' if platform().startswith('Windows') else 'Linux'
 
 if env == 'Windows':
-    txt_yelp_word_vecs_file = 'd:/data/res/yelp-word-vecs-sg-100-n10-i20-w5.txt'
-    # txt_yelp_word_vecs_file = 'd:/data/res/yelp-w2v-sg-100-n10-i30-w5.txt'
-    se14_rest_wv_file = 'd:/data/aspect/semeval14/model-data/yelp-word-vecs-sg-100-n10-i20-w5.pkl'
-    se15_rest_wv_file = 'd:/data/aspect/semeval15/model-data/yelp-word-vecs-sg-100-n10-i20-w5.pkl'
+    # txt_yelp_word_vecs_file = 'd:/data/res/yelp-word-vecs-sg-100-n10-i20-w5.txt'
+    # se14_rest_wv_file = 'd:/data/aspect/semeval14/model-data/yelp-word-vecs-sg-100-n10-i20-w5.pkl'
+    # se15_rest_wv_file = 'd:/data/aspect/semeval15/model-data/yelp-word-vecs-sg-100-n10-i20-w5.pkl'
+    txt_yelp_word_vecs_file = 'd:/data/res/yelp-w2v-sg-100-n10-i30-w5.txt'
+    se14_rest_wv_file = 'd:/data/aspect/semeval14/model-data/yelp-w2v-sg-100-n10-i30-w5.pkl'
+    se15_rest_wv_file = 'd:/data/aspect/semeval15/model-data/yelp-w2v-sg-100-n10-i30-w5.pkl'
     # txt_yelp_word_vecs_file = 'd:/data/res/yelp-word-vecs-sg-100-n10-i20.txt'
     # txt_amazon_word_vecs_file = 'd:/data/res/electronics-word-vecs-100.txt'
     # txt_amazon_word_vecs_file = 'd:/data/amazon/elec-w2v-nr-100-sg-n10-w8-i30.txt'
