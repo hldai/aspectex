@@ -302,6 +302,8 @@ class NeuCRFAutoEncoder:
                     data_train.word_idxs_list, data_train.labels_list, i, lr, dropout)
                 losses_l.append(train_loss_l)
 
+            print(self.sess.run(self.crf_bin_score_mat))
+
             # for i in range(n_batches_u):
             #     train_loss_u = self.__train_batch_unsupervised(unsupervised_word_seqs, i, lr, dropout)
             #     losses_u.append(train_loss_u)
