@@ -8,9 +8,9 @@ import datetime
 
 if __name__ == '__main__':
     str_today = datetime.date.today().strftime('%y-%m-%d')
-    init_logging('log/nrdj-train-{}.log'.format(str_today), mode='a', to_stdout=True)
+    init_logging('log/ncrfae-train-{}.log'.format(str_today), mode='a', to_stdout=True)
 
-    word_vecs_file = 'd:/data/aspect/semeval15/model-data/yelp-word-vecs-sg-100-n10-i20-w5.pkl'
+    word_vecs_file = 'd:/data/aspect/semeval14/model-data/amazon-wv-100-sg-n10-w8-i30.pkl'
     n_tags = 5
     n_train = -1
     label_opinions = True
@@ -25,6 +25,7 @@ if __name__ == '__main__':
     print('loading data ...')
     with open(word_vecs_file, 'rb') as f:
         vocab, word_vecs_matrix = pickle.load(f)
+        print(vocab)
 
     word_idx_dict = {w: i + 1 for i, w in enumerate(vocab)}
     unsupervised_word_seqs = datautils.read_sents_to_word_idx_seqs(unsupervised_tok_texts_file, word_idx_dict)
