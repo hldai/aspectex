@@ -14,7 +14,7 @@ def np_softmax(vals):
 
 
 class NeuCRFAutoEncoder:
-    def __init__(self, n_tags, word_embeddings, hidden_size_lstm=300, batch_size=5, train_word_embeddings=False,
+    def __init__(self, n_tags, word_embeddings, hidden_size_lstm=100, batch_size=5, train_word_embeddings=False,
                  lr_method='adam', manual_feat_len=0, model_file=None):
         self.n_tags = n_tags
         self.vals_word_embeddings = word_embeddings
@@ -115,8 +115,11 @@ class NeuCRFAutoEncoder:
         # self.loss_encoder = tf.reduce_mean(-log_likelihood)
 
         self.unary_score_input = self.logits + self.decoder_log_probs
+        # self.supervised_seq_score = crf_sequence_score(
+        #     self.unary_score_input, self.labels, self.sequence_lengths, self.crf_bin_score_mat)
         self.supervised_seq_score = crf_sequence_score(
-            self.unary_score_input, self.labels, self.sequence_lengths, self.crf_bin_score_mat)
+            self.logits, self.labels, self.sequence_lengths, self.crf_bin_score_mat)
+
         # self.log_norm_unsupervised = crf_log_norm(
         #     unary_score_input, self.sequence_lengths, self.crf_bin_score_mat)
         self.log_norm_unsupervised, self.alphas = crf.crf_log_norm_forward_with_scan(
@@ -157,7 +160,8 @@ class NeuCRFAutoEncoder:
             else:
                 raise NotImplementedError("Unknown method {}".format(_lr_m))
 
-            self.train_op_supervised = optimizer.minimize(self.loss_supervised)
+            # self.train_op_supervised = optimizer.minimize(self.loss_supervised)
+            self.train_op_supervised = optimizer.minimize(self.loss_l)
             self.train_op_unsupervised = optimizer.minimize(self.loss_u)
 
     def __init_session(self, model_file):
@@ -250,13 +254,12 @@ class NeuCRFAutoEncoder:
         feed_dict, _ = self.get_feed_dict(word_idxs_list_batch,
                                           label_seqs=labels_list_batch, lr=lr, dropout=dropout)
 
-        _, train_loss, va, vb, vc = self.sess.run(
-            [self.train_op_supervised, self.loss_supervised, self.supervised_seq_score, self.yw_prob_mat, self.yw_prob_val_mat],
+        # _, train_loss = self.sess.run(
+        #     [self.train_op_supervised, self.loss_supervised],
+        #     feed_dict=feed_dict)
+        _, train_loss = self.sess.run(
+            [self.train_op_supervised, self.loss_l],
             feed_dict=feed_dict)
-        # print(train_loss, va)
-        # print(vb)
-        # print('vc')
-        # print(vc)
         return train_loss
 
     def __train_batch_unsupervised(self, word_idx_seqs, batch_idx, lr, dropout):
@@ -307,7 +310,7 @@ class NeuCRFAutoEncoder:
             loss_u = sum(losses_u)
             # print(loss_l, loss_u)
 
-            self.update_decoder_probs_mat(data_train.word_idxs_list, data_train.labels_list, unsupervised_word_seqs)
+            # self.update_decoder_probs_mat(data_train.word_idxs_list, data_train.labels_list, unsupervised_word_seqs)
 
             aspect_p, aspect_r, aspect_f1, opinion_p, opinion_r, opinion_f1 = self.evaluate(
                 data_valid.word_idxs_list, data_valid.tok_texts, data_valid.aspects_true_list,
@@ -354,8 +357,10 @@ class NeuCRFAutoEncoder:
 
         # get tag scores and transition params of CRF
         viterbi_sequences = []
+        # logits, trans_params = self.sess.run(
+        #         [self.unary_score_input, self.crf_bin_score_mat], feed_dict=fd)
         logits, trans_params = self.sess.run(
-                [self.unary_score_input, self.crf_bin_score_mat], feed_dict=fd)
+                [self.logits, self.crf_bin_score_mat], feed_dict=fd)
 
         # iterate over the sentences because no batching in vitervi_decode
         for logit, sequence_length in zip(logits, sequence_lengths):
