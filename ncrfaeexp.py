@@ -3,6 +3,7 @@ from models.ncrfae import NeuCRFAutoEncoder
 import config
 from utils.loggingutils import init_logging
 from utils import datautils
+import logging
 import datetime
 
 
@@ -22,10 +23,11 @@ if __name__ == '__main__':
     # unsupervised_tok_texts_file = config.SE14_LAPTOP_TRAIN_TOK_TEXTS_FILE
     unsupervised_tok_texts_file = config.AMAZON_TOK_TEXTS_FILE
 
+    logging.info('word_vec_file: {}'.format(config.SE14_LAPTOP_AMAZON_WORD_VEC_FILE))
     print('loading data ...')
     with open(word_vecs_file, 'rb') as f:
         vocab, word_vecs_matrix = pickle.load(f)
-        print(vocab)
+        # print(vocab)
 
     word_idx_dict = {w: i + 1 for i, w in enumerate(vocab)}
     unsupervised_word_seqs = datautils.read_sents_to_word_idx_seqs(unsupervised_tok_texts_file, word_idx_dict)
