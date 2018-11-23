@@ -32,7 +32,10 @@ if __name__ == '__main__':
     word_idx_dict = {w: i + 1 for i, w in enumerate(vocab)}
     unsupervised_word_seqs = datautils.read_sents_to_word_idx_seqs(unsupervised_tok_texts_file, word_idx_dict)
     print(len(unsupervised_word_seqs), 'unsupervised sents')
-    unsupervised_word_seqs = unsupervised_word_seqs[:1000]
+
+    n_unsupervised_sents_used = 100
+    unsupervised_word_seqs = unsupervised_word_seqs[:n_unsupervised_sents_used]
+    logging.info('{} unsupervised sents used.'.format(n_unsupervised_sents_used))
 
     train_data, valid_data, test_data = datautils.get_data_semeval(
         train_sents_file, train_tok_texts_file, train_valid_split_file, test_sents_file, test_tok_texts_file,
