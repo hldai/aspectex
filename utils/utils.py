@@ -61,6 +61,16 @@ def get_max_len(sequences):
     return max_len
 
 
+def pad_embed_sequences(seqs, pad_embed):
+    max_len = get_max_len(seqs)
+    padded_seqs, seq_lens = list(), list()
+    for seq in seqs:
+        new_seq = [embed for embed in seq]
+        for _ in range(max_len - len(seq)):
+            new_seq.append(pad_embed)
+    return padded_seqs, seq_lens
+
+
 def pad_sequences(sequences, pad_token, fixed_len=False):
     max_len = get_max_len(sequences)
 
