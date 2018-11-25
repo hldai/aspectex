@@ -68,6 +68,8 @@ def pad_embed_sequences(seqs, pad_embed):
         new_seq = [embed for embed in seq]
         for _ in range(max_len - len(seq)):
             new_seq.append(pad_embed)
+        padded_seqs.append(new_seq)
+        seq_lens.append(len(seq))
     return padded_seqs, seq_lens
 
 

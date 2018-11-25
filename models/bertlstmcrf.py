@@ -3,10 +3,10 @@ import numpy as np
 import logging
 from utils import utils
 from utils.modelutils import evaluate_ao_extraction
-from utils.datautils import TrainData, ValidData
+from utils.bldatautils import TrainDataBert, ValidDataBert
 
 
-class LSTMCRF:
+class BertLSTMCRF:
     def __init__(self, n_tags, word_embed_dim, hidden_size_lstm=300, batch_size=5,
                  lr_method='adam', use_crf=True, manual_feat_len=0, model_file=None):
         self.n_tags = n_tags
@@ -20,7 +20,8 @@ class LSTMCRF:
 
         self.word_embed_pad = np.random.normal(size=word_embed_dim)
 
-        self.word_embeddings_input = tf.placeholder(tf.int32, shape=[None, None, None], name='word_embeddings')
+        self.word_embeddings_input = tf.placeholder(
+            tf.float32, shape=[None, None, word_embed_dim], name='word_embeddings')
         self.word_embeddings = self.word_embeddings_input
         # self.word_embeddings = tf.nn.dropout(self.word_embeddings_input, self.dropout)
 
@@ -121,7 +122,9 @@ class LSTMCRF:
 
     def get_feed_dict(self, word_embeddings, label_seqs=None, lr=None, dropout=None):
         word_embed_seqs, sequence_lengths = utils.pad_embed_sequences(word_embeddings, self.word_embed_pad)
+        # print(word_embed_seqs)
         word_embed_seqs = np.array(word_embed_seqs, np.float32)
+        # print(word_embed_seqs.shape)
 
         # print(len(word_ids))
         # build feed dictionary
@@ -153,6 +156,7 @@ class LSTMCRF:
         return hidden_vecs_batch_list
 
     def __train_batch(self, word_embed_seqs, label_seqs, batch_idx, lr, dropout):
+        # print(self.batch_size)
         word_embed_seqs_batch = word_embed_seqs[batch_idx * self.batch_size: (batch_idx + 1) * self.batch_size]
         label_seqs_batch = label_seqs[batch_idx * self.batch_size: (batch_idx + 1) * self.batch_size]
         feed_dict, _ = self.get_feed_dict(word_embed_seqs_batch,
@@ -162,13 +166,13 @@ class LSTMCRF:
             [self.train_op, self.loss], feed_dict=feed_dict)
         return train_loss
 
-    def train(self, data_train: TrainData, data_valid: ValidData, data_test: ValidData,
+    def train(self, data_train: TrainDataBert, data_valid: ValidDataBert, data_test: ValidDataBert,
               n_epochs=10, lr=0.001, dropout=0.5, save_file=None, dst_aspects_file=None, dst_opinions_file=None):
         logging.info('n_epochs={}, lr={}, dropout={}'.format(n_epochs, lr, dropout))
         if save_file is not None and self.saver is None:
             self.saver = tf.train.Saver()
 
-        n_train = len(data_train.word_idxs_list)
+        n_train = len(data_train.label_seqs)
         n_batches = (n_train + self.batch_size - 1) // self.batch_size
 
         best_f1_sum = 0
@@ -176,52 +180,52 @@ class LSTMCRF:
         for epoch in range(n_epochs):
             losses, losses_seg = list(), list()
             for i in range(n_batches):
-                train_loss_tar = self.__train_batch(
-                    data_train.word_idxs_list, data_train.labels_list, i, lr, dropout)
-                losses.append(train_loss_tar)
+                train_loss = self.__train_batch(
+                    data_train.word_embed_seqs, data_train.label_seqs, i, lr, dropout)
+                losses.append(train_loss)
 
             loss = sum(losses)
+            # print(loss)
             # metrics = self.run_evaluate(dev)
             aspect_p, aspect_r, aspect_f1, opinion_p, opinion_r, opinion_f1 = self.evaluate(
-                data_valid.word_idxs_list, data_valid.tok_texts, data_valid.aspects_true_list,
-                'tar', data_valid.opinions_true_list)
+                data_valid.word_embed_seqs, data_valid.tok_texts, data_valid.aspects_true_list,
+                data_valid.opinions_true_list)
 
             logging.info('iter {}, loss={:.4f}, p={:.4f}, r={:.4f}, f1={:.4f};'
                          ' p={:.4f}, r={:.4f}, f1={:.4f}; best_f1_sum={:.4f}'.format(
                 epoch, loss, aspect_p, aspect_r, aspect_f1, opinion_p, opinion_r,
                 opinion_f1, best_f1_sum))
 
-            # if True:
-            # if aspect_f1 + opinion_f1 > best_f1_sum:
-            if aspect_f1 > best_a_f1 and opinion_f1 > best_o_f1:
-                best_f1_sum = aspect_f1 + opinion_f1
-                best_a_f1 = aspect_f1
-                best_o_f1 = opinion_f1
+            # # if True:
+            # # if aspect_f1 + opinion_f1 > best_f1_sum:
+            # if aspect_f1 > best_a_f1 and opinion_f1 > best_o_f1:
+            #     best_f1_sum = aspect_f1 + opinion_f1
+            #     best_a_f1 = aspect_f1
+            #     best_o_f1 = opinion_f1
+            #
+            #     aspect_p, aspect_r, aspect_f1, opinion_p, opinion_r, opinion_f1 = self.evaluate(
+            #         data_test.word_idxs_list, data_test.tok_texts, data_test.aspects_true_list,
+            #         'tar', data_test.opinions_true_list)
+            #     # print('iter {}, loss={:.4f}, p={:.4f}, r={:.4f}, f1={:.4f}, best_f1={:.4f}'.format(
+            #     #     epoch, loss_tar, p, r, f1, best_f1))
+            #     logging.info('Test, p={:.4f}, r={:.4f}, f1={:.4f}; p={:.4f}, r={:.4f}, f1={:.4f}'.format(
+            #         aspect_p, aspect_r, aspect_f1, opinion_p, opinion_r,
+            #         opinion_f1))
+            #
+            #     if self.saver is not None:
+            #         self.saver.save(self.sess, save_file)
+            #         # print('model saved to {}'.format(save_file))
+            #         logging.info('model saved to {}'.format(save_file))
 
-                aspect_p, aspect_r, aspect_f1, opinion_p, opinion_r, opinion_f1 = self.evaluate(
-                    data_test.word_idxs_list, data_test.tok_texts, data_test.aspects_true_list,
-                    'tar', data_test.opinions_true_list)
-                # print('iter {}, loss={:.4f}, p={:.4f}, r={:.4f}, f1={:.4f}, best_f1={:.4f}'.format(
-                #     epoch, loss_tar, p, r, f1, best_f1))
-                logging.info('Test, p={:.4f}, r={:.4f}, f1={:.4f}; p={:.4f}, r={:.4f}, f1={:.4f}'.format(
-                    aspect_p, aspect_r, aspect_f1, opinion_p, opinion_r,
-                    opinion_f1))
-
-                if self.saver is not None:
-                    self.saver.save(self.sess, save_file)
-                    # print('model saved to {}'.format(save_file))
-                    logging.info('model saved to {}'.format(save_file))
-
-    def predict_all(self, word_idxs_list, feat_list):
+    def predict_all(self, word_idxs_list):
         label_seq_list = list()
         for i, word_idxs in enumerate(word_idxs_list):
-            feat_seq_batch = None if feat_list is None else [feat_list[i]]
-            label_seq, lens = self.predict_batch([word_idxs], feat_seq_batch)
+            label_seq, lens = self.predict_batch([word_idxs])
             label_seq_list.append(label_seq[0])
         return label_seq_list
 
-    def predict_batch(self, word_idxs_list, feat_list):
-        fd, sequence_lengths = self.get_feed_dict(word_idxs_list, dropout=1.0)
+    def predict_batch(self, token_embed_seqs):
+        fd, sequence_lengths = self.get_feed_dict(token_embed_seqs, dropout=1.0)
 
         # get tag scores and transition params of CRF
         viterbi_sequences = []
@@ -257,16 +261,16 @@ class LSTMCRF:
                 p += 1
         return terms
 
-    def evaluate(self, word_idxs_list_valid, test_texts, terms_true_list, task,
+    def evaluate(self, word_embed_seqs, test_texts, terms_true_list,
                  opinions_ture_list=None, dst_aspects_file=None, dst_opinions_file=None):
         aspect_true_cnt, aspect_sys_cnt, aspect_hit_cnt = 0, 0, 0
         opinion_true_cnt, opinion_sys_cnt, opinion_hit_cnt = 0, 0, 0
         error_sents, error_terms = list(), list()
         correct_sent_idxs = list()
         aspect_terms_sys_list, opinion_terms_sys_list = list(), list()
-        for sent_idx, (word_idxs, text, terms_true) in enumerate(zip(
-                word_idxs_list_valid, test_texts, terms_true_list)):
-            labels_pred, sequence_lengths = self.predict_batch([word_idxs], task)
+        for sent_idx, (word_embed_seq, text, terms_true) in enumerate(zip(
+                word_embed_seqs, test_texts, terms_true_list)):
+            labels_pred, sequence_lengths = self.predict_batch([word_embed_seq])
             labels_pred = labels_pred[0]
 
             aspect_terms_sys = self.get_terms_from_label_list(labels_pred, text, 1, 2)
