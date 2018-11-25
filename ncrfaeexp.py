@@ -33,7 +33,7 @@ if __name__ == '__main__':
     unsupervised_word_seqs = datautils.read_sents_to_word_idx_seqs(unsupervised_tok_texts_file, word_idx_dict)
     print(len(unsupervised_word_seqs), 'unsupervised sents')
 
-    n_unsupervised_sents_used = 100
+    n_unsupervised_sents_used = 5
     unsupervised_word_seqs = unsupervised_word_seqs[:n_unsupervised_sents_used]
     logging.info('{} unsupervised sents used.'.format(n_unsupervised_sents_used))
 
