@@ -2,6 +2,13 @@ import json
 import numpy as np
 
 
+def has_alphabet(s: str):
+    for ch in s:
+        if ch.isalpha():
+            return True
+    return False
+
+
 def write_terms_list(terms_list, dst_file):
     fout = open(dst_file, 'w', encoding='utf-8')
     for terms in terms_list:

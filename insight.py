@@ -236,9 +236,29 @@ def __count_rule_extracted_terms():
     print(num_opinion_terms)
 
 
+def __count_words(tok_texts_file):
+    f = open(tok_texts_file, encoding='utf-8')
+    n_min, n_max = 1e9, 0
+    for line in f:
+        words = line.strip().split(' ')
+        # print(len(words))
+        if len(words) == 1:
+            print(line)
+        n_min = min(n_min, len(words))
+        n_max = max(n_max, len(words))
+    f.close()
+    print(n_min, n_max)
+
+
 # __count_adj_phrases()
 # __semeval_rule_insight()
 # __dataset_statistics()
 # __amazon_statistics()
 # __check_errors()
-__count_rule_extracted_terms()
+# __count_rule_extracted_terms()
+# __count_words('d:/data/aspect/semeval14/laptops/laptops_train_texts_tok.txt')
+# __count_words('d:/data/aspect/semeval14/laptops/laptops_test_texts_tok.txt')
+# __count_words('d:/data/aspect/semeval14/restaurants/restaurants_test_texts_tok.txt')
+# __count_words('d:/data/aspect/semeval14/restaurants/restaurants_train_texts_tok.txt')
+# __count_words('d:/data/aspect/semeval15/restaurants/restaurants_train_texts_tok.txt')
+# __count_words('d:/data/aspect/semeval15/restaurants/restaurants_test_texts_tok.txt')

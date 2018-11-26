@@ -237,3 +237,51 @@ def get_data_amazon(vocab, true_terms_file, tok_texts_file, task):
         label_seq_list_valid, word_idx_seq_list_valid, tok_texts_valid, aspect_true_list, opinion_true_list)
 
     return train_data, valid_data
+
+
+def gen_yelp_review_sents(yelp_review_file, dst_file, biz_id_set=None):
+    import re
+    import nltk
+    f = open(yelp_review_file, encoding='utf-8')
+    fout = open(dst_file, 'w', encoding='utf-8', newline='\n')
+    for i, line in enumerate(f):
+        review = json.loads(line)
+        if biz_id_set is not None and review['business_id'] not in biz_id_set:
+            continue
+
+        review_text = review['text']
+        sents = nltk.sent_tokenize(review_text)
+        # print(sents)
+        for sent in sents:
+            sent = sent.strip()
+            if not sent:
+                continue
+            sent = re.sub('\s+', ' ', sent)
+            fout.write('{}\n'.format(sent))
+        if i % 10000 == 0:
+            print(i)
+        # if i > 10000:
+        #     break
+    f.close()
+    fout.close()
+
+
+def get_yelp_restaurant_reviews(yelp_review_file, yelp_biz_file, dst_file):
+    restaurant_categories = {'Restaurants', 'Diners', 'Mexican', 'Fast Food', 'Food'}
+    restaurant_biz_set = set()
+    with open(yelp_biz_file, encoding='utf-8') as f:
+        for i, line in enumerate(f):
+            biz = json.loads(line)
+            # print(biz)
+            is_restaurant = False
+            biz_categories = biz.get('categories', list())
+            if not biz_categories:
+                continue
+            for cat in biz_categories:
+                if cat in restaurant_categories:
+                    is_restaurant = True
+                    break
+            if is_restaurant:
+                restaurant_biz_set.add(biz['business_id'])
+
+    gen_yelp_review_sents(yelp_review_file, dst_file, restaurant_biz_set)

@@ -5,7 +5,7 @@ import pickle
 import random
 import json
 import config
-from utils import utils
+from utils import utils, datautils
 from platform import platform
 
 N_HEADER_LINES = 11
@@ -222,29 +222,6 @@ def __gen_judge_train_data():
             fout.write('{}\n'.format(sent['text']))
 
 
-def __gen_yelp_review_sents(yelp_review_file, dst_file):
-    import nltk
-    f = open(yelp_review_file, encoding='utf-8')
-    fout = open(dst_file, 'w', encoding='utf-8', newline='\n')
-    for i, line in enumerate(f):
-        review = json.loads(line)
-        review_text = review['text']
-        sents = nltk.sent_tokenize(review_text)
-        # print(sents)
-        for sent in sents:
-            sent = sent.strip()
-            if not sent:
-                continue
-            sent = re.sub('\s+', ' ', sent)
-            fout.write('{}\n'.format(sent))
-        if i % 10000 == 0:
-            print(i)
-        # if i > 10000:
-        #     break
-    f.close()
-    fout.close()
-
-
 def __split_to_sents(txt_file, dst_file):
     import nltk
     f = open(txt_file, encoding='utf-8')
@@ -266,12 +243,12 @@ def __split_to_sents(txt_file, dst_file):
     fout.close()
 
 
-def __select_random_yelp_review_sents(sents_file, dst_file):
+def __select_random_yelp_review_sents(sents_file, ratio, dst_file):
     f = open(sents_file, encoding='utf-8')
     fout = open(dst_file, 'w', encoding='utf-8', newline='\n')
     for line in f:
         v = random.uniform(0, 1)
-        if v < 0.01:
+        if v < ratio:
             fout.write(line)
     f.close()
     fout.close()
@@ -291,6 +268,10 @@ def __filter_non_english_sents(tok_sents_file, dst_file):
                 hit_cnt += 1
         # print(hit_cnt / len(words))
         r = hit_cnt / len(words)
+
+        if len(words) < 2 and not utils.has_alphabet(line):
+            continue
+
         if r > 0.6:
             fout.write(line)
     fout.close()
@@ -395,6 +376,23 @@ else:
     # txt_amazon_word_vecs_file = '/home/hldai/data/amazon/elec-w2v-nr-100-sg-n10-w8-i30.txt'
     # se14_laptop_wv_file = '/home/hldai/data/aspect/semeval14/model-data/amazon-wv-nr-100-sg-n10-w8-i30.pkl'
 
+yelp_review_sents_file = 'd:/data/res/yelp/yelp-review-sents-round-9.txt'
+yelp_rest_sents_file = 'd:/data/res/yelp/yelp-rest-sents-r9.txt'
+yelp_rest_sents_tok_file = 'd:/data/res/yelp/yelp-rest-sents-r9-tok.txt'
+yelp_rest_sents_tok_eng_file = 'd:/data/res/yelp/yelp-rest-sents-r9-tok-eng.txt'
+yelp_rest_sents_tok_eng_part_file = 'd:/data/res/yelp/eng-part/yelp-rest-sents-r9-tok-eng-part0_04.txt'
+# yelp_sents_part_eng_file = 'd:/data/res/yelp/yelp-review-eng-tok-sents-round-9.txt'
+yelp_tok_sents_eng_file = 'd:/data/res/yelp/yelp-eng-tok-sents-r9.txt'
+yelp_tok_sents_part_eng_file = 'd:/data/res/yelp/eng-part/yelp-eng-tok-sents-r9-rand-0_02.txt'
+
+se15_rest_sent_opinions_train_file = '/home/hldai/data/aspect/semeval15/restaurants/sentence_res15_op'
+se15_rest_opinions_train_file = '/home/hldai/data/aspect/semeval15/restaurants/opinions_train.txt'
+se15_rest_sent_opinions_test_file = '/home/hldai/data/aspect/semeval15/restaurants/sentence_restest15_op'
+se15_rest_opinions_test_file = '/home/hldai/data/aspect/semeval15/restaurants/opinions_test.txt'
+
+restaurants_train_word_cnts_file = 'd:/data/aspect/semeval14/restaurants/word_cnts.txt'
+rest15_train_word_cnts_file = 'd:/data/aspect/semeval15/restaurants/word_cnts.txt'
+
 # test_file_json = 'd:/data/aspect/semeval14/Laptops_Test_Gold.json'
 # train_file_xml = 'd:/data/aspect/semeval14/Laptops_Train.xml'
 # train_file_json = 'd:/data/aspect/semeval14/Laptops_Train.json'
@@ -434,10 +432,6 @@ else:
 #     txt_yelp_word_vecs_file, se14_rest_wv_file
 # )
 
-se15_rest_sent_opinions_train_file = '/home/hldai/data/aspect/semeval15/restaurants/sentence_res15_op'
-se15_rest_opinions_train_file = '/home/hldai/data/aspect/semeval15/restaurants/opinions_train.txt'
-se15_rest_sent_opinions_test_file = '/home/hldai/data/aspect/semeval15/restaurants/sentence_restest15_op'
-se15_rest_opinions_test_file = '/home/hldai/data/aspect/semeval15/restaurants/opinions_test.txt'
 # __gen_se15_opinion_file(se15_rest_sent_opinions_train_file, se15_rest_opinions_train_file)
 # __gen_se15_opinion_file(se15_rest_sent_opinions_test_file, se15_rest_opinions_test_file)
 # __process_raw_sem_eval_data(
@@ -452,23 +446,23 @@ se15_rest_opinions_test_file = '/home/hldai/data/aspect/semeval15/restaurants/op
 #     txt_yelp_word_vecs_file, se15_rest_wv_file
 # )
 
-yelp_rest_review_sents_file = 'd:/data/res/yelp-review-sents-round-9.txt'
-eng_yelp_rest_review_sents_file = 'd:/data/res/yelp-review-eng-tok-sents-round-9-full.txt'
-# __gen_yelp_review_sents('d:/data/yelp/srcdata/yelp_academic_dataset_review.json',
-#                         yelp_rest_review_sents_file)
-# __select_random_yelp_review_sents(yelp_rest_review_sents_file,
-#                                   'd:/data/res/yelp-review-sents-round-9-rand-part.txt')
-# __get_yelp_review_texts_file()
+# datautils.get_yelp_restaurant_reviews('d:/data/yelp/srcdata/yelp_academic_dataset_review.json',
+#                                       'd:/data/yelp/srcdata/yelp_academic_dataset_business.json',
+#                                       yelp_rest_sents_file)
 # __filter_non_english_sents('d:/data/res/yelp-review-tok-texts.txt',
 #                            'd:/data/res/yelp-review-eng-tok-texts.txt')
-__filter_non_english_sents('d:/data/res/yelp-review-tok-sents-round-9-full.txt',
-                           eng_yelp_rest_review_sents_file)
+# __filter_non_english_sents('d:/data/res/yelp/yelp-review-tok-sents-round-9-full.txt',
+#                            yelp_tok_sents_eng_file)
+# __filter_non_english_sents(yelp_rest_sents_tok_file, yelp_rest_sents_tok_eng_file)
+# datautils.gen_yelp_review_sents('d:/data/yelp/srcdata/yelp_academic_dataset_review.json',
+#                         yelp_rest_review_sents_file)
+# __select_random_yelp_review_sents(yelp_tok_sents_eng_file, 0.02, yelp_tok_sents_part_eng_file)
+__select_random_yelp_review_sents(yelp_rest_sents_tok_eng_file, 0.04, yelp_rest_sents_tok_eng_part_file)
+# __get_yelp_review_texts_file()
 
 # laptops_train_word_cnts_file = 'd:/data/aspect/semeval14/laptops/word_cnts.txt'
 # __gen_word_cnts_file(config.SE14_LAPTOP_TRAIN_TOK_TEXTS_FILE, laptops_train_word_cnts_file)
-restaurants_train_word_cnts_file = 'd:/data/aspect/semeval14/restaurants/word_cnts.txt'
 # __gen_word_cnts_file(config.SE14_REST_TRAIN_TOK_TEXTS_FILE, restaurants_train_word_cnts_file)
-rest15_train_word_cnts_file = 'd:/data/aspect/semeval15/restaurants/word_cnts.txt'
 # __gen_word_cnts_file(config.SE15_REST_TRAIN_TOK_TEXTS_FILE, rest15_train_word_cnts_file)
 
 # __split_training_set(config.SE14_LAPTOP_TRAIN_SENTS_FILE, config.SE14_LAPTOP_TRAIN_VALID_SPLIT_FILE)
