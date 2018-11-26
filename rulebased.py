@@ -325,10 +325,10 @@ rest_filter_nouns_file = 'd:/data/aspect/semeval14/restaurants/aspect-nouns-filt
 dm = 'semeval15'
 # dataset = 'laptops-test'
 # dataset = 'laptops-amazon'
-dataset = 'restaurants-test'
-# dataset = 'restaurants-yelp'
-# task = 'aspect'
-task = 'opinion'
+# dataset = 'restaurants-test'
+dataset = 'restaurants-yelp'
+task = 'aspect'
+# task = 'opinion'
 
 filter_nouns_file = laptops_filter_nouns_file if dataset.startswith('laptops') else rest_filter_nouns_file
 
@@ -374,12 +374,14 @@ if dataset == 'laptops-amazon':
     aspect_result_file = 'd:/data/amazon/laptops-aspect-rm-rule-result.txt'
     sent_texts_file = 'd:/data/amazon/laptops-reivews-sent-text.txt'
 if dataset == 'restaurants-yelp':
-    dep_tags_file = 'd:/data/res/yelp-review-round-9-dep.txt'
-    pos_tags_file = 'd:/data/res/yelp-review-round-9-pos.txt'
+    # dep_tags_file = 'd:/data/res/yelp-review-round-9-dep.txt'
+    # pos_tags_file = 'd:/data/res/yelp-review-round-9-pos.txt'
+    dep_tags_file = 'd:/data/res/yelp/eng-part/yelp-rest-sents-r9-tok-eng-part0_04-dep.txt'
+    pos_tags_file = 'd:/data/res/yelp/eng-part/yelp-rest-sents-r9-tok-eng-part0_04-pos.txt'
+    sent_texts_file = 'd:/data/res/yelp/eng-part/yelp-rest-sents-r9-tok-eng-part0_04.txt'
     # aspect_result_file = 'd:/data/aspect/semeval14/restaurant/yelp-aspect-rule-result-p.txt'
-    aspect_result_file = 'd:/data/aspect/{}/restaurants/yelp-aspect-rm-rule-result.txt'.format(dm)
-    opinion_result_file = 'd:/data/aspect/{}/restaurants/yelp-opinion-rule-result.txt'.format(dm)
-    sent_texts_file = 'd:/data/res/yelp-review-eng-tok-sents-round-9.txt'
+    aspect_result_file = 'd:/data/aspect/{}/restaurants/yelpr9-rest-part0_04-aspect-rule-result.txt'.format(dm)
+    opinion_result_file = 'd:/data/aspect/{}/restaurants/yelpr9-rest-part0_04-opinion-rule-result.txt'.format(dm)
 
 if task == 'aspect':
     # __rule_insight(opinion_terms_file, filter_nouns_file, dep_tags_file, pos_tags_file, sent_texts_file,

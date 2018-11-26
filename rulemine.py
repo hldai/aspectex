@@ -474,10 +474,10 @@ def __gen_term_hit_rate_file(mine_helper, train_sents_file, dep_tags_file, pos_t
         )
 
 
-dataset = 'semeval14'
-# dataset = 'semeval15'
-sub_dataset = 'laptops'
-# sub_dataset = 'restaurants'
+# dataset = 'semeval14'
+dataset = 'semeval15'
+# sub_dataset = 'laptops'
+sub_dataset = 'restaurants'
 # target = 'opinion'
 target = 'aspect'
 

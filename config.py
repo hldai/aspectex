@@ -104,3 +104,29 @@ LAPTOP_RULE_MODEL2_FILE = join(DATA_DIR_SE14, 'tf-model/single-2/laptop-rule2.ck
 LAPTOP_RULE_MODEL3_FILE = join(DATA_DIR_SE14, 'tf-model/single-3/laptop-rule3.ckpl')
 LAPTOP_RULE_MODEL4_FILE = join(DATA_DIR_SE14, 'tf-model/single-3/laptop-rule4.ckpl')
 LAPTOP_NRDJ_RULE_MODEL_FILE = join(DATA_DIR_SE14, 'tf-model/laptop-nrdj-rule.ckpl')
+
+DATASET_RES_FILES = {
+    'se15-restaurants': {
+        'train_sents_file': join(DATA_DIR_SE15, 'restaurants/restaurants_train_sents.json'),
+        'test_sents_file': join(DATA_DIR_SE15, 'restaurants/restaurants_test_sents.json'),
+        'aspect_term_filter_vocab_file': join(DATA_DIR_SE15, 'restaurants/aspect_filter_vocab_full.txt'),
+        'opinion_term_filter_vocab_file': join(DATA_DIR_SE15, 'restaurants/opinion_filter_vocab_full.txt'),
+        'aspect_term_hit_rate_file': join(DATA_DIR_SE15, 'restaurants/aspect-term-hit-rate.txt'),
+        'opinion_term_hit_rate_file': join(DATA_DIR_SE15, 'restaurants/opinion-term-hit-rate.txt'),
+        'aspect_rule_patterns_file': join(DATA_DIR_SE15, 'restaurants/aspect_mined_rule_patterns.txt'),
+        'opinion_rule_patterns_file': join(DATA_DIR_SE15, 'restaurants/opinion_mined_rule_patterns.txt'),
+    },
+    'restaurants-yelp': {
+        # 'sent_texts_file': join(RES_DIR, 'yelp/yelp-review-eng-tok-sents-round-9.txt'),
+        # 'dep_tags_file': join(RES_DIR, 'yelp/yelp-review-round-9-dep.txt'),
+        # 'pos_tags_file': join(RES_DIR, 'yelp/yelp-review-round-9-pos.txt')
+        'sent_texts_file': join(RES_DIR, 'yelp/eng-part/yelp-rest-sents-r9-tok-eng-part0_04.txt'),
+        'dep_tags_file': join(RES_DIR, 'yelp/eng-part/yelp-rest-sents-r9-tok-eng-part0_04-dep.txt'),
+        'pos_tags_file': join(RES_DIR, 'yelp/eng-part/yelp-rest-sents-r9-tok-eng-part0_04-pos.txt'),
+    },
+    'laptops-amazon': {
+        'sent_texts_file': 'd:/data/amazon/laptops-reivews-sent-text.txt',
+        'dep_tags_file': 'd:/data/amazon/laptops-rule-dep.txt',
+        'pos_tags_file': 'd:/data/amazon/laptops-rule-pos.txt',
+    }
+}

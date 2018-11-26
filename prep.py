@@ -457,7 +457,7 @@ rest15_train_word_cnts_file = 'd:/data/aspect/semeval15/restaurants/word_cnts.tx
 # datautils.gen_yelp_review_sents('d:/data/yelp/srcdata/yelp_academic_dataset_review.json',
 #                         yelp_rest_review_sents_file)
 # __select_random_yelp_review_sents(yelp_tok_sents_eng_file, 0.02, yelp_tok_sents_part_eng_file)
-__select_random_yelp_review_sents(yelp_rest_sents_tok_eng_file, 0.04, yelp_rest_sents_tok_eng_part_file)
+# __select_random_yelp_review_sents(yelp_rest_sents_tok_eng_file, 0.04, yelp_rest_sents_tok_eng_part_file)
 # __get_yelp_review_texts_file()
 
 # laptops_train_word_cnts_file = 'd:/data/aspect/semeval14/laptops/word_cnts.txt'
