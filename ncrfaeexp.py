@@ -11,19 +11,33 @@ if __name__ == '__main__':
     str_today = datetime.date.today().strftime('%y-%m-%d')
     init_logging('log/ncrfae-train-{}.log'.format(str_today), mode='a', to_stdout=True)
 
-    word_vecs_file = config.SE14_LAPTOP_AMAZON_WORD_VEC_FILE
     n_tags = 5
     n_train = -1
     label_opinions = True
-    train_valid_split_file = config.SE14_LAPTOP_TRAIN_VALID_SPLIT_FILE
-    train_tok_texts_file = config.SE14_LAPTOP_TRAIN_TOK_TEXTS_FILE
-    train_sents_file = config.SE14_LAPTOP_TRAIN_SENTS_FILE
-    test_tok_texts_file = config.SE14_LAPTOP_TEST_TOK_TEXTS_FILE
-    test_sents_file = config.SE14_LAPTOP_TEST_SENTS_FILE
-    # unsupervised_tok_texts_file = config.SE14_LAPTOP_TRAIN_TOK_TEXTS_FILE
-    unsupervised_tok_texts_file = config.AMAZON_TOK_TEXTS_FILE
 
-    logging.info('word_vec_file: {}'.format(config.SE14_LAPTOP_AMAZON_WORD_VEC_FILE))
+    # dataset = 'se14-laptops'
+    dataset = 'se14-restaurants'
+    if dataset == 'se14-laptops':
+        word_vecs_file = config.SE14_LAPTOP_AMAZON_WORD_VEC_FILE
+        train_valid_split_file = config.SE14_LAPTOP_TRAIN_VALID_SPLIT_FILE
+        train_tok_texts_file = config.SE14_LAPTOP_TRAIN_TOK_TEXTS_FILE
+        train_sents_file = config.SE14_LAPTOP_TRAIN_SENTS_FILE
+        test_tok_texts_file = config.SE14_LAPTOP_TEST_TOK_TEXTS_FILE
+        test_sents_file = config.SE14_LAPTOP_TEST_SENTS_FILE
+        # unsupervised_tok_texts_file = config.SE14_LAPTOP_TRAIN_TOK_TEXTS_FILE
+        unsupervised_tok_texts_file = config.AMAZON_TOK_TEXTS_FILE
+    else:
+        word_vecs_file = 'd:/data/aspect/semeval14/model-data/yelp-w2v-sg-100-n10-i30-w5.pkl'
+        train_valid_split_file = config.SE14_REST_TRAIN_VALID_SPLIT_FILE
+        train_tok_texts_file = config.SE14_REST_TRAIN_TOK_TEXTS_FILE
+        train_sents_file = config.SE14_REST_TRAIN_SENTS_FILE
+        test_tok_texts_file = config.SE14_REST_TEST_TOK_TEXTS_FILE
+        test_sents_file = config.SE14_REST_TEST_SENTS_FILE
+        # unsupervised_tok_texts_file = config.SE14_LAPTOP_TRAIN_TOK_TEXTS_FILE
+        unsupervised_tok_texts_file = 'd:/data/yelp/yelp-review-eng-tok-sents-round-9.txt'
+
+    logging.info('word_vec_file: {}'.format(word_vecs_file))
+    logging.info(test_sents_file)
     print('loading data ...')
     with open(word_vecs_file, 'rb') as f:
         vocab, word_vecs_matrix = pickle.load(f)
@@ -33,7 +47,7 @@ if __name__ == '__main__':
     unsupervised_word_seqs = datautils.read_sents_to_word_idx_seqs(unsupervised_tok_texts_file, word_idx_dict)
     print(len(unsupervised_word_seqs), 'unsupervised sents')
 
-    n_unsupervised_sents_used = 5
+    n_unsupervised_sents_used = 1000
     unsupervised_word_seqs = unsupervised_word_seqs[:n_unsupervised_sents_used]
     logging.info('{} unsupervised sents used.'.format(n_unsupervised_sents_used))
 

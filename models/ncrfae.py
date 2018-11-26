@@ -174,18 +174,16 @@ class NeuCRFAutoEncoder:
                 new_theta_table[y, xi] += 1
 
         for word_seq in word_seqs_u:
+            if len(word_seq) < 2:
+                continue
             feed_dict = {
                 self.word_idxs: np.expand_dims(word_seq, 0),
                 self.dropout: 1.0,
                 self.yw_prob_val_mat: self.yw_prob_val_mat_val,
                 self.sequence_lengths: np.array([len(word_seq)], np.int32)
             }
-            # feed_dict[self.word_idxs] = np.expand_dims(word_seq, 0)
             alphas, betas, z = self.sess.run(
                 [self.alphas, self.betas, self.log_norm_unsupervised], feed_dict=feed_dict)
-            # print(valids)
-            # print(z)
-            # print()
             for t in range(len(word_seq)):
                 expected_count = np.exp((alphas[t] + betas[t] - z))
                 word_id = word_seq[t]
@@ -285,6 +283,7 @@ class NeuCRFAutoEncoder:
         n_batches_u = (n_train_u + self.batch_size - 1) // self.batch_size  # n_batches unsupervised
 
         best_f1_sum = 0
+        loss_l, loss_u = 0, 0
         best_a_f1, best_o_f1 = 0, 0
         for epoch in range(n_epochs):
             # self.update_decoder_probs_mat(data_train.word_idxs_list, data_train.labels_list, unsupervised_word_seqs)
@@ -294,18 +293,6 @@ class NeuCRFAutoEncoder:
                 train_loss_l = self.__train_batch_supervised(
                     data_train.word_idxs_list, data_train.labels_list, i, lr, dropout)
                 losses_l.append(train_loss_l)
-
-            # print(self.sess.run(self.crf_bin_score_mat))
-
-            for i in range(n_batches_u):
-                train_loss_u = self.__train_batch_unsupervised(unsupervised_word_seqs, i, lr, dropout)
-                losses_u.append(train_loss_u)
-
-            loss_l = sum(losses_l)
-            loss_u = sum(losses_u)
-            # print(loss_l, loss_u)
-
-            self.update_decoder_probs_mat(data_train.word_idxs_list, data_train.labels_list, unsupervised_word_seqs)
 
             aspect_p, aspect_r, aspect_f1, opinion_p, opinion_r, opinion_f1 = self.evaluate(
                 data_valid.word_idxs_list, data_valid.tok_texts, data_valid.aspects_true_list,
@@ -338,6 +325,18 @@ class NeuCRFAutoEncoder:
             #         self.saver.save(self.sess, save_file)
             #         # print('model saved to {}'.format(save_file))
             #         logging.info('model saved to {}'.format(save_file))
+
+            # print(self.sess.run(self.crf_bin_score_mat))
+
+            for i in range(n_batches_u):
+                train_loss_u = self.__train_batch_unsupervised(unsupervised_word_seqs, i, lr, dropout)
+                losses_u.append(train_loss_u)
+
+            loss_l = sum(losses_l)
+            loss_u = sum(losses_u)
+            # print(loss_l, loss_u)
+
+            self.update_decoder_probs_mat(data_train.word_idxs_list, data_train.labels_list, unsupervised_word_seqs)
 
     def predict_all(self, word_idxs_list, feat_list):
         label_seq_list = list()
