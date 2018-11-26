@@ -11,7 +11,8 @@ def __train_bert():
     str_today = datetime.date.today().strftime('%y-%m-%d')
     init_logging('log/bertlstmcrf-{}.log'.format(str_today), mode='a', to_stdout=True)
 
-    dataset = 'se14-restaurants'
+    # dataset = 'se14-restaurants'
+    dataset = 'se15-restaurants'
 
     if dataset == 'se14-laptops':
         bert_embed_file_train = os.path.join(config.DATA_DIR_SE14, 'laptops/laptops_train_texts_tok_bert.txt')
@@ -21,7 +22,7 @@ def __train_bert():
         test_sents_file = config.SE14_LAPTOP_TEST_SENTS_FILE
         # dst_aspects_file = 'd:/data/aspect/semeval14/lstmcrf-aspects.txt'
         # dst_opinions_file = 'd:/data/aspect/semeval14/lstmcrf-opinions.txt'
-    else:
+    elif dataset == 'se14-restaurants':
         bert_embed_file_train = os.path.join(
             config.DATA_DIR_SE14, 'restaurants/restaurants_train_texts_tok_bert.txt')
         bert_embed_file_test = os.path.join(
@@ -29,6 +30,14 @@ def __train_bert():
         train_valid_split_file = config.SE14_REST_TRAIN_VALID_SPLIT_FILE
         train_sents_file = config.SE14_REST_TRAIN_SENTS_FILE
         test_sents_file = config.SE14_REST_TEST_SENTS_FILE
+    else:
+        bert_embed_file_train = os.path.join(
+            config.DATA_DIR_SE15, 'restaurants/restaurants_train_texts_tok_bert.txt')
+        bert_embed_file_test = os.path.join(
+            config.DATA_DIR_SE15, 'restaurants/restaurants_test_texts_tok_bert.txt')
+        train_valid_split_file = config.SE15_REST_TRAIN_VALID_SPLIT_FILE
+        train_sents_file = config.SE15_REST_TRAIN_SENTS_FILE
+        test_sents_file = config.SE15_REST_TEST_SENTS_FILE
 
     print('loading data ...')
     data_train, data_valid = bldatautils.load_train_data_bert(
