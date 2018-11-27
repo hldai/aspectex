@@ -1,5 +1,6 @@
 import numpy as np
 import pickle
+import os
 import config
 import datetime
 from platform import platform
@@ -476,9 +477,20 @@ else:
         else:
             word_vecs_file = '/home/hldai/data/aspect/semeval15/model-data/yelp-word-vecs-sg-100-n10-i20-w5.pkl'
 
+dataset = 'se15-restaurants'
+rule_model_file = os.path.join(config.DATA_DIR_SE15, 'model-data/pretrain/yelpr9-rest-part0_04.ckpl')
+dataset_files = config.DATASET_RES_FILES[dataset]
+auto_labeled_data_files = config.DATASET_RES_FILES['restaurants-yelp']
+if 'laptops' in dataset:
+    auto_labeled_data_files = config.DATASET_RES_FILES['laptops-amazon']
+
 # __pre_train_nrdj(word_vecs_file, pre_tok_texts_file, pre_aspect_terms_file,
 #                  pre_opinion_terms_file, rule_model_file, 'both', load_model_file=rule_model_file)
 # __pre_train_nrdj(word_vecs_file, pre_tok_texts_file, pre_aspect_terms_file,
 #                  pre_opinion_terms_file, rule_model_file, 'both')
-__train_nrdj(word_vecs_file, train_tok_texts_file, train_sents_file, train_valid_split_file,
-             test_tok_texts_file, test_sents_file, rule_model_file, 'both')
+__pre_train_nrdj(
+    dataset_files['word_vecs_file'], auto_labeled_data_files['sent_texts_file'],
+    dataset_files['rule_aspect_result_file'], dataset_files['rule_opinion_result_file'], rule_model_file, 'both'
+)
+# __train_nrdj(word_vecs_file, train_tok_texts_file, train_sents_file, train_valid_split_file,
+#              test_tok_texts_file, test_sents_file, rule_model_file, 'both')

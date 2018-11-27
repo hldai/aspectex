@@ -327,8 +327,8 @@ dm = 'semeval15'
 # dataset = 'laptops-amazon'
 # dataset = 'restaurants-test'
 dataset = 'restaurants-yelp'
-task = 'aspect'
-# task = 'opinion'
+# task = 'aspect'
+task = 'opinion'
 
 filter_nouns_file = laptops_filter_nouns_file if dataset.startswith('laptops') else rest_filter_nouns_file
 

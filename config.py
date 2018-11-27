@@ -109,17 +109,24 @@ DATASET_RES_FILES = {
     'se15-restaurants': {
         'train_sents_file': join(DATA_DIR_SE15, 'restaurants/restaurants_train_sents.json'),
         'test_sents_file': join(DATA_DIR_SE15, 'restaurants/restaurants_test_sents.json'),
+        'train_dep_tags_file': join(DATA_DIR_SE15, 'restaurants/restaurants-train-rule-dep.txt'),
+        'test_dep_tags_file': join(DATA_DIR_SE15, 'restaurants/restaurants-test-rule-dep.txt'),
+        'train_pos_tags_file': join(DATA_DIR_SE15, 'restaurants/restaurants-train-rule-pos.txt'),
+        'test_pos_tags_file': join(DATA_DIR_SE15, 'restaurants/restaurants-test-rule-pos.txt'),
+        'word_vecs_file': join(DATA_DIR_SE15, 'model-data/yelp-w2v-sg-100-n10-i30-w5.pkl'),
         'aspect_term_filter_vocab_file': join(DATA_DIR_SE15, 'restaurants/aspect_filter_vocab_full.txt'),
         'opinion_term_filter_vocab_file': join(DATA_DIR_SE15, 'restaurants/opinion_filter_vocab_full.txt'),
         'aspect_term_hit_rate_file': join(DATA_DIR_SE15, 'restaurants/aspect-term-hit-rate.txt'),
         'opinion_term_hit_rate_file': join(DATA_DIR_SE15, 'restaurants/opinion-term-hit-rate.txt'),
         'aspect_rule_patterns_file': join(DATA_DIR_SE15, 'restaurants/aspect_mined_rule_patterns.txt'),
         'opinion_rule_patterns_file': join(DATA_DIR_SE15, 'restaurants/opinion_mined_rule_patterns.txt'),
+        'rule_aspect_result_file': join(DATA_DIR_SE15, 'restaurants/yelpr9-rest-part0_04-aspect-rule-result.txt'),
+        'rule_opinion_result_file': join(DATA_DIR_SE15, 'restaurants/yelpr9-rest-part0_04-opinion-rule-result.txt')
     },
     'restaurants-yelp': {
         # 'sent_texts_file': join(RES_DIR, 'yelp/yelp-review-eng-tok-sents-round-9.txt'),
         # 'dep_tags_file': join(RES_DIR, 'yelp/yelp-review-round-9-dep.txt'),
-        # 'pos_tags_file': join(RES_DIR, 'yelp/yelp-review-round-9-pos.txt')
+        # 'pos_tags_file': join(RES_DIR, 'yelp/yelp-review-round-9-pos.txt'),
         'sent_texts_file': join(RES_DIR, 'yelp/eng-part/yelp-rest-sents-r9-tok-eng-part0_04.txt'),
         'dep_tags_file': join(RES_DIR, 'yelp/eng-part/yelp-rest-sents-r9-tok-eng-part0_04-dep.txt'),
         'pos_tags_file': join(RES_DIR, 'yelp/eng-part/yelp-rest-sents-r9-tok-eng-part0_04-pos.txt'),
