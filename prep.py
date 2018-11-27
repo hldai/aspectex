@@ -428,8 +428,9 @@ rest15_train_word_cnts_file = 'd:/data/aspect/semeval15/restaurants/word_cnts.tx
 #     config.GLOVE_WORD_VEC_FILE, config.SE14_REST_GLOVE_WORD_VEC_FILE
 # )
 # utils.trim_word_vecs_file(
-#     [config.SE14_REST_TRAIN_TOK_TEXTS_FILE, config.SE14_REST_TEST_TOK_TEXTS_FILE],
-#     txt_yelp_word_vecs_file, se14_rest_wv_file
+#     [config.DATA_FILES['se14-restaurants']['train_tok_texts_file'],
+#      config.DATA_FILES['se14-restaurants']['test_tok_texts_file']],
+#     txt_yelp_word_vecs_file, config.DATA_FILES['se14-restaurants']['word_vecs_file']
 # )
 
 # __gen_se15_opinion_file(se15_rest_sent_opinions_train_file, se15_rest_opinions_train_file)

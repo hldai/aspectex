@@ -46,18 +46,6 @@ def __pre_train_nrdj(word_vecs_file, tok_texts_file, aspect_terms_file, opinion_
                               hidden_size_lstm=hidden_size_lstm,
                               model_file=load_model_file, batch_size=batch_size)
 
-    nrj_train_data_src1 = nrj_train_data_src2 = None
-    # if train_mode != 'target-only':
-    # nrj_train_data_src1 = NeuRuleDoubleJoint.TrainData(
-    #     train_data_src1.word_idxs_list, train_data_src1.labels_list, valid_data_src1.word_idxs_list,
-    #     valid_data_src1.labels_list, valid_data_src1.tok_texts, valid_data_src1.aspects_true_list, None
-    # )
-    # nrj_train_data_src2 = NeuRuleDoubleJoint.TrainData(
-    #     train_data_src2.word_idxs_list, train_data_src2.labels_list, valid_data_src2.word_idxs_list,
-    #     valid_data_src2.labels_list, valid_data_src2.tok_texts, None,
-    #     valid_data_src2.opinions_true_list
-    # )
-
     nrdj.pre_train(train_data_src1, valid_data_src1, train_data_src2, valid_data_src2, vocab,
                    n_epochs=30, lr=lr, save_file=dst_model_file)
 
@@ -162,12 +150,20 @@ else:
         else:
             word_vecs_file = '/home/hldai/data/aspect/semeval14/model-data/yelp-word-vecs-sg-100-n10-i20-w5.pkl'
 
-dataset = 'se15-restaurants'
-rule_model_file = os.path.join(config.DATA_DIR_SE15, 'model-data/pretrain/yelpr9-rest-part0_04.ckpl')
-dataset_files = config.DATASET_RES_FILES[dataset]
-auto_labeled_data_files = config.DATASET_RES_FILES['restaurants-yelp']
+# dataset = 'se15-restaurants'
+dataset = 'se14-restaurants'
+
+if dataset == 'se15-restaurants':
+    rule_model_file = os.path.join(config.DATA_DIR_SE15, 'model-data/pretrain/yelpr9-rest-part0_04.ckpl')
+elif dataset == 'se14-restaurants':
+    rule_model_file = os.path.join(config.DATA_DIR_SE14, 'model-data/pretrain/yelpr9-rest-part0_04.ckpl')
+else:
+    rule_model_file = os.path.join(config.DATA_DIR_SE14, 'model-data/pretrain/amazon.ckpl')
+
+dataset_files = config.DATA_FILES[dataset]
+auto_labeled_data_files = config.DATA_FILES['restaurants-yelp']
 if 'laptops' in dataset:
-    auto_labeled_data_files = config.DATASET_RES_FILES['laptops-amazon']
+    auto_labeled_data_files = config.DATA_FILES['laptops-amazon']
 
 # __pre_train_nrdj(word_vecs_file, pre_tok_texts_file, pre_aspect_terms_file,
 #                  pre_opinion_terms_file, rule_model_file, 'both', load_model_file=rule_model_file)

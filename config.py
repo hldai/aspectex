@@ -105,10 +105,50 @@ LAPTOP_RULE_MODEL3_FILE = join(DATA_DIR_SE14, 'tf-model/single-3/laptop-rule3.ck
 LAPTOP_RULE_MODEL4_FILE = join(DATA_DIR_SE14, 'tf-model/single-3/laptop-rule4.ckpl')
 LAPTOP_NRDJ_RULE_MODEL_FILE = join(DATA_DIR_SE14, 'tf-model/laptop-nrdj-rule.ckpl')
 
-DATASET_RES_FILES = {
+DATA_FILES = {
+    'se14-laptops': {
+        'train_sents_file': join(DATA_DIR_SE14, 'laptops/laptops_train_sents.json'),
+        'test_sents_file': join(DATA_DIR_SE14, 'laptops/laptops_test_sents.json'),
+        'train_tok_texts_file': join(DATA_DIR_SE14, 'laptops/laptops_train_texts_tok.txt'),
+        'test_tok_texts_file': join(DATA_DIR_SE14, 'laptops/laptops_test_texts_tok.txt'),
+        'train_dep_tags_file': join(DATA_DIR_SE14, 'laptops/laptops-train-rule-dep.txt'),
+        'test_dep_tags_file': join(DATA_DIR_SE14, 'laptops/laptops-test-rule-dep.txt'),
+        'train_pos_tags_file': join(DATA_DIR_SE14, 'laptops/laptops-train-rule-pos.txt'),
+        'test_pos_tags_file': join(DATA_DIR_SE14, 'laptops/laptops-test-rule-pos.txt'),
+        'word_vecs_file': join(DATA_DIR_SE14, 'model-data/amazon-wv-100-sg-n10-w8-i30.pkl'),
+        'aspect_term_filter_vocab_file': join(DATA_DIR_SE14, 'laptops/aspect_filter_vocab_full.txt'),
+        'opinion_term_filter_vocab_file': join(DATA_DIR_SE14, 'laptops/opinion_filter_vocab_full.txt'),
+        'aspect_term_hit_rate_file': join(DATA_DIR_SE14, 'laptops/aspect-term-hit-rate.txt'),
+        'opinion_term_hit_rate_file': join(DATA_DIR_SE14, 'laptops/opinion-term-hit-rate.txt'),
+        'aspect_rule_patterns_file': join(DATA_DIR_SE14, 'laptops/aspect_mined_rule_patterns.txt'),
+        'opinion_rule_patterns_file': join(DATA_DIR_SE14, 'laptops/opinion_mined_rule_patterns.txt'),
+        'rule_aspect_result_file': join(DATA_DIR_SE14, 'laptops/amazon-laptops-aspect-rm-rule-result.txt'),
+        'rule_opinion_result_file': join(DATA_DIR_SE14, 'laptops/amazon-laptops-opinion-rule-result.txt')
+    },
+    'se14-restaurants': {
+        'train_sents_file': join(DATA_DIR_SE14, 'restaurants/restaurants_train_sents.json'),
+        'test_sents_file': join(DATA_DIR_SE14, 'restaurants/restaurants_test_sents.json'),
+        'train_tok_texts_file': join(DATA_DIR_SE14, 'restaurants/restaurants_train_texts_tok.txt'),
+        'test_tok_texts_file': join(DATA_DIR_SE14, 'restaurants/restaurants_test_texts_tok.txt'),
+        'train_dep_tags_file': join(DATA_DIR_SE14, 'restaurants/restaurants-train-rule-dep.txt'),
+        'test_dep_tags_file': join(DATA_DIR_SE14, 'restaurants/restaurants-test-rule-dep.txt'),
+        'train_pos_tags_file': join(DATA_DIR_SE14, 'restaurants/restaurants-train-rule-pos.txt'),
+        'test_pos_tags_file': join(DATA_DIR_SE14, 'restaurants/restaurants-test-rule-pos.txt'),
+        'word_vecs_file': join(DATA_DIR_SE14, 'model-data/yelp-w2v-sg-100-n10-i30-w5.pkl'),
+        'aspect_term_filter_vocab_file': join(DATA_DIR_SE14, 'restaurants/aspect_filter_vocab_full.txt'),
+        'opinion_term_filter_vocab_file': join(DATA_DIR_SE14, 'restaurants/opinion_filter_vocab_full.txt'),
+        'aspect_term_hit_rate_file': join(DATA_DIR_SE14, 'restaurants/aspect-term-hit-rate.txt'),
+        'opinion_term_hit_rate_file': join(DATA_DIR_SE14, 'restaurants/opinion-term-hit-rate.txt'),
+        'aspect_rule_patterns_file': join(DATA_DIR_SE14, 'restaurants/aspect_mined_rule_patterns.txt'),
+        'opinion_rule_patterns_file': join(DATA_DIR_SE14, 'restaurants/opinion_mined_rule_patterns.txt'),
+        'rule_aspect_result_file': join(DATA_DIR_SE14, 'restaurants/yelpr9-rest-part0_04-aspect-rule-result.txt'),
+        'rule_opinion_result_file': join(DATA_DIR_SE14, 'restaurants/yelpr9-rest-part0_04-opinion-rule-result.txt')
+    },
     'se15-restaurants': {
         'train_sents_file': join(DATA_DIR_SE15, 'restaurants/restaurants_train_sents.json'),
         'test_sents_file': join(DATA_DIR_SE15, 'restaurants/restaurants_test_sents.json'),
+        'train_tok_texts_file': join(DATA_DIR_SE15, 'restaurants/restaurants_train_texts_tok.txt'),
+        'test_tok_texts_file': join(DATA_DIR_SE15, 'restaurants/restaurants_test_texts_tok.txt'),
         'train_dep_tags_file': join(DATA_DIR_SE15, 'restaurants/restaurants-train-rule-dep.txt'),
         'test_dep_tags_file': join(DATA_DIR_SE15, 'restaurants/restaurants-test-rule-dep.txt'),
         'train_pos_tags_file': join(DATA_DIR_SE15, 'restaurants/restaurants-train-rule-pos.txt'),
