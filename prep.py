@@ -440,11 +440,11 @@ rest15_train_word_cnts_file = 'd:/data/aspect/semeval15/restaurants/word_cnts.tx
 # __process_raw_sem_eval_data(
 #     config.SE15_REST_TEST_XML_FILE, se15_rest_opinions_test_file,
 #     config.SE15_REST_TEST_SENTS_FILE, config.SE15_REST_TEST_SENT_TEXTS_FILE, __get_sent_objs_se15)
-utils.trim_word_vecs_file(
-    [config.SE15_REST_TRAIN_TOK_TEXTS_FILE, config.SE15_REST_TEST_TOK_TEXTS_FILE,
-     config.SE14_REST_TRAIN_TOK_TEXTS_FILE, config.SE14_REST_TEST_TOK_TEXTS_FILE],
-    txt_yelp_word_vecs_file, se15_rest_wv_file
-)
+# utils.trim_word_vecs_file(
+#     [config.SE15_REST_TRAIN_TOK_TEXTS_FILE, config.SE15_REST_TEST_TOK_TEXTS_FILE,
+#      config.SE14_REST_TRAIN_TOK_TEXTS_FILE, config.SE14_REST_TEST_TOK_TEXTS_FILE],
+#     txt_yelp_word_vecs_file, se15_rest_wv_file
+# )
 
 # datautils.get_yelp_restaurant_reviews('d:/data/yelp/srcdata/yelp_academic_dataset_review.json',
 #                                       'd:/data/yelp/srcdata/yelp_academic_dataset_business.json',

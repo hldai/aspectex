@@ -9,6 +9,13 @@ def has_alphabet(s: str):
     return False
 
 
+def get_machine_name():
+    import socket
+    hostname = socket.gethostname()
+    dot_pos = hostname.find('.')
+    return hostname[:dot_pos] if dot_pos > -1 else hostname[:]
+
+
 def write_terms_list(terms_list, dst_file):
     fout = open(dst_file, 'w', encoding='utf-8')
     for terms in terms_list:

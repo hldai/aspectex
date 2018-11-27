@@ -13,7 +13,7 @@ import logging
 
 def __pre_train_nrdj(word_vecs_file, tok_texts_file, aspect_terms_file, opinion_terms_file,
                      dst_model_file, task, load_model_file=None):
-    init_logging('log/nrdj-pre-{}.log'.format(str_today), mode='a', to_stdout=True)
+    init_logging('log/nrdj-pre-{}-{}.log'.format(utils.get_machine_name(), str_today), mode='a', to_stdout=True)
 
     # n_train = 1000
     n_train = -1
@@ -64,7 +64,7 @@ def __pre_train_nrdj(word_vecs_file, tok_texts_file, aspect_terms_file, opinion_
 
 def __train_nrdj(word_vecs_file, train_tok_texts_file, train_sents_file, train_valid_split_file, test_tok_texts_file,
                  test_sents_file, load_model_file, task):
-    init_logging('log/nrdj-train-{}.log'.format(str_today), mode='a', to_stdout=True)
+    init_logging('log/nrdj-train-{}-{}.log'.format(utils.get_machine_name(), str_today), mode='a', to_stdout=True)
 
     dst_aspects_file = 'd:/data/aspect/semeval14/nrdj-aspects.txt'
     dst_opinions_file = 'd:/data/aspect/semeval14/nrdj-opinions.txt'
