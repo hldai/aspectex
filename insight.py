@@ -249,12 +249,7 @@ def __count_words(tok_texts_file):
     f.close()
     print(n_min, n_max)
 
-import socket
-hostname = socket.gethostname()
-dot_pos = hostname.find('.')
-print(dot_pos)
-hostname = hostname[:dot_pos] if dot_pos > -1 else hostname[:]
-print(hostname)
+
 # __count_adj_phrases()
 # __semeval_rule_insight()
 # __dataset_statistics()

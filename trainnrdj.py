@@ -121,34 +121,34 @@ if dataset_name == 'laptops':
     train_sents_file = config.SE14_LAPTOP_TRAIN_SENTS_FILE
     test_tok_texts_file = config.SE14_LAPTOP_TEST_TOK_TEXTS_FILE
     test_sents_file = config.SE14_LAPTOP_TEST_SENTS_FILE
-else:
-    # word_vecs_file = config.SE14_REST_GLOVE_WORD_VEC_FILE
-    # pre_aspect_terms_file = 'd:/data/aspect/semeval14/restaurants/yelp-aspect-rule-result-r.txt'
-    # aspect_terms_file = 'd:/data/aspect/semeval14/restaurant/yelp-aspect-rule-result-r1.txt'
-    # rule_model_file = 'd:/data/aspect/semeval14/tf-model/drest/yelp-nrdj.ckpl'
+# else:
+#     # word_vecs_file = config.SE14_REST_GLOVE_WORD_VEC_FILE
+#     # pre_aspect_terms_file = 'd:/data/aspect/semeval14/restaurants/yelp-aspect-rule-result-r.txt'
+#     # aspect_terms_file = 'd:/data/aspect/semeval14/restaurant/yelp-aspect-rule-result-r1.txt'
+#     # rule_model_file = 'd:/data/aspect/semeval14/tf-model/drest/yelp-nrdj.ckpl'
+#
+#     if os_env == 'Windows':
+#         pre_aspect_terms_file = 'd:/data/aspect/{}/restaurants/yelp-aspect-rm-rule-result.txt'.format(dm)
+#         pre_opinion_terms_file = 'd:/data/aspect/{}/restaurants/yelp-opinion-rule-result.txt'.format(dm)
+#         pre_tok_texts_file = 'd:/data/res/yelp-review-eng-tok-sents-round-9.txt'
+#         # rule_model_file = 'd:/data/aspect/{}/tf-model/drest/yelp-nrdj.ckpl'.format(dm)
+#         rule_model_file = 'd:/data/aspect/{}/tf-model/drestw2v/yelp-nrdj.ckpl'.format(dm)
+#     else:
+#         pre_aspect_terms_file = '/home/hldai/data/aspect/{}/restaurants/yelp-aspect-rm-rule-result.txt'.format(dm)
+#         pre_opinion_terms_file = '/home/hldai/data/aspect/{}/restaurants/yelp-opinion-rule-result.txt'.format(dm)
+#         pre_tok_texts_file = '/home/hldai/data/yelp/yelp-review-eng-tok-sents-round-9.txt'
+#         rule_model_file = '/home/hldai/data/aspect/{}/tf-model/drest/yelp-nrdj.ckpl'.format(dm)
 
-    if os_env == 'Windows':
-        pre_aspect_terms_file = 'd:/data/aspect/{}/restaurants/yelp-aspect-rm-rule-result.txt'.format(dm)
-        pre_opinion_terms_file = 'd:/data/aspect/{}/restaurants/yelp-opinion-rule-result.txt'.format(dm)
-        pre_tok_texts_file = 'd:/data/res/yelp-review-eng-tok-sents-round-9.txt'
-        # rule_model_file = 'd:/data/aspect/{}/tf-model/drest/yelp-nrdj.ckpl'.format(dm)
-        rule_model_file = 'd:/data/aspect/{}/tf-model/drestw2v/yelp-nrdj.ckpl'.format(dm)
-    else:
-        pre_aspect_terms_file = '/home/hldai/data/aspect/{}/restaurants/yelp-aspect-rm-rule-result.txt'.format(dm)
-        pre_opinion_terms_file = '/home/hldai/data/aspect/{}/restaurants/yelp-opinion-rule-result.txt'.format(dm)
-        pre_tok_texts_file = '/home/hldai/data/yelp/yelp-review-eng-tok-sents-round-9.txt'
-        rule_model_file = '/home/hldai/data/aspect/{}/tf-model/drest/yelp-nrdj.ckpl'.format(dm)
-
-    if dm == 'semeval14':
-        train_valid_split_file = config.SE14_REST_TRAIN_VALID_SPLIT_FILE
-        train_tok_texts_file = config.SE14_REST_TRAIN_TOK_TEXTS_FILE
-        train_sents_file = config.SE14_REST_TRAIN_SENTS_FILE
-        test_tok_texts_file = config.SE14_REST_TEST_TOK_TEXTS_FILE
-        test_sents_file = config.SE14_REST_TEST_SENTS_FILE
-        if os_env == 'Windows':
-            word_vecs_file = 'd:/data/aspect/semeval14/model-data/yelp-word-vecs-sg-100-n10-i20-w5.pkl'
-        else:
-            word_vecs_file = '/home/hldai/data/aspect/semeval14/model-data/yelp-word-vecs-sg-100-n10-i20-w5.pkl'
+    # if dm == 'semeval14':
+    #     train_valid_split_file = config.SE14_REST_TRAIN_VALID_SPLIT_FILE
+    #     train_tok_texts_file = config.SE14_REST_TRAIN_TOK_TEXTS_FILE
+    #     train_sents_file = config.SE14_REST_TRAIN_SENTS_FILE
+    #     test_tok_texts_file = config.SE14_REST_TEST_TOK_TEXTS_FILE
+    #     test_sents_file = config.SE14_REST_TEST_SENTS_FILE
+    #     if os_env == 'Windows':
+    #         word_vecs_file = 'd:/data/aspect/semeval14/model-data/yelp-word-vecs-sg-100-n10-i20-w5.pkl'
+    #     else:
+    #         word_vecs_file = '/home/hldai/data/aspect/semeval14/model-data/yelp-word-vecs-sg-100-n10-i20-w5.pkl'
 
 # dataset = 'se15-restaurants'
 dataset = 'se14-restaurants'

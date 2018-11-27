@@ -381,8 +381,8 @@ rest_filter_nouns_file = 'd:/data/aspect/semeval14/restaurants/aspect-nouns-filt
 #     aspect_result_file = 'd:/data/aspect/{}/restaurants/yelpr9-rest-part0_04-aspect-rule-result.txt'.format(dm)
 #     opinion_result_file = 'd:/data/aspect/{}/restaurants/yelpr9-rest-part0_04-opinion-rule-result.txt'.format(dm)
 
-task = 'aspect'
-# task = 'opinion'
+# task = 'aspect'
+task = 'opinion'
 target_dataset = 'se14-restaurants'
 res_dataset = 'restaurants-yelp'
 target_dataset_files, res_dataset_files = config.DATA_FILES[target_dataset], config.DATA_FILES[res_dataset]
@@ -410,5 +410,5 @@ if task == 'opinion':
         mine_helper, target_dataset_files['opinion_rule_patterns_file'],
         target_dataset_files['opinion_term_hit_rate_file'], res_dataset_files['dep_tags_file'],
         res_dataset_files['pos_tags_file'], res_dataset_files['sent_texts_file'],
-        target_dataset_files['opinion_filter_terms_vocab_file'],
-        dst_result_file=target_dataset_files['opinion_result_file'], sents_file=sents_file)
+        target_dataset_files['opinion_term_filter_vocab_file'],
+        dst_result_file=target_dataset_files['rule_opinion_result_file'], sents_file=sents_file)
