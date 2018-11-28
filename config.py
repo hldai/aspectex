@@ -109,6 +109,7 @@ DATA_FILES = {
     'se14-laptops': {
         'train_sents_file': join(DATA_DIR_SE14, 'laptops/laptops_train_sents.json'),
         'test_sents_file': join(DATA_DIR_SE14, 'laptops/laptops_test_sents.json'),
+        'train_valid_split_file': join(DATA_DIR_SE14, 'laptops/laptops_train_valid_split.txt'),
         'train_tok_texts_file': join(DATA_DIR_SE14, 'laptops/laptops_train_texts_tok.txt'),
         'test_tok_texts_file': join(DATA_DIR_SE14, 'laptops/laptops_test_texts_tok.txt'),
         'train_dep_tags_file': join(DATA_DIR_SE14, 'laptops/laptops-train-rule-dep.txt'),
@@ -128,6 +129,7 @@ DATA_FILES = {
     'se14-restaurants': {
         'train_sents_file': join(DATA_DIR_SE14, 'restaurants/restaurants_train_sents.json'),
         'test_sents_file': join(DATA_DIR_SE14, 'restaurants/restaurants_test_sents.json'),
+        'train_valid_split_file': join(DATA_DIR_SE14, 'restaurants/restaurants_train_valid_split.txt'),
         'train_tok_texts_file': join(DATA_DIR_SE14, 'restaurants/restaurants_train_texts_tok.txt'),
         'test_tok_texts_file': join(DATA_DIR_SE14, 'restaurants/restaurants_test_texts_tok.txt'),
         'train_dep_tags_file': join(DATA_DIR_SE14, 'restaurants/restaurants-train-rule-dep.txt'),
@@ -147,6 +149,7 @@ DATA_FILES = {
     'se15-restaurants': {
         'train_sents_file': join(DATA_DIR_SE15, 'restaurants/restaurants_train_sents.json'),
         'test_sents_file': join(DATA_DIR_SE15, 'restaurants/restaurants_test_sents.json'),
+        'train_valid_split_file': join(DATA_DIR_SE15, 'restaurants/restaurants_train_valid_split.txt'),
         'train_tok_texts_file': join(DATA_DIR_SE15, 'restaurants/restaurants_train_texts_tok.txt'),
         'test_tok_texts_file': join(DATA_DIR_SE15, 'restaurants/restaurants_test_texts_tok.txt'),
         'train_dep_tags_file': join(DATA_DIR_SE15, 'restaurants/restaurants-train-rule-dep.txt'),

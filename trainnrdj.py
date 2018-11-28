@@ -150,15 +150,18 @@ if dataset_name == 'laptops':
     #     else:
     #         word_vecs_file = '/home/hldai/data/aspect/semeval14/model-data/yelp-word-vecs-sg-100-n10-i20-w5.pkl'
 
-# dataset = 'se15-restaurants'
-dataset = 'se14-restaurants'
+dataset = 'se15-restaurants'
+# dataset = 'se14-restaurants'
 
 if dataset == 'se15-restaurants':
     rule_model_file = os.path.join(config.DATA_DIR_SE15, 'model-data/pretrain/yelpr9-rest-part0_04.ckpl')
+    word_vecs_file = os.path.join(config.DATA_DIR_SE15, 'model-data/yelp-w2v-sg-100-n10-i30-w5.pkl')
 elif dataset == 'se14-restaurants':
     rule_model_file = os.path.join(config.DATA_DIR_SE14, 'model-data/pretrain/yelpr9-rest-part0_04.ckpl')
+    word_vecs_file = os.path.join(config.DATA_DIR_SE14, 'model-data/yelp-w2v-sg-100-n10-i30-w5.pkl')
 else:
     rule_model_file = os.path.join(config.DATA_DIR_SE14, 'model-data/pretrain/amazon.ckpl')
+    word_vecs_file = os.path.join(config.DATA_DIR_SE14, 'model-data/amazon-wv-100-sg-n10-w8-i30.pkl')
 
 dataset_files = config.DATA_FILES[dataset]
 auto_labeled_data_files = config.DATA_FILES['restaurants-yelp']
@@ -169,9 +172,10 @@ if 'laptops' in dataset:
 #                  pre_opinion_terms_file, rule_model_file, 'both', load_model_file=rule_model_file)
 # __pre_train_nrdj(word_vecs_file, pre_tok_texts_file, pre_aspect_terms_file,
 #                  pre_opinion_terms_file, rule_model_file, 'both')
-__pre_train_nrdj(
-    dataset_files['word_vecs_file'], auto_labeled_data_files['sent_texts_file'],
-    dataset_files['rule_aspect_result_file'], dataset_files['rule_opinion_result_file'], rule_model_file, 'both'
-)
-# __train_nrdj(word_vecs_file, train_tok_texts_file, train_sents_file, train_valid_split_file,
-#              test_tok_texts_file, test_sents_file, rule_model_file, 'both')
+# __pre_train_nrdj(
+#     dataset_files['word_vecs_file'], auto_labeled_data_files['sent_texts_file'],
+#     dataset_files['rule_aspect_result_file'], dataset_files['rule_opinion_result_file'], rule_model_file, 'both'
+# )
+__train_nrdj(word_vecs_file, dataset_files['train_tok_texts_file'], dataset_files['train_sents_file'],
+             dataset_files['train_valid_split_file'], dataset_files['test_tok_texts_file'],
+             dataset_files['test_sents_file'], rule_model_file, 'both')
