@@ -357,9 +357,9 @@ if env == 'Windows':
     # txt_yelp_word_vecs_file = 'd:/data/res/yelp-word-vecs-sg-100-n10-i20-w5.txt'
     # se14_rest_wv_file = 'd:/data/aspect/semeval14/model-data/yelp-word-vecs-sg-100-n10-i20-w5.pkl'
     # se15_rest_wv_file = 'd:/data/aspect/semeval15/model-data/yelp-word-vecs-sg-100-n10-i20-w5.pkl'
-    txt_yelp_word_vecs_file = 'd:/data/res/yelp/yelp-w2v-sg-100-n10-i30-w5.txt'
-    se14_rest_wv_file = 'd:/data/aspect/semeval14/model-data/yelp-w2v-sg-100-n10-i30-w5.pkl'
-    se15_rest_wv_file = 'd:/data/aspect/semeval15/model-data/yelp-w2v-sg-100-n10-i30-w5.pkl'
+    txt_yelp_word_vecs_file = 'd:/data/res/yelp/yelp-w2v-sg-300-n10-i30-w5.txt'
+    se14_rest_wv_file = 'd:/data/aspect/semeval14/model-data/yelp-w2v-sg-300-n10-i30-w5.pkl'
+    se15_rest_wv_file = 'd:/data/aspect/semeval15/model-data/yelp-w2v-sg-300-n10-i30-w5.pkl'
     # txt_yelp_word_vecs_file = 'd:/data/res/yelp-word-vecs-sg-100-n10-i20.txt'
     # txt_amazon_word_vecs_file = 'd:/data/res/electronics-word-vecs-100.txt'
     # txt_amazon_word_vecs_file = 'd:/data/amazon/elec-w2v-nr-100-sg-n10-w8-i30.txt'
@@ -423,6 +423,19 @@ rest15_train_word_cnts_file = 'd:/data/aspect/semeval15/restaurants/word_cnts.tx
 # __process_raw_sem_eval_data(config.SE14_REST_TEST_XML_FILE, config.SE14_REST_TEST_OPINIONS_FILE,
 #                             config.SE14_REST_TEST_SENTS_FILE, config.SE14_REST_TEST_SENT_TEXTS_FILE)
 
+# utils.bin_word_vec_file_to_txt(
+#     'd:/data/res/yelp/yelp-w2v-sg-300-n10-i30-w5.bin',
+#     'd:/data/res/yelp/yelp-w2v-sg-300-n10-i30-w5.txt'
+# )
+# utils.bin_word_vec_file_to_txt(
+#     '/home/hldai/data/amazon/electronics-word-vecs-100-sg-n10-i20-w5.bin',
+#     '/home/hldai/data/amazon/electronics-word-vecs-100-sg-n10-i20-w5.txt'
+# )
+# utils.bin_word_vec_file_to_txt(
+#     '/home/hldai/data/amazon/elec-w2v-nr-100-sg-n10-w8-i30.bin',
+#     '/home/hldai/data/amazon/elec-w2v-nr-100-sg-n10-w8-i30.txt'
+# )
+
 # utils.trim_word_vecs_file(
 #     [config.SE14_REST_TRAIN_TOK_TEXTS_FILE, config.SE14_REST_TEST_TOK_TEXTS_FILE],
 #     config.GLOVE_WORD_VEC_FILE, config.SE14_REST_GLOVE_WORD_VEC_FILE
@@ -469,18 +482,6 @@ rest15_train_word_cnts_file = 'd:/data/aspect/semeval15/restaurants/word_cnts.tx
 # __split_training_set(config.SE14_LAPTOP_TRAIN_SENTS_FILE, config.SE14_LAPTOP_TRAIN_VALID_SPLIT_FILE)
 # __split_training_set(config.SE14_REST_TRAIN_SENTS_FILE, config.SE14_REST_TRAIN_VALID_SPLIT_FILE)
 # __split_training_set(config.SE15_REST_TRAIN_SENTS_FILE, config.SE15_REST_TRAIN_VALID_SPLIT_FILE)
-# utils.bin_word_vec_file_to_txt(
-#     'd:/data/res/yelp-w2v-sg-200-n10-i30-w5.bin',
-#     'd:/data/res/yelp-w2v-sg-200-n10-i30-w5.txt'
-# )
-# utils.bin_word_vec_file_to_txt(
-#     '/home/hldai/data/amazon/electronics-word-vecs-100-sg-n10-i20-w5.bin',
-#     '/home/hldai/data/amazon/electronics-word-vecs-100-sg-n10-i20-w5.txt'
-# )
-# utils.bin_word_vec_file_to_txt(
-#     '/home/hldai/data/amazon/elec-w2v-nr-100-sg-n10-w8-i30.bin',
-#     '/home/hldai/data/amazon/elec-w2v-nr-100-sg-n10-w8-i30.txt'
-# )
 
 # __split_to_sents('/home/hldai/data/amazon/electronics_5_text.txt',
 #                  '/home/hldai/data/amazon/electronics_5_tok_sent_texts.txt')
