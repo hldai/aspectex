@@ -33,7 +33,8 @@ def __train_lstmcrf(word_vecs_file, train_tok_texts_file, train_sents_file, trai
     print('done')
 
     # lstmcrf = LSTMCRF(n_tags, word_vecs_matrix, hidden_size_lstm=hidden_size_lstm)
-    lstmcrf = LSTMCRF(n_tags, word_vecs_matrix, hidden_size_lstm=hidden_size_lstm, model_file=load_model_file)
+    lstmcrf = LSTMCRF(n_tags, word_vecs_matrix, hidden_size_lstm=hidden_size_lstm, model_file=load_model_file,
+                      train_word_embeddings=False)
     # print(valid_data.aspects_true_list)
     # lstmcrf.train(train_data.word_idxs_list, train_data.labels_list, valid_data.word_idxs_list,
     #               valid_data.labels_list, vocab, valid_data.tok_texts, valid_data.aspects_true_list,
@@ -45,10 +46,10 @@ def __train_lstmcrf(word_vecs_file, train_tok_texts_file, train_sents_file, trai
 
 str_today = datetime.date.today().strftime('%y-%m-%d')
 
-# dm = 'semeval15'
-dm = 'semeval14'
-# dataset_name = 'restaurant'
-dataset_name = 'laptops'
+dm = 'semeval15'
+# dm = 'semeval14'
+dataset_name = 'restaurant'
+# dataset_name = 'laptops'
 hidden_size_lstm = 100
 n_epochs = 200
 

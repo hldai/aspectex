@@ -13,7 +13,7 @@ class NeuRuleDoubleJoint:
     #                   'valid_texts', 'aspects_true_list', 'opinions_true_list'])
     # TestData = namedtuple('TestData', ['word_idxs_list', 'texts', 'aspects_true_list', 'opinions_true_list'])
 
-    def __init__(self, n_tags, word_embeddings, share_lstm, hidden_size_lstm=100,
+    def __init__(self, n_tags, word_embeddings, share_lstm, hidden_size_lstm=100, train_word_embeddings=False,
                  batch_size=20, lr_method='adam', clip=-1, use_crf=True, model_file=None):
         logging.info('hidden_size_lstm={}, batch_size={}, lr_method={}'.format(
             hidden_size_lstm, batch_size, lr_method))
@@ -40,7 +40,7 @@ class NeuRuleDoubleJoint:
         self.dropout = tf.placeholder(dtype=tf.float32, shape=[], name="dropout")
         self.lr = tf.placeholder(dtype=tf.float32, shape=[], name="lr")
 
-        self.__add_word_embedding_op(word_embeddings)
+        self.__add_word_embedding_op(word_embeddings, train_word_embeddings)
         # self.__setup_rule_lstm_hidden()
         self.__add_logits_op()
         self.__add_pred_op()
@@ -48,12 +48,17 @@ class NeuRuleDoubleJoint:
         self.__add_train_op(self.lr_method, self.lr, self.clip)
         self.__init_session(model_file)
 
-    def __add_word_embedding_op(self, word_embeddings_val):
+    def __add_word_embedding_op(self, word_embeddings_val, train_word_embeddings):
         with tf.variable_scope("words"):
-            _word_embeddings = tf.constant(
-                    word_embeddings_val,
-                    name="_word_embeddings",
-                    dtype=tf.float32)
+            # _word_embeddings = tf.constant(
+            #         word_embeddings_val,
+            #         name="_word_embeddings",
+            #         dtype=tf.float32)
+            _word_embeddings = tf.Variable(
+                word_embeddings_val,
+                name="_word_embeddings",
+                dtype=tf.float32,
+                trainable=train_word_embeddings)
 
             word_embeddings = tf.nn.embedding_lookup(_word_embeddings, self.word_idxs, name="word_embeddings")
         self.word_embeddings = tf.nn.dropout(word_embeddings, self.dropout)

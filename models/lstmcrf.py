@@ -45,15 +45,15 @@ class LSTMCRF:
                         dtype=tf.float32,
                         shape=[self.n_words, self.dim_word])
             else:
-                # _word_embeddings = tf.Variable(
-                #         self.vals_word_embeddings,
-                #         name="_word_embeddings",
-                #         dtype=tf.float32,
-                #         trainable=train_word_embeddings)
-                _word_embeddings = tf.constant(
+                _word_embeddings = tf.Variable(
                         self.vals_word_embeddings,
                         name="_word_embeddings",
-                        dtype=tf.float32)
+                        dtype=tf.float32,
+                        trainable=train_word_embeddings)
+                # _word_embeddings = tf.constant(
+                #         self.vals_word_embeddings,
+                #         name="_word_embeddings",
+                #         dtype=tf.float32)
 
             word_embeddings = tf.nn.embedding_lookup(_word_embeddings, self.word_idxs, name="word_embeddings")
         self.word_embeddings = tf.nn.dropout(word_embeddings, self.dropout)

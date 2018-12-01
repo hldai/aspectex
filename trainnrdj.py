@@ -12,7 +12,7 @@ import logging
 
 
 def __pre_train_nrdj(word_vecs_file, tok_texts_file, aspect_terms_file, opinion_terms_file,
-                     dst_model_file, task, load_model_file=None):
+                     dst_model_file, task, train_word_embeddings=False, load_model_file=None):
     init_logging('log/nrdj-pre-{}-{}.log'.format(utils.get_machine_name(), str_today), mode='a', to_stdout=True)
 
     # n_train = 1000
@@ -41,9 +41,10 @@ def __pre_train_nrdj(word_vecs_file, tok_texts_file, aspect_terms_file, opinion_
     train_data_src2, valid_data_src2 = datautils.get_data_amazon(
         vocab, opinion_terms_file, tok_texts_file, 'opinion')
     print('done')
+    logging.info('train_word_embeddings={}'.format(train_word_embeddings))
 
     nrdj = NeuRuleDoubleJoint(n_tags, word_vecs_matrix, share_lstm,
-                              hidden_size_lstm=hidden_size_lstm,
+                              hidden_size_lstm=hidden_size_lstm, train_word_embeddings=train_word_embeddings,
                               model_file=load_model_file, batch_size=batch_size)
 
     nrdj.pre_train(train_data_src1, valid_data_src1, train_data_src2, valid_data_src2, vocab,
@@ -91,91 +92,38 @@ def __train_nrdj(word_vecs_file, train_tok_texts_file, train_sents_file, train_v
 
 str_today = datetime.date.today().strftime('%y-%m-%d')
 
-dm = 'semeval15'
-# dm = 'semeval14'
-dataset_name = 'restaurant'
-# dataset_name = 'laptops'
 hidden_size_lstm = 100
 n_epochs = 200
+train_word_embeddings=True
 
-os_env = 'Windows' if platform().startswith('Windows') else 'Linux'
+dataset = 'se15r'
+# dataset = 'se14r'
+# dataset = 'se14l'
 
-if dataset_name == 'laptops':
-    # word_vecs_file = config.SE14_LAPTOP_GLOVE_WORD_VEC_FILE
-    # word_vecs_file = config.SE14_LAPTOP_AMAZON_WORD_VEC_FILE
-    pre_tok_texts_file = config.AMAZON_TOK_TEXTS_FILE
-    pre_aspect_terms_file = config.AMAZON_RM_TERMS_FILE
-    pre_opinion_terms_file = config.AMAZON_TERMS_TRUE4_FILE
-
-    wv_dim = '100'
-    if os_env == 'Windows':
-        word_vecs_file = 'd:/data/aspect/semeval14/model-data/amazon-wv-{}-sg-n10-w8-i30.pkl'.format(wv_dim)
-        # rule_model_file = 'd:/data/aspect/semeval14/model-data/d{}/wv-{}.ckpl'.format(wv_dim, wv_dim)
-        rule_model_file = config.LAPTOP_RULE_MODEL2_FILE
-    else:
-        word_vecs_file = '/home/hldai/data/aspect/semeval14/model-data/amazon-wv-{}-sg-n10-w8-i30.pkl'.format(wv_dim)
-        rule_model_file = '/home/hldai/data/aspect/semeval14/model-data/d{}/wv-{}.ckpl'.format(wv_dim, wv_dim)
-
-    train_valid_split_file = config.SE14_LAPTOP_TRAIN_VALID_SPLIT_FILE
-    train_tok_texts_file = config.SE14_LAPTOP_TRAIN_TOK_TEXTS_FILE
-    train_sents_file = config.SE14_LAPTOP_TRAIN_SENTS_FILE
-    test_tok_texts_file = config.SE14_LAPTOP_TEST_TOK_TEXTS_FILE
-    test_sents_file = config.SE14_LAPTOP_TEST_SENTS_FILE
-# else:
-#     # word_vecs_file = config.SE14_REST_GLOVE_WORD_VEC_FILE
-#     # pre_aspect_terms_file = 'd:/data/aspect/semeval14/restaurants/yelp-aspect-rule-result-r.txt'
-#     # aspect_terms_file = 'd:/data/aspect/semeval14/restaurant/yelp-aspect-rule-result-r1.txt'
-#     # rule_model_file = 'd:/data/aspect/semeval14/tf-model/drest/yelp-nrdj.ckpl'
-#
-#     if os_env == 'Windows':
-#         pre_aspect_terms_file = 'd:/data/aspect/{}/restaurants/yelp-aspect-rm-rule-result.txt'.format(dm)
-#         pre_opinion_terms_file = 'd:/data/aspect/{}/restaurants/yelp-opinion-rule-result.txt'.format(dm)
-#         pre_tok_texts_file = 'd:/data/res/yelp-review-eng-tok-sents-round-9.txt'
-#         # rule_model_file = 'd:/data/aspect/{}/tf-model/drest/yelp-nrdj.ckpl'.format(dm)
-#         rule_model_file = 'd:/data/aspect/{}/tf-model/drestw2v/yelp-nrdj.ckpl'.format(dm)
-#     else:
-#         pre_aspect_terms_file = '/home/hldai/data/aspect/{}/restaurants/yelp-aspect-rm-rule-result.txt'.format(dm)
-#         pre_opinion_terms_file = '/home/hldai/data/aspect/{}/restaurants/yelp-opinion-rule-result.txt'.format(dm)
-#         pre_tok_texts_file = '/home/hldai/data/yelp/yelp-review-eng-tok-sents-round-9.txt'
-#         rule_model_file = '/home/hldai/data/aspect/{}/tf-model/drest/yelp-nrdj.ckpl'.format(dm)
-
-    # if dm == 'semeval14':
-    #     train_valid_split_file = config.SE14_REST_TRAIN_VALID_SPLIT_FILE
-    #     train_tok_texts_file = config.SE14_REST_TRAIN_TOK_TEXTS_FILE
-    #     train_sents_file = config.SE14_REST_TRAIN_SENTS_FILE
-    #     test_tok_texts_file = config.SE14_REST_TEST_TOK_TEXTS_FILE
-    #     test_sents_file = config.SE14_REST_TEST_SENTS_FILE
-    #     if os_env == 'Windows':
-    #         word_vecs_file = 'd:/data/aspect/semeval14/model-data/yelp-word-vecs-sg-100-n10-i20-w5.pkl'
-    #     else:
-    #         word_vecs_file = '/home/hldai/data/aspect/semeval14/model-data/yelp-word-vecs-sg-100-n10-i20-w5.pkl'
-
-dataset = 'se15-restaurants'
-# dataset = 'se14-restaurants'
-
-if dataset == 'se15-restaurants':
-    rule_model_file = os.path.join(config.DATA_DIR_SE15, 'model-data/pretrain/yelpr9-rest-part0_04.ckpl')
+if dataset == 'se15r':
+    # rule_model_file = os.path.join(config.DATA_DIR_SE15, 'model-data/pretrain/yelpr9-rest-part0_04.ckpt')
+    # word_vecs_file = os.path.join(config.DATA_DIR_SE15, 'model-data/yelp-w2v-sg-100-n10-i30-w5.pkl')
+    rule_model_file = os.path.join(config.DATA_DIR_SE15, 'model-data/pretrain/yelpr9-rest-part0_04-tmp.ckpt')
     word_vecs_file = os.path.join(config.DATA_DIR_SE15, 'model-data/yelp-w2v-sg-100-n10-i30-w5.pkl')
-elif dataset == 'se14-restaurants':
-    rule_model_file = os.path.join(config.DATA_DIR_SE14, 'model-data/pretrain/yelpr9-rest-part0_04.ckpl')
+elif dataset == 'se14r':
+    rule_model_file = os.path.join(config.DATA_DIR_SE14, 'model-data/pretrain/yelpr9-rest-part0_04.ckpt')
     word_vecs_file = os.path.join(config.DATA_DIR_SE14, 'model-data/yelp-w2v-sg-100-n10-i30-w5.pkl')
 else:
-    rule_model_file = os.path.join(config.DATA_DIR_SE14, 'model-data/pretrain/amazon.ckpl')
+    rule_model_file = os.path.join(config.DATA_DIR_SE14, 'model-data/pretrain/amazon-100.ckpt')
     word_vecs_file = os.path.join(config.DATA_DIR_SE14, 'model-data/amazon-wv-100-sg-n10-w8-i30.pkl')
 
 dataset_files = config.DATA_FILES[dataset]
 auto_labeled_data_files = config.DATA_FILES['restaurants-yelp']
-if 'laptops' in dataset:
+if dataset == 'se14l':
     auto_labeled_data_files = config.DATA_FILES['laptops-amazon']
 
 # __pre_train_nrdj(word_vecs_file, pre_tok_texts_file, pre_aspect_terms_file,
 #                  pre_opinion_terms_file, rule_model_file, 'both', load_model_file=rule_model_file)
-# __pre_train_nrdj(word_vecs_file, pre_tok_texts_file, pre_aspect_terms_file,
-#                  pre_opinion_terms_file, rule_model_file, 'both')
-# __pre_train_nrdj(
-#     dataset_files['word_vecs_file'], auto_labeled_data_files['sent_texts_file'],
-#     dataset_files['rule_aspect_result_file'], dataset_files['rule_opinion_result_file'], rule_model_file, 'both'
-# )
-__train_nrdj(word_vecs_file, dataset_files['train_tok_texts_file'], dataset_files['train_sents_file'],
-             dataset_files['train_valid_split_file'], dataset_files['test_tok_texts_file'],
-             dataset_files['test_sents_file'], rule_model_file, 'both')
+__pre_train_nrdj(
+    word_vecs_file, auto_labeled_data_files['sent_texts_file'],
+    dataset_files['rule_aspect_result_file'], dataset_files['rule_opinion_result_file'], rule_model_file, 'both',
+    train_word_embeddings=train_word_embeddings
+)
+# __train_nrdj(word_vecs_file, dataset_files['train_tok_texts_file'], dataset_files['train_sents_file'],
+#              dataset_files['train_valid_split_file'], dataset_files['test_tok_texts_file'],
+#              dataset_files['test_sents_file'], rule_model_file, 'both')
