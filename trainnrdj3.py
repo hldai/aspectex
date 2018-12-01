@@ -21,7 +21,7 @@ def __pre_train_nrdj(word_vecs_file, tok_texts_file, aspect_terms_file, opinion_
     # label_opinions = False
     n_tags = 5 if label_opinions else 3
     # n_tags = 5 if task == 'train' else 3
-    batch_size = 20
+    batch_size = 32
     lr = 0.001
     share_lstm = False
 
@@ -53,7 +53,7 @@ def __pre_train_nrdj(word_vecs_file, tok_texts_file, aspect_terms_file, opinion_
 
 def __train_nrdj(word_vecs_file, train_tok_texts_file, train_sents_file, train_valid_split_file, test_tok_texts_file,
                  test_sents_file, load_model_file, task):
-    init_logging('log/nrdj-train-{}-{}.log'.format(utils.get_machine_name(), str_today), mode='a', to_stdout=True)
+    init_logging('log/nrdj3-train-{}-{}.log'.format(utils.get_machine_name(), str_today), mode='a', to_stdout=True)
 
     dst_aspects_file = 'd:/data/aspect/semeval14/nrdj-aspects.txt'
     dst_opinions_file = 'd:/data/aspect/semeval14/nrdj-opinions.txt'
@@ -96,9 +96,9 @@ hidden_size_lstm = 100
 n_epochs = 200
 train_word_embeddings = True
 
-dataset = 'se15r'
+# dataset = 'se15r'
 # dataset = 'se14r'
-# dataset = 'se14l'
+dataset = 'se14l'
 
 if dataset == 'se15r':
     # rule_model_file = os.path.join(config.DATA_DIR_SE15, 'model-data/pretrain/yelpr9-rest-part0_04.ckpt')
@@ -111,8 +111,9 @@ elif dataset == 'se14r':
     rule_model_file = os.path.join(config.DATA_DIR_SE14, 'model-data/pretrain/yelpr9-rest-part0_04.ckpt')
     word_vecs_file = os.path.join(config.DATA_DIR_SE14, 'model-data/yelp-w2v-sg-100-n10-i30-w5.pkl')
 else:
-    rule_model_file = os.path.join(config.DATA_DIR_SE14, 'model-data/pretrain/amazon-100.ckpt')
-    word_vecs_file = os.path.join(config.DATA_DIR_SE14, 'model-data/amazon-wv-100-sg-n10-w8-i30.pkl')
+    rule_model_file = os.path.join(config.DATA_DIR_SE14, 'model-data/pretrain/amazon-300d-100h-twv.ckpt')
+    word_vecs_file = os.path.join(config.DATA_DIR_SE14, 'model-data/amazon-wv-300-sg-n10-w8-i30.pkl')
+    # word_vecs_file = os.path.join(config.DATA_DIR_SE14, 'model-data/amazon-wv-100-sg-n10-w8-i30.pkl')
 
 dataset_files = config.DATA_FILES[dataset]
 auto_labeled_data_files = config.DATA_FILES['restaurants-yelp']
