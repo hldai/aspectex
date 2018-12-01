@@ -181,8 +181,8 @@ DATA_FILES = {
         'pos_tags_file': join(RES_DIR, 'yelp/eng-part/yelp-rest-sents-r9-tok-eng-part0_04-pos.txt'),
     },
     'laptops-amazon': {
-        'sent_texts_file': 'd:/data/amazon/laptops-reivews-sent-text.txt',
-        'dep_tags_file': 'd:/data/amazon/laptops-rule-dep.txt',
-        'pos_tags_file': 'd:/data/amazon/laptops-rule-pos.txt',
+        'sent_texts_file': join(RES_DIR, 'amazon/laptops-reivews-sent-text.txt'),
+        'dep_tags_file': join(RES_DIR, 'amazon/laptops-rule-dep.txt'),
+        'pos_tags_file': join(RES_DIR, 'amazon/laptops-rule-pos.txt'),
     }
 }

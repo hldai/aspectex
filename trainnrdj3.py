@@ -13,7 +13,7 @@ import logging
 
 def __pre_train_nrdj(word_vecs_file, tok_texts_file, aspect_terms_file, opinion_terms_file,
                      dst_model_file, task, train_word_embeddings=False, load_model_file=None):
-    init_logging('log/nrdj-pre-{}-{}.log'.format(utils.get_machine_name(), str_today), mode='a', to_stdout=True)
+    init_logging('log/nrdj3-pre-{}-{}.log'.format(utils.get_machine_name(), str_today), mode='a', to_stdout=True)
 
     # n_train = 1000
     n_train = -1
