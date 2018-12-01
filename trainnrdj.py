@@ -94,7 +94,7 @@ str_today = datetime.date.today().strftime('%y-%m-%d')
 
 hidden_size_lstm = 100
 n_epochs = 200
-train_word_embeddings=True
+train_word_embeddings = True
 
 dataset = 'se15r'
 # dataset = 'se14r'
@@ -103,8 +103,10 @@ dataset = 'se15r'
 if dataset == 'se15r':
     # rule_model_file = os.path.join(config.DATA_DIR_SE15, 'model-data/pretrain/yelpr9-rest-part0_04.ckpt')
     # word_vecs_file = os.path.join(config.DATA_DIR_SE15, 'model-data/yelp-w2v-sg-100-n10-i30-w5.pkl')
-    rule_model_file = os.path.join(config.DATA_DIR_SE15, 'model-data/pretrain/yelpr9-rest-part0_04-tmp.ckpt')
-    word_vecs_file = os.path.join(config.DATA_DIR_SE15, 'model-data/yelp-w2v-sg-100-n10-i30-w5.pkl')
+    # rule_model_file = os.path.join(config.DATA_DIR_SE15, 'model-data/pretrain/yelpr9-rest-part0_04-tmp.ckpt')
+    # word_vecs_file = os.path.join(config.DATA_DIR_SE15, 'model-data/yelp-w2v-sg-100-n10-i30-w5.pkl')
+    rule_model_file = os.path.join(config.DATA_DIR_SE15, 'model-data/pretrain/yelpr9-rest-part0_04-300d-100h-twv.ckpt')
+    word_vecs_file = os.path.join(config.DATA_DIR_SE15, 'model-data/yelp-w2v-sg-300-n10-i30-w5.pkl')
 elif dataset == 'se14r':
     rule_model_file = os.path.join(config.DATA_DIR_SE14, 'model-data/pretrain/yelpr9-rest-part0_04.ckpt')
     word_vecs_file = os.path.join(config.DATA_DIR_SE14, 'model-data/yelp-w2v-sg-100-n10-i30-w5.pkl')
@@ -119,11 +121,11 @@ if dataset == 'se14l':
 
 # __pre_train_nrdj(word_vecs_file, pre_tok_texts_file, pre_aspect_terms_file,
 #                  pre_opinion_terms_file, rule_model_file, 'both', load_model_file=rule_model_file)
-__pre_train_nrdj(
-    word_vecs_file, auto_labeled_data_files['sent_texts_file'],
-    dataset_files['rule_aspect_result_file'], dataset_files['rule_opinion_result_file'], rule_model_file, 'both',
-    train_word_embeddings=train_word_embeddings
-)
-# __train_nrdj(word_vecs_file, dataset_files['train_tok_texts_file'], dataset_files['train_sents_file'],
-#              dataset_files['train_valid_split_file'], dataset_files['test_tok_texts_file'],
-#              dataset_files['test_sents_file'], rule_model_file, 'both')
+# __pre_train_nrdj(
+#     word_vecs_file, auto_labeled_data_files['sent_texts_file'],
+#     dataset_files['rule_aspect_result_file'], dataset_files['rule_opinion_result_file'], rule_model_file, 'both',
+#     train_word_embeddings=train_word_embeddings
+# )
+__train_nrdj(word_vecs_file, dataset_files['train_tok_texts_file'], dataset_files['train_sents_file'],
+             dataset_files['train_valid_split_file'], dataset_files['test_tok_texts_file'],
+             dataset_files['test_sents_file'], rule_model_file, 'both')
