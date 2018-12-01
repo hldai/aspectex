@@ -2,6 +2,7 @@ import datetime
 import pickle
 from utils.loggingutils import init_logging
 from utils import datautils
+import os
 import config
 from models.lstmcrf import LSTMCRF
 
@@ -46,49 +47,23 @@ def __train_lstmcrf(word_vecs_file, train_tok_texts_file, train_sents_file, trai
 
 str_today = datetime.date.today().strftime('%y-%m-%d')
 
-dm = 'semeval15'
-# dm = 'semeval14'
-dataset_name = 'restaurant'
-# dataset_name = 'laptops'
 hidden_size_lstm = 100
 n_epochs = 200
 
-if dataset_name == 'laptops':
-    # word_vecs_file = config.SE14_LAPTOP_GLOVE_WORD_VEC_FILE
-    word_vecs_file = config.SE14_LAPTOP_AMAZON_WORD_VEC_FILE
-    pre_tok_texts_file = config.AMAZON_TOK_TEXTS_FILE
-    pre_aspect_terms_file = config.AMAZON_RM_TERMS_FILE
-    pre_opinion_terms_file = config.AMAZON_TERMS_TRUE4_FILE
+# dataset = 'se15r'
+# dataset = 'se14r'
+dataset = 'se14l'
 
-    train_valid_split_file = config.SE14_LAPTOP_TRAIN_VALID_SPLIT_FILE
-    train_tok_texts_file = config.SE14_LAPTOP_TRAIN_TOK_TEXTS_FILE
-    train_sents_file = config.SE14_LAPTOP_TRAIN_SENTS_FILE
-    test_tok_texts_file = config.SE14_LAPTOP_TEST_TOK_TEXTS_FILE
-    test_sents_file = config.SE14_LAPTOP_TEST_SENTS_FILE
+if dataset == 'se14l':
+    # word_vecs_file = os.path.join(config.DATA_DIR_SE14, 'model-data/amazon-wv-300-sg-n10-w8-i30.pkl')
+    word_vecs_file = os.path.join(config.DATA_DIR_SE14, 'model-data/amazon-wv-300-sg-n10-w8-i30.pkl')
+    # word_vecs_file = os.path.join(config.DATA_DIR_SE14, 'model-data/laptops-amazon-word-vecs.pkl')
+elif dataset == 'se14r':
+    word_vecs_file = os.path.join(config.DATA_DIR_SE14, 'model-data/yelp-w2v-sg-100-n10-i30-w5.pkl')
 else:
-    # word_vecs_file = config.SE14_REST_GLOVE_WORD_VEC_FILE
-    # pre_aspect_terms_file = 'd:/data/aspect/semeval14/restaurants/yelp-aspect-rule-result-r.txt'
-    # aspect_terms_file = 'd:/data/aspect/semeval14/restaurant/yelp-aspect-rule-result-r1.txt'
-    pre_aspect_terms_file = 'd:/data/aspect/{}/restaurants/yelp-aspect-rm-rule-result.txt'.format(dm)
-    pre_opinion_terms_file = 'd:/data/aspect/{}/restaurants/yelp-opinion-rule-result.txt'.format(dm)
-    pre_tok_texts_file = 'd:/data/res/yelp-review-eng-tok-sents-round-9.txt'
-    # rule_model_file = 'd:/data/aspect/semeval14/tf-model/drest/yelp-nrdj.ckpl'
+    word_vecs_file = os.path.join(config.DATA_DIR_SE15, 'model-data/yelp-w2v-sg-100-n10-i30-w5.pkl')
 
-    if dm == 'semeval14':
-        train_valid_split_file = config.SE14_REST_TRAIN_VALID_SPLIT_FILE
-        train_tok_texts_file = config.SE14_REST_TRAIN_TOK_TEXTS_FILE
-        train_sents_file = config.SE14_REST_TRAIN_SENTS_FILE
-        test_tok_texts_file = config.SE14_REST_TEST_TOK_TEXTS_FILE
-        test_sents_file = config.SE14_REST_TEST_SENTS_FILE
-        word_vecs_file = config.SE14_REST_YELP_WORD_VEC_FILE
-    else:
-        train_valid_split_file = config.SE15_REST_TRAIN_VALID_SPLIT_FILE
-        train_tok_texts_file = config.SE15_REST_TRAIN_TOK_TEXTS_FILE
-        train_sents_file = config.SE15_REST_TRAIN_SENTS_FILE
-        test_tok_texts_file = config.SE15_REST_TEST_TOK_TEXTS_FILE
-        test_sents_file = config.SE15_REST_TEST_SENTS_FILE
-        word_vecs_file = config.SE15_REST_YELP_WORD_VEC_FILE
-
-
-__train_lstmcrf(word_vecs_file, train_tok_texts_file, train_sents_file, train_valid_split_file, test_tok_texts_file,
-                test_sents_file, 'both')
+dataset_files = config.DATA_FILES[dataset]
+__train_lstmcrf(word_vecs_file, dataset_files['train_tok_texts_file'], dataset_files['train_sents_file'],
+                dataset_files['train_valid_split_file'], dataset_files['test_tok_texts_file'],
+                dataset_files['test_sents_file'], 'both')

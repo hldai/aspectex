@@ -192,36 +192,6 @@ def __rncrf_sample_to_json():
     utils.save_json_objs(sents, dst_file)
 
 
-def __gen_judge_train_data():
-    judge_train_sents_file = 'd:/data/aspect/semeval14/judge_data/laptops_jtrain_sents.json'
-    judge_train_dep_file = 'd:/data/aspect/semeval14/judge_data/laptops_jtrain_dep.txt'
-    judge_test_sents_file = 'd:/data/aspect/semeval14/judge_data/laptops_jtest_sents.json'
-    judge_test_dep_file = 'd:/data/aspect/semeval14/judge_data/laptops_jtest_dep.txt'
-    judge_test_text_file = 'd:/data/aspect/semeval14/judge_data/laptops_jtest_texts.txt'
-
-    sents = utils.load_json_objs(config.SE14_LAPTOP_TRAIN_SENTS_FILE)
-    dep_tags_list = utils.load_dep_tags_list(config.SE14_LAPTOP_TRAIN_DEP_PARSE_FILE, space_sep=False)
-    n_sents = len(sents)
-    n_train = 2000
-    assert n_sents == len(dep_tags_list)
-
-    perm = np.random.permutation(n_sents)
-    idxs_train, idxs_test = perm[:n_train], perm[n_train:]
-    sents_train = [sents[idx] for idx in idxs_train]
-    sents_test = [sents[idx] for idx in idxs_test]
-    dep_tags_train = [dep_tags_list[idx] for idx in idxs_train]
-    dep_tags_test = [dep_tags_list[idx] for idx in idxs_test]
-
-    utils.save_json_objs(sents_train, judge_train_sents_file)
-    utils.save_json_objs(sents_test, judge_test_sents_file)
-    utils.save_dep_tags(dep_tags_train, judge_train_dep_file, False)
-    utils.save_dep_tags(dep_tags_test, judge_test_dep_file, False)
-
-    with open(judge_test_text_file, 'w', encoding='utf-8', newline='\n') as fout:
-        for sent in sents_test:
-            fout.write('{}\n'.format(sent['text']))
-
-
 def __split_to_sents(txt_file, dst_file):
     import nltk
     f = open(txt_file, encoding='utf-8')
@@ -365,8 +335,10 @@ if env == 'Windows':
     # txt_amazon_word_vecs_file = 'd:/data/amazon/elec-w2v-nr-100-sg-n10-w8-i30.txt'
     # txt_amazon_word_vecs_file = 'd:/data/amazon/elec-w2v-100-sg-n10-w8-i30.txt'
     # se14_laptop_wv_file = 'd:/data/aspect/semeval14/model-data/amazon-wv-100-sg-n10-w8-i30.pkl'
-    txt_amazon_word_vecs_file = 'd:/data/amazon/elec-w2v-nr-100-sg-n10-w8-i30.txt'
-    se14_laptop_wv_file = 'd:/data/aspect/semeval14/model-data/amazon-wv-nr-100-sg-n10-w8-i30.pkl'
+    # txt_amazon_word_vecs_file = 'd:/data/amazon/elec-w2v-nr-100-sg-n10-w8-i30.txt'
+    # se14_laptop_wv_file = 'd:/data/aspect/semeval14/model-data/amazon-wv-nr-100-sg-n10-w8-i30.pkl'
+    txt_amazon_word_vecs_file = 'd:/data/res/amazon/elec-w2v-300-sg-n10-w8-i30.txt'
+    se14_laptop_wv_file = 'd:/data/aspect/semeval14/model-data/amazon-wv-300-sg-n10-w8-i30.pkl'
 else:
     txt_yelp_word_vecs_file = '/home/hldai/data/yelp/yelp-word-vecs-sg-100-n10-i20-w5.txt'
     se14_rest_wv_file = '/home/hldai/data/aspect/semeval14/model-data/yelp-word-vecs-sg-100-n10-i20-w5.pkl'
@@ -406,16 +378,6 @@ rest15_train_word_cnts_file = 'd:/data/aspect/semeval15/restaurants/word_cnts.tx
 # __process_raw_sem_eval_data(
 #     config.SE14_LAPTOP_TEST_XML_FILE, config.SE14_LAPTOP_TEST_OPINIONS_FILE,
 #     config.SE14_LAPTOP_TEST_SENTS_FILE, config.SE14_LAPTOP_TEST_SENT_TEXTS_FILE, __get_sent_objs_se14)
-# __gen_judge_train_data()
-
-# __trim_word_vecs_file(
-#     [config.SE14_LAPTOP_TRAIN_TOK_TEXTS_FILE, config.SE14_LAPTOP_TEST_TOK_TEXTS_FILE],
-#     config.GLOVE_WORD_VEC_FILE, config.SE14_LAPTOP_GLOVE_WORD_VEC_FILE
-# )
-# utils.trim_word_vecs_file(
-#     [config.SE14_LAPTOP_TRAIN_TOK_TEXTS_FILE, config.SE14_LAPTOP_TEST_TOK_TEXTS_FILE],
-#     txt_amazon_word_vecs_file, se14_laptop_wv_file
-# )
 
 # __process_raw_sem_eval_data(
 #     config.SE14_REST_TRAIN_XML_FILE, config.SE14_REST_TRAIN_OPINIONS_FILE,
@@ -436,6 +398,10 @@ rest15_train_word_cnts_file = 'd:/data/aspect/semeval15/restaurants/word_cnts.tx
 #     '/home/hldai/data/amazon/elec-w2v-nr-100-sg-n10-w8-i30.txt'
 # )
 
+# utils.trim_word_vecs_file(
+#     [config.DATA_FILES['se14l']['train_tok_texts_file'], config.DATA_FILES['se14l']['test_tok_texts_file']],
+#     txt_amazon_word_vecs_file, se14_laptop_wv_file
+# )
 # utils.trim_word_vecs_file(
 #     [config.SE14_REST_TRAIN_TOK_TEXTS_FILE, config.SE14_REST_TEST_TOK_TEXTS_FILE],
 #     config.GLOVE_WORD_VEC_FILE, config.SE14_REST_GLOVE_WORD_VEC_FILE
