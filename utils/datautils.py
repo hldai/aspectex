@@ -199,6 +199,26 @@ def get_data_amazon_ao(vocab, aspect_terms_file, opinion_terms_file, tok_texts_f
     return train_data, valid_data
 
 
+def read_tokens_file(tokens_file):
+    token_seqs = list()
+    with open(tokens_file, encoding='utf-8') as f:
+        for line in f:
+            token_seqs.append(line.strip().split(' '))
+    return token_seqs
+
+
+def gen_train_valid_sample_idxs_file(tok_texts_file, n_valid_samples, output_file):
+    tok_texts = utils.read_lines(tok_texts_file)
+    n_samples = len(tok_texts)
+    np.random.seed(3719)
+    perm = np.random.permutation(n_samples)
+    n_train = n_samples - n_valid_samples
+    idxs_train, idxs_valid = perm[:n_train], perm[n_train:]
+    with open(output_file, 'w', encoding='utf-8') as fout:
+        fout.write('{}\n'.format(' '.join([str(idx) for idx in idxs_train])))
+        fout.write('{}\n'.format(' '.join([str(idx) for idx in idxs_valid])))
+
+
 def get_data_amazon(vocab, true_terms_file, tok_texts_file, task):
     terms_true_list = utils.load_json_objs(true_terms_file)
     tok_texts = utils.read_lines(tok_texts_file)

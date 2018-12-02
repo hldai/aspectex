@@ -3,11 +3,12 @@ import numpy as np
 import logging
 from utils import utils
 from utils.modelutils import evaluate_ao_extraction
-from utils.bldatautils import TrainDataBert, ValidDataBert
+from utils.bldatautils import TrainDataBert, ValidDataBert, ValidDataBertOL
+from models.robert import Robert
 
 
 class BertLSTMCRF:
-    def __init__(self, n_tags, word_embed_dim, hidden_size_lstm=300, batch_size=5,
+    def __init__(self, n_tags, word_embed_dim, learning_rate=0.001, hidden_size_lstm=300, batch_size=5,
                  lr_method='adam', use_crf=True, manual_feat_len=0, model_file=None):
         self.n_tags = n_tags
         self.hidden_size_lstm = hidden_size_lstm
@@ -15,6 +16,7 @@ class BertLSTMCRF:
         self.lr_method = lr_method
         self.saver = None
         self.manual_feat_len = manual_feat_len
+        self.init_learning_rate = learning_rate
 
         self.use_crf = use_crf
 
@@ -122,7 +124,6 @@ class BertLSTMCRF:
 
     def get_feed_dict(self, word_embeddings, label_seqs=None, lr=None, dropout=None):
         word_embed_seqs, sequence_lengths = utils.pad_embed_sequences(word_embeddings, self.word_embed_pad)
-        # print(word_embed_seqs)
         word_embed_seqs = np.array(word_embed_seqs, np.float32)
         # print(word_embed_seqs.shape)
 
@@ -165,6 +166,109 @@ class BertLSTMCRF:
         _, train_loss = self.sess.run(
             [self.train_op, self.loss], feed_dict=feed_dict)
         return train_loss
+
+    def get_feed_dict_ol(self, embed_arr, seq_lens, lr, dropout, label_seqs=None):
+        feed = {
+            self.word_embeddings_input: embed_arr,
+            self.sequence_lengths: seq_lens
+        }
+
+        if label_seqs is not None:
+            feed[self.labels] = label_seqs
+
+        feed[self.lr] = lr
+        feed[self.dropout] = dropout
+        return feed
+
+    def __evaluate_ol(self, tfrec_dataset_valid, token_seqs, at_true_list, ot_true_list, robert_model):
+        next_valid_example = tfrec_dataset_valid.make_one_shot_iterator().get_next()
+        all_preds = list()
+        idx = 0
+        while True:
+            try:
+                features = self.sess.run(next_valid_example)
+                all_layers = self.sess.run(robert_model.all_layers, feed_dict={
+                    robert_model.input_ids: features["input_ids"], robert_model.input_mask: features["input_mask"],
+                    robert_model.segment_ids: features["segment_ids"], robert_model.label_ids: features["label_ids"],
+                    robert_model.hidden_dropout: 1.0, robert_model.attention_dropout: 1.0
+                })
+                seq_embeds = np.concatenate(
+                    [all_layers[-1], all_layers[-2], all_layers[-3], all_layers[-4]], axis=-1)
+                idx += 1
+                seq_lens = np.squeeze(features['seq_len'])
+                max_seq_len = np.max(seq_lens)
+                embed_arr = seq_embeds[:, :max_seq_len, :]
+
+                preds = self.predict_batch_ol(embed_arr, seq_lens)
+
+                for y_pred in preds:
+                    all_preds.append(y_pred[1:])
+            except tf.errors.OutOfRangeError:
+                break
+        assert len(all_preds) == len(at_true_list)
+        token_seqs = [token_seq[1:len(token_seq) - 1] for token_seq in token_seqs]
+        (a_p, a_r, a_f1, o_p, o_r, o_f1
+         ) = utils.prf1_for_terms(all_preds, token_seqs, at_true_list, ot_true_list)
+        return a_p, a_r, a_f1, o_p, o_r, o_f1
+
+    def train_ol(self, robert_model: Robert, train_tfrec_file, valid_tfrec_file, test_tfrec_file, seq_length,
+                 n_train, data_valid: ValidDataBertOL, data_test: ValidDataBertOL,
+                 n_epochs=10, lr=0.001, dropout=0.5):
+        from models import robert
+
+        logging.info('n_epochs={}, lr={}, dropout={}'.format(n_epochs, lr, dropout))
+
+        n_batches = (n_train + self.batch_size - 1) // self.batch_size
+
+        dataset_train = robert.get_dataset(train_tfrec_file, self.batch_size, True, seq_length)
+        dataset_valid = robert.get_dataset(valid_tfrec_file, 8, False, seq_length)
+        dataset_test = robert.get_dataset(test_tfrec_file, 8, False, seq_length)
+        next_train_example = dataset_train.make_one_shot_iterator().get_next()
+        best_f1_sum = 0
+        for epoch in range(n_epochs):
+            losses = list()
+            for i in range(n_batches):
+                features = self.sess.run(next_train_example)
+                all_layers = self.sess.run(robert_model.all_layers, feed_dict={
+                    robert_model.input_ids: features["input_ids"], robert_model.input_mask: features["input_mask"],
+                    robert_model.segment_ids: features["segment_ids"], robert_model.label_ids: features["label_ids"],
+                    robert_model.hidden_dropout: 1.0, robert_model.attention_dropout: 1.0
+                })
+                seq_embeds = np.concatenate(
+                    [all_layers[-1], all_layers[-2], all_layers[-3], all_layers[-4]], axis=-1)
+                # print(all_layers[-1].shape)
+                # print(seq_embeds.shape)
+                seq_lens = np.squeeze(features['seq_len'])
+                # print(seq_lens)
+                # print(all_layers[-1])
+                # print(seq_embeds)
+                # exit()
+                max_seq_len = np.max(seq_lens)
+                embed_arr = seq_embeds[:, :max_seq_len, :]
+                label_seqs = features["label_ids"][:, :max_seq_len]
+                feed_dict = self.get_feed_dict_ol(embed_arr, seq_lens, lr, dropout, label_seqs)
+                _, train_loss = self.sess.run(
+                    [self.train_op, self.loss], feed_dict=feed_dict)
+                losses.append(train_loss)
+            loss = sum(losses)
+
+            a_p_v, a_r_v, a_f1_v, o_p_v, o_r_v, o_f1_v = self.__evaluate_ol(
+                dataset_valid, data_valid.token_seqs, data_valid.aspects_true_list,
+                data_valid.opinions_true_list, robert_model)
+            logging.info(
+                'iter {}, loss={:.4f}, p={:.4f}, r={:.4f}, f1={:.4f};'
+                ' p={:.4f}, r={:.4f}, f1={:.4f}; best_f1_sum={:.4f}'.format(
+                    epoch, loss, a_p_v, a_r_v, a_f1_v, o_p_v, o_r_v,
+                    o_f1_v, best_f1_sum))
+            if a_f1_v + o_f1_v > best_f1_sum:
+                best_f1_sum = a_f1_v + o_f1_v
+                a_p_t, a_r_t, a_f1_t, o_p_t, o_r_t, o_f1_t = self.__evaluate_ol(
+                    dataset_test, data_test.token_seqs, data_test.aspects_true_list,
+                    data_test.opinions_true_list, robert_model)
+                logging.info(
+                    'Test, p={:.4f}, r={:.4f}, a_f1={:.4f};'
+                    ' p={:.4f}, r={:.4f}, o_f1={:.4f}'.format(
+                        a_p_t, a_r_t, a_f1_t, o_p_t, o_r_t, o_f1_t, best_f1_sum))
 
     def train(self, data_train: TrainDataBert, data_valid: ValidDataBert, data_test: ValidDataBert,
               n_epochs=10, lr=0.001, dropout=0.5, save_file=None, dst_aspects_file=None, dst_opinions_file=None):
@@ -223,6 +327,23 @@ class BertLSTMCRF:
             label_seq, lens = self.predict_batch([word_idxs])
             label_seq_list.append(label_seq[0])
         return label_seq_list
+
+    def predict_batch_ol(self, token_embed_arr, seq_lens):
+        fd = self.get_feed_dict_ol(token_embed_arr, seq_lens, lr=None, dropout=1.0)
+
+        # get tag scores and transition params of CRF
+        viterbi_sequences = []
+        logits, trans_params = self.sess.run(
+                [self.logits, self.trans_params], feed_dict=fd)
+
+        # iterate over the sentences because no batching in vitervi_decode
+        for logit, sequence_length in zip(logits, seq_lens):
+            logit = logit[:sequence_length]  # keep only the valid steps
+            viterbi_seq, viterbi_score = tf.contrib.crf.viterbi_decode(
+                    logit, trans_params)
+            viterbi_sequences += [viterbi_seq]
+
+        return viterbi_sequences
 
     def predict_batch(self, token_embed_seqs):
         fd, sequence_lengths = self.get_feed_dict(token_embed_seqs, dropout=1.0)

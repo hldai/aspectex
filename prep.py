@@ -451,3 +451,7 @@ rest15_train_word_cnts_file = 'd:/data/aspect/semeval15/restaurants/word_cnts.tx
 
 # __split_to_sents('/home/hldai/data/amazon/electronics_5_text.txt',
 #                  '/home/hldai/data/amazon/electronics_5_tok_sent_texts.txt')
+
+# datautils.gen_train_valid_sample_idxs_file(
+#     config.DATA_FILES['restaurants-yelp']['sent_texts_file'], 2000,
+#     config.DATA_FILES['restaurants-yelp']['train_valid_idxs_file'])

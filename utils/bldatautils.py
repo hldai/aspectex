@@ -7,6 +7,8 @@ TrainDataBert = namedtuple("TrainDataBert", ["label_seqs", "word_embed_seqs"])
 ValidDataBert = namedtuple("ValidDataBert", [
     "label_seqs", "word_embed_seqs", "tok_texts", "aspects_true_list", "opinions_true_list"])
 
+ValidDataBertOL = namedtuple("ValidDataBertOL", ["token_seqs", "aspects_true_list", "opinions_true_list"])
+
 
 def __load_bert_embed_data(bert_embed_file):
     f_bert = open(bert_embed_file, encoding='utf-8')
@@ -25,7 +27,7 @@ def __load_bert_embed_data(bert_embed_file):
             layer_feat_tups = list()
             for layer in layers:
                 layer_feat_tups.append((layer['index'], layer['values']))
-            layer_feat_tups.sort(key=lambda x: x[0])
+            layer_feat_tups.sort(key=lambda x: -x[0])
             full_feat_vec = list()
             for idx, feat_vec in layer_feat_tups:
                 full_feat_vec += feat_vec
@@ -78,6 +80,39 @@ def load_valid_data_bert(bert_embed_file, sents_file):
     #     tok_texts.append(tok_text)
     # print(cnt_miss, 'missed')
     # return ValidDataBert(label_seqs, token_embed_seqs, tok_texts, aspect_terms_list, opinion_terms_list)
+
+
+def load_test_data_bert_ol(sents_file, bert_tokens_file):
+    aspect_terms_list, opinion_terms_list = datautils.load_terms_list(sents_file, True)
+    token_seqs = datautils.read_tokens_file(bert_tokens_file)
+    return ValidDataBertOL(token_seqs, aspect_terms_list, opinion_terms_list)
+
+
+def load_train_data_bert_ol(sents_file, train_valid_split_file, valid_bert_tokens_file):
+    from utils.utils import read_lines
+
+    aspect_terms_list, opinion_terms_list = datautils.load_terms_list(sents_file, True)
+
+    tvs_line = read_lines(train_valid_split_file)[0]
+    tvs_arr = [int(v) for v in tvs_line.split()]
+
+    # token_seqs_train = datautils.read_tokens_file(train_bert_tokens_file)
+    token_seqs_valid = datautils.read_tokens_file(valid_bert_tokens_file)
+
+    aspect_terms_list_train, aspect_terms_list_valid = list(), list()
+    opinion_terms_list_train, opinion_terms_list_valid = list(), list()
+
+    assert len(tvs_arr) == len(aspect_terms_list)
+    for i, tvs_label in enumerate(tvs_arr):
+        if tvs_label == 0:
+            aspect_terms_list_train.append(aspect_terms_list[i])
+            opinion_terms_list_train.append(opinion_terms_list[i])
+        else:
+            aspect_terms_list_valid.append(aspect_terms_list[i])
+            opinion_terms_list_valid.append(opinion_terms_list[i])
+
+    data_valid = ValidDataBertOL(token_seqs_valid, aspect_terms_list_valid, opinion_terms_list_valid)
+    return len(aspect_terms_list_train), data_valid
 
 
 def load_train_data_bert(bert_embed_file, sents_file, train_valid_split_file):

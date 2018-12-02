@@ -12,10 +12,12 @@ GNEWS_LIGHT_WORD_VEC_FILE = 'd:/data/res/GoogleNews-light-vectors-negative300.tx
 env = 'Windows' if platform().startswith('Windows') else 'Linux'
 
 if env == 'Windows':
+    BERT_BASE_DIR = 'd:/data/res/bert'
     RES_DIR = 'd:/data/res/'
     DATA_DIR = 'd:/data/aspect/'
     AMAZON_DATA_DIR = 'd:/data/amazon'
 else:
+    BERT_BASE_DIR = '/home/hldai/data/bert'
     RES_DIR = '/home/hldai/data/res/'
     DATA_DIR = '/home/hldai/data/aspect/'
     AMAZON_DATA_DIR = '/home/hldai/data/amazon'
@@ -26,7 +28,7 @@ GLOVE_WORD_VEC_FILE = join(RES_DIR, 'glove.6B/glove.6B.100d.txt')
 
 DATA_DIR_HL04 = join(DATA_DIR, 'huliu04')
 DATA_DIR_SE14 = join(DATA_DIR, 'semeval14')
-DATA_DIR_SE15 = join(DATA_DIR, 'semeval15')
+SE15_DIR = join(DATA_DIR, 'semeval15')
 
 # SE14_LAPTOP_GLOVE_WORD_VEC_FILE = 'd:/data/aspect/semeval14/model-data/glove-word-vecs.pkl'
 SE14_LAPTOP_GLOVE_WORD_VEC_FILE = join(DATA_DIR_SE14, 'model-data/laptops-glove-word-vecs.pkl')
@@ -78,20 +80,20 @@ SE14_REST_TRAIN_VALID_SPLIT_FILE = join(DATA_DIR_SE14, 'restaurants/restaurants_
 
 SE14_REST_GLOVE_WORD_VEC_FILE = join(DATA_DIR_SE14, 'model-data/restaurants_word_vecs.pkl')
 SE14_REST_YELP_WORD_VEC_FILE = join(DATA_DIR_SE14, 'model-data/restaurants_yelp_word_vecs.pkl')
-SE15_REST_YELP_WORD_VEC_FILE = join(DATA_DIR_SE15, 'model-data/restaurants_yelp_word_vecs.pkl')
+SE15_REST_YELP_WORD_VEC_FILE = join(SE15_DIR, 'model-data/restaurants_yelp_word_vecs.pkl')
 
-SE15_REST_TRAIN_XML_FILE = join(DATA_DIR_SE15, 'restaurants/ABSA-15_Restaurants_Train_Final.xml')
-SE15_REST_TRAIN_SENTS_FILE = join(DATA_DIR_SE15, 'restaurants/restaurants_train_sents.json')
-SE15_REST_TRAIN_SENT_TEXTS_FILE = join(DATA_DIR_SE15, 'restaurants/restaurants_train_texts.txt')
-SE15_REST_TRAIN_TOK_TEXTS_FILE = join(DATA_DIR_SE15, 'restaurants/restaurants_train_texts_tok.txt')
-SE15_REST_TRAIN_OPINIONS_FILE = join(DATA_DIR_SE15, 'restaurants/opinions_train.txt')
-SE15_REST_TRAIN_VALID_SPLIT_FILE = join(DATA_DIR_SE15, 'restaurants/restaurants_train_valid_split.txt')
+SE15_REST_TRAIN_XML_FILE = join(SE15_DIR, 'restaurants/ABSA-15_Restaurants_Train_Final.xml')
+SE15_REST_TRAIN_SENTS_FILE = join(SE15_DIR, 'restaurants/restaurants_train_sents.json')
+SE15_REST_TRAIN_SENT_TEXTS_FILE = join(SE15_DIR, 'restaurants/restaurants_train_texts.txt')
+SE15_REST_TRAIN_TOK_TEXTS_FILE = join(SE15_DIR, 'restaurants/restaurants_train_texts_tok.txt')
+SE15_REST_TRAIN_OPINIONS_FILE = join(SE15_DIR, 'restaurants/opinions_train.txt')
+SE15_REST_TRAIN_VALID_SPLIT_FILE = join(SE15_DIR, 'restaurants/restaurants_train_valid_split.txt')
 
-SE15_REST_TEST_XML_FILE = join(DATA_DIR_SE15, 'restaurants/ABSA15_Restaurants_Test.xml')
-SE15_REST_TEST_SENTS_FILE = join(DATA_DIR_SE15, 'restaurants/restaurants_test_sents.json')
-SE15_REST_TEST_SENT_TEXTS_FILE = join(DATA_DIR_SE15, 'restaurants/restaurants_test_texts.txt')
-SE15_REST_TEST_TOK_TEXTS_FILE = join(DATA_DIR_SE15, 'restaurants/restaurants_test_texts_tok.txt')
-SE15_REST_TEST_OPINIONS_FILE = join(DATA_DIR_SE15, 'restaurants/opinions_test.txt')
+SE15_REST_TEST_XML_FILE = join(SE15_DIR, 'restaurants/ABSA15_Restaurants_Test.xml')
+SE15_REST_TEST_SENTS_FILE = join(SE15_DIR, 'restaurants/restaurants_test_sents.json')
+SE15_REST_TEST_SENT_TEXTS_FILE = join(SE15_DIR, 'restaurants/restaurants_test_texts.txt')
+SE15_REST_TEST_TOK_TEXTS_FILE = join(SE15_DIR, 'restaurants/restaurants_test_texts_tok.txt')
+SE15_REST_TEST_OPINIONS_FILE = join(SE15_DIR, 'restaurants/opinions_test.txt')
 
 AMAZON_TOK_TEXTS_FILE = join(AMAZON_DATA_DIR, 'laptops-reivews-sent-tok-text.txt')
 AMAZON_TERMS_TRUE1_FILE = join(AMAZON_DATA_DIR, 'laptops-rule-result1.txt')
@@ -148,24 +150,31 @@ SE14R_FILES = {
 }
 
 SE15R_FILES = {
-    'train_sents_file': join(DATA_DIR_SE15, 'restaurants/restaurants_train_sents.json'),
-    'test_sents_file': join(DATA_DIR_SE15, 'restaurants/restaurants_test_sents.json'),
-    'train_valid_split_file': join(DATA_DIR_SE15, 'restaurants/restaurants_train_valid_split.txt'),
-    'train_tok_texts_file': join(DATA_DIR_SE15, 'restaurants/restaurants_train_texts_tok.txt'),
-    'test_tok_texts_file': join(DATA_DIR_SE15, 'restaurants/restaurants_test_texts_tok.txt'),
-    'train_dep_tags_file': join(DATA_DIR_SE15, 'restaurants/restaurants-train-rule-dep.txt'),
-    'test_dep_tags_file': join(DATA_DIR_SE15, 'restaurants/restaurants-test-rule-dep.txt'),
-    'train_pos_tags_file': join(DATA_DIR_SE15, 'restaurants/restaurants-train-rule-pos.txt'),
-    'test_pos_tags_file': join(DATA_DIR_SE15, 'restaurants/restaurants-test-rule-pos.txt'),
-    'word_vecs_file': join(DATA_DIR_SE15, 'model-data/yelp-w2v-sg-100-n10-i30-w5.pkl'),
-    'aspect_term_filter_vocab_file': join(DATA_DIR_SE15, 'restaurants/aspect_filter_vocab_full.txt'),
-    'opinion_term_filter_vocab_file': join(DATA_DIR_SE15, 'restaurants/opinion_filter_vocab_full.txt'),
-    'aspect_term_hit_rate_file': join(DATA_DIR_SE15, 'restaurants/aspect-term-hit-rate.txt'),
-    'opinion_term_hit_rate_file': join(DATA_DIR_SE15, 'restaurants/opinion-term-hit-rate.txt'),
-    'aspect_rule_patterns_file': join(DATA_DIR_SE15, 'restaurants/aspect_mined_rule_patterns.txt'),
-    'opinion_rule_patterns_file': join(DATA_DIR_SE15, 'restaurants/opinion_mined_rule_patterns.txt'),
-    'rule_aspect_result_file': join(DATA_DIR_SE15, 'restaurants/yelpr9-rest-part0_04-aspect-rule-result.txt'),
-    'rule_opinion_result_file': join(DATA_DIR_SE15, 'restaurants/yelpr9-rest-part0_04-opinion-rule-result.txt')
+    'train_sents_file': join(SE15_DIR, 'restaurants/restaurants_train_sents.json'),
+    'test_sents_file': join(SE15_DIR, 'restaurants/restaurants_test_sents.json'),
+    'train_valid_split_file': join(SE15_DIR, 'restaurants/restaurants_train_valid_split.txt'),
+    'train_tok_texts_file': join(SE15_DIR, 'restaurants/restaurants_train_texts_tok.txt'),
+    'test_tok_texts_file': join(SE15_DIR, 'restaurants/restaurants_test_texts_tok.txt'),
+    'train_dep_tags_file': join(SE15_DIR, 'restaurants/restaurants-train-rule-dep.txt'),
+    'test_dep_tags_file': join(SE15_DIR, 'restaurants/restaurants-test-rule-dep.txt'),
+    'train_pos_tags_file': join(SE15_DIR, 'restaurants/restaurants-train-rule-pos.txt'),
+    'test_pos_tags_file': join(SE15_DIR, 'restaurants/restaurants-test-rule-pos.txt'),
+    'word_vecs_file': join(SE15_DIR, 'model-data/yelp-w2v-sg-100-n10-i30-w5.pkl'),
+    'aspect_term_filter_vocab_file': join(SE15_DIR, 'restaurants/aspect_filter_vocab_full.txt'),
+    'opinion_term_filter_vocab_file': join(SE15_DIR, 'restaurants/opinion_filter_vocab_full.txt'),
+    'aspect_term_hit_rate_file': join(SE15_DIR, 'restaurants/aspect-term-hit-rate.txt'),
+    'opinion_term_hit_rate_file': join(SE15_DIR, 'restaurants/opinion-term-hit-rate.txt'),
+    'aspect_rule_patterns_file': join(SE15_DIR, 'restaurants/aspect_mined_rule_patterns.txt'),
+    'opinion_rule_patterns_file': join(SE15_DIR, 'restaurants/opinion_mined_rule_patterns.txt'),
+    'rule_aspect_result_file': join(SE15_DIR, 'restaurants/yelpr9-rest-part0_04-aspect-rule-result.txt'),
+    'rule_opinion_result_file': join(SE15_DIR, 'restaurants/yelpr9-rest-part0_04-opinion-rule-result.txt'),
+    'train_tfrecord_file': join(SE15_DIR, 'bert-data/se15r-train.tfrecord'),
+    'valid_tfrecord_file': join(SE15_DIR, 'bert-data/se15r-valid.tfrecord'),
+    'test_tfrecord_file': join(SE15_DIR, 'bert-data/se15r-test.tfrecord'),
+    'bert_train_tokens_file': join(SE15_DIR, 'bert-data/se15r-train-tokens.txt'),
+    'bert_valid_tokens_file': join(SE15_DIR, 'bert-data/se15r-valid-tokens.txt'),
+    'bert_test_tokens_file': join(SE15_DIR, 'bert-data/se15r-test-tokens.txt'),
+    'bert_init_checkpoint': join(BERT_BASE_DIR, 'yelp/model.ckpt-10000'),
 }
 
 DATA_FILES = {
@@ -177,12 +186,19 @@ DATA_FILES = {
         # 'dep_tags_file': join(RES_DIR, 'yelp/yelp-review-round-9-dep.txt'),
         # 'pos_tags_file': join(RES_DIR, 'yelp/yelp-review-round-9-pos.txt'),
         'sent_texts_file': join(RES_DIR, 'yelp/eng-part/yelp-rest-sents-r9-tok-eng-part0_04.txt'),
+        'train_valid_idxs_file': join(RES_DIR, 'yelp/eng-part/yelp-rest-sents-r9-tok-eng-part0_04-tvidxs.txt'),
         'dep_tags_file': join(RES_DIR, 'yelp/eng-part/yelp-rest-sents-r9-tok-eng-part0_04-dep.txt'),
         'pos_tags_file': join(RES_DIR, 'yelp/eng-part/yelp-rest-sents-r9-tok-eng-part0_04-pos.txt'),
     },
     'laptops-amazon': {
-        'sent_texts_file': join(RES_DIR, 'amazon/laptops-reivews-sent-text.txt'),
+        'sent_texts_file': join(RES_DIR, 'amazon/laptops-reivews-sent-tok-text.txt'),
+        'train_valid_idxs_file': join(RES_DIR, 'amazon/laptops-reivews-sent-tok-text-tvidxs.txt'),
         'dep_tags_file': join(RES_DIR, 'amazon/laptops-rule-dep.txt'),
         'pos_tags_file': join(RES_DIR, 'amazon/laptops-rule-pos.txt'),
     }
 }
+
+BERT_CONFIG_FILE = join(BERT_BASE_DIR, 'uncased_L-12_H-768_A-12/bert_config.json')
+BERT_VOCAB_FILE = join(BERT_BASE_DIR, 'uncased_L-12_H-768_A-12/vocab.txt')
+BERT_SEQ_LEN = 128
+BERT_EMBED_DIM = 3072
