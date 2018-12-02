@@ -115,18 +115,22 @@ def __pretrain_bertnrdj():
 
     dataset_files = config.DATA_FILES[dataset]
 
+    print('init robert ...')
     bert_config = bertmodel.BertConfig.from_json_file(config.BERT_CONFIG_FILE)
     robert_model = robert.Robert(
         bert_config, n_labels=n_labels, seq_length=config.BERT_SEQ_LEN, is_train=False,
         init_checkpoint=dataset_files['bert_init_checkpoint']
     )
+    print('done')
 
     yelp_tv_idxs_file = os.path.join(config.RES_DIR, 'yelp/eng-part/yelp-rest-sents-r9-tok-eng-part0_04-tvidxs.txt')
     amazon_tv_idxs_file = os.path.join(config.RES_DIR, 'amazon/laptops-reivews-sent-tok-text-tvidxs.txt')
     tv_idxs_file = amazon_tv_idxs_file if dataset == 'se14l' else yelp_tv_idxs_file
+    print('loading data ...')
     idxs_train, idxs_valid = datautils.load_train_valid_idxs(tv_idxs_file)
     valid_aspect_terms_list = __load_terms_list(idxs_valid, dataset_files['pretrain_aspect_terms_file'])
     valid_opinion_terms_list = __load_terms_list(idxs_valid, dataset_files['pretrain_opinion_terms_file'])
+    print('done')
 
     bertnrdj_model = BertNRDJ(n_labels, config.BERT_EMBED_DIM, hidden_size_lstm=500, batch_size=batch_size)
     bertnrdj_model.pretrain(
@@ -136,7 +140,7 @@ def __pretrain_bertnrdj():
         valid_opinion_tfrec_file=dataset_files['pretrain_valid_opinion_tfrec_file'],
         valid_tokens_file=dataset_files['pretrain_valid_aspect_token_file'], seq_length=seq_length,
         valid_aspect_terms_list=valid_aspect_terms_list, valid_opinion_terms_list=valid_opinion_terms_list,
-        n_steps=n_steps, batch_size=batch_size
+        n_steps=n_steps, batch_size=batch_size, save_file=dataset_files['pretrained_bertnrdj_file']
     )
 
 
@@ -162,7 +166,10 @@ def __train_bertnrdj():
         init_checkpoint=dataset_files['bert_init_checkpoint']
     )
 
-    lstmcrf = BertNRDJ(n_labels, config.BERT_EMBED_DIM, hidden_size_lstm=500, batch_size=5)
+    model_file = dataset_files['pretrained_bertnrdj_file']
+    # model_file = None
+    lstmcrf = BertNRDJ(n_labels, config.BERT_EMBED_DIM, hidden_size_lstm=500, batch_size=5,
+                       model_file=model_file)
     lstmcrf.train(
         robert_model=bm, train_tfrec_file=dataset_files['train_tfrecord_file'],
         valid_tfrec_file=dataset_files['valid_tfrecord_file'], test_tfrec_file=dataset_files['test_tfrecord_file'],
@@ -173,5 +180,5 @@ def __train_bertnrdj():
 if __name__ == '__main__':
     # __train_bert()
     # __train_bertlstm_ol()
-    __train_bertnrdj()
-    # __pretrain_bertnrdj()
+    __pretrain_bertnrdj()
+    # __train_bertnrdj()

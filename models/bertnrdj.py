@@ -72,7 +72,7 @@ class BertNRDJ:
 
         with tf.variable_scope("proj-src2"):
             self.W_src2 = tf.get_variable("W", dtype=tf.float32, shape=[
-                2 * self.hidden_size_lstm, 3])
+                2 * self.hidden_size_lstm, self.n_tags_src])
             self.b_src2 = tf.get_variable(
                 "b", shape=[self.n_tags_src], dtype=tf.float32, initializer=tf.zeros_initializer())
 
@@ -291,8 +291,11 @@ class BertNRDJ:
             self, robert_model: Robert, train_aspect_tfrec_file, valid_aspect_tfrec_file,
             train_opinion_tfrec_file, valid_opinion_tfrec_file, valid_tokens_file,
             seq_length, valid_aspect_terms_list, valid_opinion_terms_list, n_steps, batch_size,
-            lr=0.001, dropout=0.5):
+            lr=0.001, dropout=0.5, save_file=None):
         from models import robert
+
+        if save_file is not None and self.saver is None:
+            self.saver = tf.train.Saver()
 
         token_seqs_valid = datautils.read_tokens_file(valid_tokens_file)
 
@@ -305,20 +308,26 @@ class BertNRDJ:
         best_f1_sum = 0
         losses_aspect, losses_opinion = list(), list()
         for step in range(n_steps):
-            train_loss = self.__train_batch(robert_model, next_aspect_train_example, lr, dropout, 'src1')
-            losses_aspect.append(train_loss)
-            train_loss = self.__train_batch(robert_model, next_opinion_train_example, lr, dropout, 'src2')
-            losses_opinion.append(train_loss)
+            train_loss_apect = self.__train_batch(robert_model, next_aspect_train_example, lr, dropout, 'src1')
+            losses_aspect.append(train_loss_apect)
+            # train_loss_opinion = self.__train_batch(robert_model, next_opinion_train_example, lr, dropout, 'src2')
+            # losses_opinion.append(train_loss_opinion)
             if (step + 1) % 5 == 0:
-                loss_aspect, loss_opnion = sum(losses_aspect), sum(losses_opinion)
+                loss_aspect, loss_opinion = sum(losses_aspect), sum(losses_opinion)
                 a_p, a_r, a_f1 = self.__evaluate_single_term_type(
                     dataset_aspect_valid, token_seqs_valid, valid_aspect_terms_list, robert_model, 'src1')
                 o_p, o_r, o_f1 = self.__evaluate_single_term_type(
                     dataset_opinion_valid, token_seqs_valid, valid_opinion_terms_list, robert_model, 'src2')
                 logging.info(
-                    'al={:.4f}, ol={:.4f}, p={:.4f}, r={:.4f}, a_f1={:.4f}, p={:.4f}, r={:.4f}, o_f1={:.4f}'.format(
-                        loss_aspect, losses_opinion, a_p, a_r, a_f1, o_p, o_r, o_f1
+                    'step={}, al={:.4f}, ol={:.4f}, p={:.4f}, r={:.4f}, a_f1={:.4f}, p={:.4f}, r={:.4f}, o_f1={:.4f}'.format(
+                        step, loss_aspect, loss_opinion, a_p, a_r, a_f1, o_p, o_r, o_f1
                     ))
+                if a_f1 + o_f1 > best_f1_sum:
+                    best_f1_sum = a_f1 + o_f1
+                    if self.saver is not None:
+                        self.saver.save(self.sess, save_file)
+                        # print('model saved to {}'.format(save_file))
+                        logging.info('model saved to {}'.format(save_file))
 
     def train(
             self, robert_model: Robert, train_tfrec_file, valid_tfrec_file, test_tfrec_file, seq_length,
