@@ -310,9 +310,9 @@ class BertNRDJ:
         for step in range(n_steps):
             train_loss_apect = self.__train_batch(robert_model, next_aspect_train_example, lr, dropout, 'src1')
             losses_aspect.append(train_loss_apect)
-            # train_loss_opinion = self.__train_batch(robert_model, next_opinion_train_example, lr, dropout, 'src2')
-            # losses_opinion.append(train_loss_opinion)
-            if (step + 1) % 10 == 0:
+            train_loss_opinion = self.__train_batch(robert_model, next_opinion_train_example, lr, dropout, 'src2')
+            losses_opinion.append(train_loss_opinion)
+            if (step + 1) % 5 == 0:
                 loss_aspect, loss_opinion = sum(losses_aspect), sum(losses_opinion)
                 losses_aspect, losses_opinion = list(), list()
                 a_p, a_r, a_f1 = self.__evaluate_single_term_type(
@@ -348,27 +348,6 @@ class BertNRDJ:
         for epoch in range(n_epochs):
             losses = list()
             for i in range(n_batches):
-                # features = self.sess.run(next_train_example)
-                # all_layers = self.sess.run(robert_model.all_layers, feed_dict={
-                #     robert_model.input_ids: features["input_ids"], robert_model.input_mask: features["input_mask"],
-                #     robert_model.segment_ids: features["segment_ids"], robert_model.label_ids: features["label_ids"],
-                #     robert_model.hidden_dropout: 1.0, robert_model.attention_dropout: 1.0
-                # })
-                # seq_embeds = np.concatenate(
-                #     [all_layers[-1], all_layers[-2], all_layers[-3], all_layers[-4]], axis=-1)
-                # # print(all_layers[-1].shape)
-                # # print(seq_embeds.shape)
-                # seq_lens = np.squeeze(features['seq_len'])
-                # max_seq_len = np.max(seq_lens)
-                # embed_arr = seq_embeds[:, :max_seq_len, :]
-                # label_seqs = features["label_ids"][:, :max_seq_len]
-                # feed_dict = self.get_feed_dict_ol(embed_arr, seq_lens, lr, dropout, task='tar', label_seqs=label_seqs)
-                # _, train_loss = self.sess.run(
-                #     [self.train_op_tar, self.loss_tar], feed_dict=feed_dict)
-
-                # feed_dict = self.get_feed_dict_ol(embed_arr, seq_lens, lr, dropout, task='src1', label_seqs=label_seqs)
-                # _, train_loss = self.sess.run(
-                #     [self.train_op_src1, self.loss_src1], feed_dict=feed_dict)
                 train_loss = self.__train_batch(robert_model, next_train_example, lr, dropout, 'tar')
                 losses.append(train_loss)
             loss = sum(losses)

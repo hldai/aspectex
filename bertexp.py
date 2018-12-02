@@ -101,16 +101,9 @@ def __load_terms_list(sample_idxs, terms_list_file):
     return dst_terms_list
 
 
-def __pretrain_bertnrdj():
+def __pretrain_bertnrdj(dataset, n_labels, seq_length, n_steps, batch_size):
     str_today = datetime.date.today().strftime('%y-%m-%d')
     init_logging('log/pre-bertnrdj-{}.log'.format(str_today), mode='a', to_stdout=True)
-
-    # dataset = 'se14r'
-    dataset = 'se15r'
-    n_labels = 5
-    n_steps = 4000
-    seq_length = 128
-    batch_size = 4
 
     dataset_files = config.DATA_FILES[dataset]
 
@@ -133,7 +126,8 @@ def __pretrain_bertnrdj():
     valid_opinion_terms_list = __load_terms_list(idxs_valid, dataset_files['pretrain_opinion_terms_file'])
     print('done')
 
-    bertnrdj_model = BertNRDJ(n_labels, config.BERT_EMBED_DIM, hidden_size_lstm=200, batch_size=batch_size)
+    bertnrdj_model = BertNRDJ(
+        n_labels, config.BERT_EMBED_DIM, hidden_size_lstm=hidden_size_lstm, batch_size=batch_size)
     bertnrdj_model.pretrain(
         robert_model=robert_model, train_aspect_tfrec_file=dataset_files['pretrain_train_aspect_tfrec_file'],
         valid_aspect_tfrec_file=dataset_files['pretrain_valid_aspect_tfrec_file'],
@@ -145,13 +139,9 @@ def __pretrain_bertnrdj():
     )
 
 
-def __train_bertnrdj():
+def __train_bertnrdj(dataset, n_labels, batch_size):
     str_today = datetime.date.today().strftime('%y-%m-%d')
     init_logging('log/bertnrdj-{}.log'.format(str_today), mode='a', to_stdout=True)
-
-    # dataset = 'se14r'
-    dataset = 'se15r'
-    n_labels = 5
 
     dataset_files = config.DATA_FILES[dataset]
 
@@ -167,9 +157,9 @@ def __train_bertnrdj():
         init_checkpoint=dataset_files['bert_init_checkpoint']
     )
 
-    # model_file = dataset_files['pretrained_bertnrdj_file']
-    model_file = None
-    lstmcrf = BertNRDJ(n_labels, config.BERT_EMBED_DIM, hidden_size_lstm=500, batch_size=5,
+    model_file = dataset_files['pretrained_bertnrdj_file']
+    # model_file = None
+    lstmcrf = BertNRDJ(n_labels, config.BERT_EMBED_DIM, hidden_size_lstm=hidden_size_lstm, batch_size=batch_size,
                        model_file=model_file)
     lstmcrf.train(
         robert_model=bm, train_tfrec_file=dataset_files['train_tfrecord_file'],
@@ -179,7 +169,16 @@ def __train_bertnrdj():
 
 
 if __name__ == '__main__':
+    # dataset = 'se14r'
+    dataset = 'se15r'
+    n_labels = 5
+    seq_length = 128
+    n_steps = 4000
+    batch_size_pretrain = 32
+    batch_size_train = 16
+    hidden_size_lstm = 500
     # __train_bert()
     # __train_bertlstm_ol()
-    __pretrain_bertnrdj()
-    # __train_bertnrdj()
+    __pretrain_bertnrdj(
+        dataset=dataset, n_labels=n_labels, seq_length=seq_length, n_steps=n_steps, batch_size=batch_size_pretrain)
+    # __train_bertnrdj(dataset=dataset, n_labels=n_labels, batch_size=batch_size_train)
