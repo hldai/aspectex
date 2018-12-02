@@ -182,5 +182,5 @@ def __train_bertnrdj():
 if __name__ == '__main__':
     # __train_bert()
     # __train_bertlstm_ol()
-    # __pretrain_bertnrdj()
-    __train_bertnrdj()
+    __pretrain_bertnrdj()
+    # __train_bertnrdj()
