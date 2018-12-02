@@ -37,29 +37,25 @@ def prf1(n_true, n_sys, n_hit):
     return p, r, f1
 
 
-def prf1_for_terms(preds, token_seqs, aspect_terms_true_list, opinion_terms_true_list):
-    aspect_true_cnt, aspect_sys_cnt, aspect_hit_cnt = 0, 0, 0
-    opinion_true_cnt, opinion_sys_cnt, opinion_hit_cnt = 0, 0, 0
+def prf1_for_single_term_type(preds, token_seqs, terms_list, label_beg=1, label_in=2):
+    true_cnt, sys_cnt, hit_cnt = 0, 0, 0
     for i, (p_seq, token_seq) in enumerate(zip(preds, token_seqs)):
         seq_len = len(token_seq)
-        aspect_terms_sys = get_terms_from_label_list_tok(p_seq[:seq_len], token_seq, 1, 2)
-        opinion_terms_sys = get_terms_from_label_list_tok(p_seq[:seq_len], token_seq, 3, 4)
-        aspect_terms_true, opinion_terms_true = aspect_terms_true_list[i], opinion_terms_true_list[i]
-        aspect_sys_cnt += len(aspect_terms_sys)
-        aspect_true_cnt += len(aspect_terms_true)
-        opinion_sys_cnt += len(opinion_terms_sys)
-        opinion_true_cnt += len(opinion_terms_true)
+        terms_sys = get_terms_from_label_list_tok(p_seq[:seq_len], token_seq, label_beg, label_in)
+        terms_true = terms_list[i]
+        sys_cnt += len(terms_sys)
+        true_cnt += len(terms_true)
 
-        new_hit_cnt = count_hit(aspect_terms_true, aspect_terms_sys)
-        aspect_hit_cnt += new_hit_cnt
-        new_hit_cnt = count_hit(opinion_terms_true, opinion_terms_sys)
-        opinion_hit_cnt += new_hit_cnt
+        new_hit_cnt = count_hit(terms_true, terms_sys)
+        hit_cnt += new_hit_cnt
 
-    aspect_p, aspect_r, aspect_f1 = prf1(aspect_true_cnt, aspect_sys_cnt, aspect_hit_cnt)
-    opinion_p, opinion_r, opinion_f1 = prf1(opinion_true_cnt, opinion_sys_cnt, opinion_hit_cnt)
-    # tf.logging.info('p={:.4f}, r={:.4f}, a_f1={:.4f}; p={:.4f}, r={:.4f}, o_f1={:.4f}'.format(
-    #                 aspect_p, aspect_r, aspect_f1, opinion_p, opinion_r,
-    #                 opinion_f1))
+    p, r, f1 = prf1(true_cnt, sys_cnt, hit_cnt)
+    return p, r, f1
+
+
+def prf1_for_terms(preds, token_seqs, aspect_terms_true_list, opinion_terms_true_list):
+    aspect_p, aspect_r, aspect_f1 = prf1_for_single_term_type(preds, token_seqs, aspect_terms_true_list, 1, 2)
+    opinion_p, opinion_r, opinion_f1 = prf1_for_single_term_type(preds, token_seqs, opinion_terms_true_list, 3, 4)
     return aspect_p, aspect_r, aspect_f1, opinion_p, opinion_r, opinion_f1
 
 

@@ -27,7 +27,7 @@ def get_dataset(data_file, batch_size, is_train, seq_length):
 
     if is_train:
         dataset = dataset.repeat()
-        # dataset = dataset.shuffle(buffer_size=100)
+        dataset = dataset.shuffle(buffer_size=100)
 
     drop_remainder = True if is_train else False
     dataset = dataset.apply(

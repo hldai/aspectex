@@ -3,8 +3,9 @@ import logging
 import datetime
 from models import robert, bertmodel
 from models.bertlstmcrf import BertLSTMCRF
+from models.bertnrdj import BertNRDJ
 from utils.loggingutils import init_logging
-from utils import bldatautils
+from utils import bldatautils, datautils, utils
 import config
 
 
@@ -58,14 +59,11 @@ def __train_bert():
     logging.info('token_embed_dim={}'.format(word_embed_dim))
 
     save_model_file = None
-
-    print(data_train.word_embed_seqs[0])
-    exit()
     lstmcrf = BertLSTMCRF(n_tags, word_embed_dim, hidden_size_lstm=500, batch_size=5)
     lstmcrf.train(data_train, data_valid, data_test, n_epochs=n_epochs, lr=lr)
 
 
-def __train_bert_ol():
+def __train_bertlstm_ol():
     str_today = datetime.date.today().strftime('%y-%m-%d')
     init_logging('log/bertlstmcrfol-{}.log'.format(str_today), mode='a', to_stdout=True)
 
@@ -95,6 +93,85 @@ def __train_bert_ol():
     )
 
 
+def __load_terms_list(sample_idxs, terms_list_file):
+    all_terms_list = utils.load_json_objs(terms_list_file)
+    dst_terms_list = list()
+    for idx, terms in enumerate(all_terms_list):
+        if idx in sample_idxs:
+            dst_terms_list.append(terms)
+    return dst_terms_list
+
+
+def __pretrain_bertnrdj():
+    str_today = datetime.date.today().strftime('%y-%m-%d')
+    init_logging('log/pre-bertnrdj-{}.log'.format(str_today), mode='a', to_stdout=True)
+
+    # dataset = 'se14r'
+    dataset = 'se15r'
+    n_labels = 5
+    n_steps = 4000
+    seq_length = 128
+    batch_size = 32
+
+    dataset_files = config.DATA_FILES[dataset]
+
+    bert_config = bertmodel.BertConfig.from_json_file(config.BERT_CONFIG_FILE)
+    robert_model = robert.Robert(
+        bert_config, n_labels=n_labels, seq_length=config.BERT_SEQ_LEN, is_train=False,
+        init_checkpoint=dataset_files['bert_init_checkpoint']
+    )
+
+    yelp_tv_idxs_file = os.path.join(config.RES_DIR, 'yelp/eng-part/yelp-rest-sents-r9-tok-eng-part0_04-tvidxs.txt')
+    amazon_tv_idxs_file = os.path.join(config.RES_DIR, 'amazon/laptops-reivews-sent-tok-text-tvidxs.txt')
+    tv_idxs_file = amazon_tv_idxs_file if dataset == 'se14l' else yelp_tv_idxs_file
+    idxs_train, idxs_valid = datautils.load_train_valid_idxs(tv_idxs_file)
+    valid_aspect_terms_list = __load_terms_list(idxs_valid, dataset_files['pretrain_aspect_terms_file'])
+    valid_opinion_terms_list = __load_terms_list(idxs_valid, dataset_files['pretrain_opinion_terms_file'])
+
+    bertnrdj_model = BertNRDJ(n_labels, config.BERT_EMBED_DIM, hidden_size_lstm=500, batch_size=batch_size)
+    bertnrdj_model.pretrain(
+        robert_model=robert_model, train_aspect_tfrec_file=dataset_files['pretrain_train_aspect_tfrec_file'],
+        valid_aspect_tfrec_file=dataset_files['pretrain_valid_aspect_tfrec_file'],
+        train_opinion_tfrec_file=dataset_files['pretrain_train_opinion_tfrec_file'],
+        valid_opinion_tfrec_file=dataset_files['pretrain_valid_opinion_tfrec_file'],
+        valid_tokens_file=dataset_files['pretrain_valid_aspect_token_file'], seq_length=seq_length,
+        valid_aspect_terms_list=valid_aspect_terms_list, valid_opinion_terms_list=valid_opinion_terms_list,
+        n_steps=n_steps, batch_size=batch_size
+    )
+
+
+def __train_bertnrdj():
+    str_today = datetime.date.today().strftime('%y-%m-%d')
+    init_logging('log/bertnrdj-{}.log'.format(str_today), mode='a', to_stdout=True)
+
+    # dataset = 'se14r'
+    dataset = 'se15r'
+    n_labels = 5
+
+    dataset_files = config.DATA_FILES[dataset]
+
+    n_train, data_valid = bldatautils.load_train_data_bert_ol(
+        dataset_files['train_sents_file'], dataset_files['train_valid_split_file'],
+        dataset_files['bert_valid_tokens_file'])
+    data_test = bldatautils.load_test_data_bert_ol(
+        dataset_files['test_sents_file'], dataset_files['bert_test_tokens_file'])
+
+    bert_config = bertmodel.BertConfig.from_json_file(config.BERT_CONFIG_FILE)
+    bm = robert.Robert(
+        bert_config, n_labels=n_labels, seq_length=config.BERT_SEQ_LEN, is_train=False,
+        init_checkpoint=dataset_files['bert_init_checkpoint']
+    )
+
+    lstmcrf = BertNRDJ(n_labels, config.BERT_EMBED_DIM, hidden_size_lstm=500, batch_size=5)
+    lstmcrf.train(
+        robert_model=bm, train_tfrec_file=dataset_files['train_tfrecord_file'],
+        valid_tfrec_file=dataset_files['valid_tfrecord_file'], test_tfrec_file=dataset_files['test_tfrecord_file'],
+        seq_length=config.BERT_SEQ_LEN, n_train=n_train, data_valid=data_valid, data_test=data_test
+    )
+
+
 if __name__ == '__main__':
     # __train_bert()
-    __train_bert_ol()
+    # __train_bertlstm_ol()
+    __train_bertnrdj()
+    # __pretrain_bertnrdj()

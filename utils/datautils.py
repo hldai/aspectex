@@ -305,3 +305,12 @@ def get_yelp_restaurant_reviews(yelp_review_file, yelp_biz_file, dst_file):
                 restaurant_biz_set.add(biz['business_id'])
 
     gen_yelp_review_sents(yelp_review_file, dst_file, restaurant_biz_set)
+
+
+def load_train_valid_idxs(train_valid_idxs_file):
+    with open(train_valid_idxs_file, encoding='utf-8') as f:
+        train_idxs = next(f).strip().split(' ')
+        train_idxs = [int(idx) for idx in train_idxs]
+        valid_idxs = next(f).strip().split(' ')
+        valid_idxs = [int(idx) for idx in valid_idxs]
+    return train_idxs, valid_idxs

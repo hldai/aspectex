@@ -9,7 +9,7 @@ from models.robert import Robert
 
 class BertLSTMCRF:
     def __init__(self, n_tags, word_embed_dim, learning_rate=0.001, hidden_size_lstm=300, batch_size=5,
-                 lr_method='adam', use_crf=True, manual_feat_len=0, model_file=None):
+                 lr_method='adam', manual_feat_len=0, model_file=None):
         self.n_tags = n_tags
         self.hidden_size_lstm = hidden_size_lstm
         self.batch_size = batch_size
@@ -17,8 +17,6 @@ class BertLSTMCRF:
         self.saver = None
         self.manual_feat_len = manual_feat_len
         self.init_learning_rate = learning_rate
-
-        self.use_crf = use_crf
 
         self.word_embed_pad = np.random.normal(size=word_embed_dim)
 
@@ -85,15 +83,6 @@ class BertLSTMCRF:
         tf.summary.scalar("loss", self.loss)
 
     def __add_train_op(self, lr_method, lr, loss):
-        """Defines self.train_op that performs an update on a batch
-
-        Args:
-            lr_method: (string) sgd method, for example "adam"
-            lr: (tf.placeholder) tf.float32, learning rate
-            loss: (tensor) tf.float32 loss to minimize
-            clip: (python float) clipping of gradient. If < 0, no clipping
-
-        """
         _lr_m = lr_method.lower()  # lower to make sure
 
         with tf.variable_scope("train_step"):
