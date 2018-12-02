@@ -96,9 +96,8 @@ def __train_bertlstm_ol():
 def __load_terms_list(sample_idxs, terms_list_file):
     all_terms_list = utils.load_json_objs(terms_list_file)
     dst_terms_list = list()
-    for idx, terms in enumerate(all_terms_list):
-        if idx in sample_idxs:
-            dst_terms_list.append(terms)
+    for idx in sample_idxs:
+        dst_terms_list.append(all_terms_list[idx])
     return dst_terms_list
 
 
@@ -129,7 +128,7 @@ def __pretrain_bertnrdj():
     print('loading data ...')
     idxs_train, idxs_valid = datautils.load_train_valid_idxs(tv_idxs_file)
     logging.info('{} valid samples'.format(len(idxs_valid)))
-    idxs_valid = set(idxs_valid)
+    # idxs_valid = set(idxs_valid)
     valid_aspect_terms_list = __load_terms_list(idxs_valid, dataset_files['pretrain_aspect_terms_file'])
     valid_opinion_terms_list = __load_terms_list(idxs_valid, dataset_files['pretrain_opinion_terms_file'])
     print('done')
