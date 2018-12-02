@@ -312,7 +312,7 @@ class BertNRDJ:
             losses_aspect.append(train_loss_apect)
             train_loss_opinion = self.__train_batch(robert_model, next_opinion_train_example, lr, dropout, 'src2')
             losses_opinion.append(train_loss_opinion)
-            if (step + 1) % 5 == 0:
+            if (step + 1) % 50 == 0:
                 loss_aspect, loss_opinion = sum(losses_aspect), sum(losses_opinion)
                 losses_aspect, losses_opinion = list(), list()
                 a_p, a_r, a_f1 = self.__evaluate_single_term_type(

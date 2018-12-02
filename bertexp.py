@@ -173,7 +173,7 @@ if __name__ == '__main__':
     dataset = 'se15r'
     n_labels = 5
     seq_length = 128
-    n_steps = 4000
+    n_steps = 400000
     batch_size_pretrain = 32
     batch_size_train = 16
     hidden_size_lstm = 500
