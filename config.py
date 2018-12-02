@@ -175,7 +175,7 @@ SE15R_FILES = {
     'bert_valid_tokens_file': join(SE15_DIR, 'bert-data/se15r-valid-tokens.txt'),
     'bert_test_tokens_file': join(SE15_DIR, 'bert-data/se15r-test-tokens.txt'),
     'bert_init_checkpoint': join(BERT_BASE_DIR, 'yelp/model.ckpt-10000'),
-    'pretrained_bertnrdj_file': join(SE15_DIR, 'model-data/se15r-yelpr9-rest-part0_04-bert.pkl'),
+    'pretrained_bertnrdj_file': join(SE15_DIR, 'model-data/se15r-yelpr9-rest-part0_04-bert.ckpt'),
     'pretrain_aspect_terms_file': join(SE15_DIR, 'restaurants/yelpr9-rest-part0_04-aspect-rule-result.txt'),
     'pretrain_opinion_terms_file': join(SE15_DIR, 'restaurants/yelpr9-rest-part0_04-opinion-rule-result.txt'),
     'pretrain_train_aspect_tfrec_file': join(SE15_DIR, 'restaurants/yelpr9-rest-part0_04-train-aspect.tfrecord'),

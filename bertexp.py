@@ -111,7 +111,7 @@ def __pretrain_bertnrdj():
     n_labels = 5
     n_steps = 4000
     seq_length = 128
-    batch_size = 32
+    batch_size = 4
 
     dataset_files = config.DATA_FILES[dataset]
 
@@ -128,11 +128,13 @@ def __pretrain_bertnrdj():
     tv_idxs_file = amazon_tv_idxs_file if dataset == 'se14l' else yelp_tv_idxs_file
     print('loading data ...')
     idxs_train, idxs_valid = datautils.load_train_valid_idxs(tv_idxs_file)
+    logging.info('{} valid samples'.format(len(idxs_valid)))
+    idxs_valid = set(idxs_valid)
     valid_aspect_terms_list = __load_terms_list(idxs_valid, dataset_files['pretrain_aspect_terms_file'])
     valid_opinion_terms_list = __load_terms_list(idxs_valid, dataset_files['pretrain_opinion_terms_file'])
     print('done')
 
-    bertnrdj_model = BertNRDJ(n_labels, config.BERT_EMBED_DIM, hidden_size_lstm=500, batch_size=batch_size)
+    bertnrdj_model = BertNRDJ(n_labels, config.BERT_EMBED_DIM, hidden_size_lstm=200, batch_size=batch_size)
     bertnrdj_model.pretrain(
         robert_model=robert_model, train_aspect_tfrec_file=dataset_files['pretrain_train_aspect_tfrec_file'],
         valid_aspect_tfrec_file=dataset_files['pretrain_valid_aspect_tfrec_file'],
@@ -166,8 +168,8 @@ def __train_bertnrdj():
         init_checkpoint=dataset_files['bert_init_checkpoint']
     )
 
-    model_file = dataset_files['pretrained_bertnrdj_file']
-    # model_file = None
+    # model_file = dataset_files['pretrained_bertnrdj_file']
+    model_file = None
     lstmcrf = BertNRDJ(n_labels, config.BERT_EMBED_DIM, hidden_size_lstm=500, batch_size=5,
                        model_file=model_file)
     lstmcrf.train(
@@ -180,5 +182,5 @@ def __train_bertnrdj():
 if __name__ == '__main__':
     # __train_bert()
     # __train_bertlstm_ol()
-    __pretrain_bertnrdj()
-    # __train_bertnrdj()
+    # __pretrain_bertnrdj()
+    __train_bertnrdj()
