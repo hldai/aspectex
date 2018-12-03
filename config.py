@@ -126,7 +126,14 @@ SE14L_FILES = {
     'opinion_rule_patterns_file': join(SE14_DIR, 'laptops/opinion_mined_rule_patterns.txt'),
     'rule_aspect_result_file': join(SE14_DIR, 'laptops/amazon-laptops-aspect-rm-rule-result.txt'),
     'rule_opinion_result_file': join(SE14_DIR, 'laptops/amazon-laptops-opinion-rule-result.txt'),
-    'unlabeled_tok_sents_file': join(RES_DIR, 'amazon/laptops-reivews-sent-tok-text.txt')
+    'unlabeled_tok_sents_file': join(RES_DIR, 'amazon/laptops-reivews-sent-tok-text.txt'),
+    'pretrain_aspect_terms_file': join(SE14_DIR, 'laptops/amazon-laptops-aspect-rm-rule-result.txt'),
+    'pretrain_opinion_terms_file': join(SE14_DIR, 'laptops/amazon-laptops-aspect-rm-rule-result.txt'),
+    'pretrain_train_aspect_tfrec_file': join(SE14_DIR, 'laptops/se14l-amazonlaptops-train-aspect.tfrecord'),
+    'pretrain_valid_aspect_tfrec_file': join(SE14_DIR, 'laptops/se14l-amazonlaptops-valid-aspect.tfrecord'),
+    'pretrain_train_opinion_tfrec_file': join(SE14_DIR, 'laptops/se14l-amazonlaptops-train-opinion.tfrecord'),
+    'pretrain_valid_opinion_tfrec_file': join(SE14_DIR, 'laptops/se14l-amazonlaptops-valid-opinion.tfrecord'),
+    'pretrain_valid_token_file': join(SE14_DIR, 'laptops/se14l-amazonlaptops-valid-tokens.txt'),
 }
 
 SE14R_FILES = {
