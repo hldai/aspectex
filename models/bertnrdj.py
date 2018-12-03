@@ -215,7 +215,7 @@ class BertNRDJ:
                 seq_embeds = np.concatenate(
                     [all_layers[-1], all_layers[-2], all_layers[-3], all_layers[-4]], axis=-1)
                 idx += 1
-                seq_lens = np.squeeze(features['seq_len'])
+                seq_lens = np.squeeze(features['seq_len'], axis=-1)
                 max_seq_len = np.max(seq_lens)
                 embed_arr = seq_embeds[:, :max_seq_len, :]
 
@@ -246,7 +246,7 @@ class BertNRDJ:
                 seq_embeds = np.concatenate(
                     [all_layers[-1], all_layers[-2], all_layers[-3], all_layers[-4]], axis=-1)
                 idx += 1
-                seq_lens = np.squeeze(features['seq_len'])
+                seq_lens = np.squeeze(features['seq_len'], axis=-1)
                 max_seq_len = np.max(seq_lens)
                 embed_arr = seq_embeds[:, :max_seq_len, :]
 
@@ -270,7 +270,7 @@ class BertNRDJ:
         })
         seq_embeds = np.concatenate(
             [all_layers[-1], all_layers[-2], all_layers[-3], all_layers[-4]], axis=-1)
-        seq_lens = np.squeeze(features['seq_len'])
+        seq_lens = np.squeeze(features['seq_len'], axis=-1)
         max_seq_len = np.max(seq_lens)
         embed_arr = seq_embeds[:, :max_seq_len, :]
         label_seqs = features["label_ids"][:, :max_seq_len]
