@@ -455,3 +455,7 @@ rest15_train_word_cnts_file = 'd:/data/aspect/semeval15/restaurants/word_cnts.tx
 # datautils.gen_train_valid_sample_idxs_file(
 #     config.DATA_FILES['restaurants-yelp']['sent_texts_file'], 2000,
 #     config.DATA_FILES['restaurants-yelp']['train_valid_idxs_file'])
+
+# datautils.gen_train_valid_sample_idxs_file(
+#     config.DATA_FILES['laptops-amazon']['sent_texts_file'], 2000,
+#     config.DATA_FILES['laptops-amazon']['train_valid_idxs_file'])

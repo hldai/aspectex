@@ -108,11 +108,11 @@ if dataset == 'se15r':
     rule_model_file = os.path.join(config.SE15_DIR, 'model-data/pretrain/yelpr9-rest-part0_04-300d-100h-twv.ckpt')
     word_vecs_file = os.path.join(config.SE15_DIR, 'model-data/yelp-w2v-sg-300-n10-i30-w5.pkl')
 elif dataset == 'se14r':
-    rule_model_file = os.path.join(config.DATA_DIR_SE14, 'model-data/pretrain/yelpr9-rest-part0_04.ckpt')
-    word_vecs_file = os.path.join(config.DATA_DIR_SE14, 'model-data/yelp-w2v-sg-100-n10-i30-w5.pkl')
+    rule_model_file = os.path.join(config.SE14_DIR, 'model-data/pretrain/yelpr9-rest-part0_04.ckpt')
+    word_vecs_file = os.path.join(config.SE14_DIR, 'model-data/yelp-w2v-sg-100-n10-i30-w5.pkl')
 else:
-    rule_model_file = os.path.join(config.DATA_DIR_SE14, 'model-data/pretrain/amazon-300d-100h-twv.ckpt')
-    word_vecs_file = os.path.join(config.DATA_DIR_SE14, 'model-data/amazon-wv-300-sg-n10-w8-i30.pkl')
+    rule_model_file = os.path.join(config.SE14_DIR, 'model-data/pretrain/amazon-300d-100h-twv.ckpt')
+    word_vecs_file = os.path.join(config.SE14_DIR, 'model-data/amazon-wv-300-sg-n10-w8-i30.pkl')
     # word_vecs_file = os.path.join(config.DATA_DIR_SE14, 'model-data/amazon-wv-100-sg-n10-w8-i30.pkl')
 
 dataset_files = config.DATA_FILES[dataset]

@@ -15,8 +15,8 @@ if __name__ == '__main__':
     n_train = -1
     label_opinions = True
 
-    # dataset = 'se14l'
-    dataset = 'se14r'
+    dataset = 'se14l'
+    # dataset = 'se14r'
     dataset_files = config.DATA_FILES[dataset]
 
     word_vecs_file = dataset_files['word_vecs_file']

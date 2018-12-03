@@ -1,5 +1,5 @@
 import json
-from singularizer import Singularizer
+from utils.singularizer import Singularizer
 from collections import Counter
 from utils import utils
 import config

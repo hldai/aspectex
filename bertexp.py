@@ -16,35 +16,27 @@ def __train_bert():
     # dataset = 'se14r'
     dataset = 'se15r'
 
+    dataset_files = config.DATA_FILES[dataset]
     if dataset == 'se14l':
-        bert_embed_file_train = os.path.join(config.DATA_DIR_SE14, 'laptops/laptops_train_texts_tok_bert.txt')
-        bert_embed_file_test = os.path.join(config.DATA_DIR_SE14, 'laptops/laptops_test_texts_tok_bert.txt')
-        train_valid_split_file = config.SE14_LAPTOP_TRAIN_VALID_SPLIT_FILE
-        train_sents_file = config.SE14_LAPTOP_TRAIN_SENTS_FILE
-        test_sents_file = config.SE14_LAPTOP_TEST_SENTS_FILE
+        bert_embed_file_train = os.path.join(config.SE14_DIR, 'laptops/laptops_train_texts_tok_bert.txt')
+        bert_embed_file_test = os.path.join(config.SE14_DIR, 'laptops/laptops_test_texts_tok_bert.txt')
         # dst_aspects_file = 'd:/data/aspect/semeval14/lstmcrf-aspects.txt'
         # dst_opinions_file = 'd:/data/aspect/semeval14/lstmcrf-opinions.txt'
     elif dataset == 'se14r':
         bert_embed_file_train = os.path.join(
-            config.DATA_DIR_SE14, 'restaurants/restaurants_train_texts_tok_bert.txt')
+            config.SE14_DIR, 'restaurants/restaurants_train_texts_tok_bert.txt')
         bert_embed_file_test = os.path.join(
-            config.DATA_DIR_SE14, 'restaurants/restaurants_test_texts_tok_bert.txt')
-        train_valid_split_file = config.SE14_REST_TRAIN_VALID_SPLIT_FILE
-        train_sents_file = config.SE14_REST_TRAIN_SENTS_FILE
-        test_sents_file = config.SE14_REST_TEST_SENTS_FILE
+            config.SE14_DIR, 'restaurants/restaurants_test_texts_tok_bert.txt')
     else:
         bert_embed_file_train = os.path.join(
             config.SE15_DIR, 'restaurants/restaurants_train_texts_tok_bert.txt')
         bert_embed_file_test = os.path.join(
             config.SE15_DIR, 'restaurants/restaurants_test_texts_tok_bert.txt')
-        train_valid_split_file = config.SE15_REST_TRAIN_VALID_SPLIT_FILE
-        train_sents_file = config.SE15_REST_TRAIN_SENTS_FILE
-        test_sents_file = config.SE15_REST_TEST_SENTS_FILE
 
     print('loading data ...')
     data_train, data_valid = bldatautils.load_train_data_bert(
-        bert_embed_file_train, train_sents_file, train_valid_split_file)
-    data_test = bldatautils.load_valid_data_bert(bert_embed_file_test, test_sents_file)
+        bert_embed_file_train, dataset_files['train_sents_file'], dataset_files['train_valid_split_file'])
+    data_test = bldatautils.load_valid_data_bert(bert_embed_file_test, dataset_files['test_sents_file'])
     print('done')
 
     word_embed_dim = len(data_train.word_embed_seqs[0][0])
@@ -55,7 +47,7 @@ def __train_bert():
     # with open(word_vecs_file, 'rb') as f:
     #     vocab, word_vecs_matrix = pickle.load(f)
 
-    logging.info(test_sents_file)
+    logging.info(dataset_files['test_sents_file'])
     logging.info('token_embed_dim={}'.format(word_embed_dim))
 
     save_model_file = None
