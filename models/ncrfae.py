@@ -271,7 +271,8 @@ class NeuCRFAutoEncoder:
         loss = self.__train_batch_supervised(train_data.word_idxs_list, train_data.labels_list, 1, lr, dropout)
         print(loss)
 
-    def train(self, data_train: TrainData, data_valid: ValidData, data_test: ValidData, unsupervised_word_seqs,
+    def train(self, data_train: TrainData, data_valid: ValidData, data_test: ValidData, unlabeled_word_seqs,
+              n_unlabeled_samples_per_iter=1000,
               n_epochs=10, lr=0.001, dropout=0.5, save_file=None, dst_aspects_file=None, dst_opinions_file=None):
         logging.info('n_epochs={}, lr={}, dropout={}'.format(n_epochs, lr, dropout))
         if save_file is not None and self.saver is None:
@@ -279,8 +280,8 @@ class NeuCRFAutoEncoder:
 
         n_train_l = len(data_train.word_idxs_list)
         n_batches_l = (n_train_l + self.batch_size - 1) // self.batch_size  # n_batches supervised
-        n_train_u = len(unsupervised_word_seqs)
-        n_batches_u = (n_train_u + self.batch_size - 1) // self.batch_size  # n_batches unsupervised
+        # n_train_u = len(unlabeled_word_seqs) if n_unlabeled_samples_per_iter < 0 else n_unlabeled_samples_per_iter
+        # n_batches_u = (n_train_u + self.batch_size - 1) // self.batch_size  # n_batches unsupervised
 
         best_f1_sum = 0
         loss_l, loss_u = 0, 0
@@ -328,15 +329,20 @@ class NeuCRFAutoEncoder:
 
             # print(self.sess.run(self.crf_bin_score_mat))
 
+            cur_unlabeled_word_seqs = unlabeled_word_seqs
+            if n_unlabeled_samples_per_iter > 0:
+                perm = np.random.permutation(len(unlabeled_word_seqs))
+                cur_unlabeled_word_seqs = [unlabeled_word_seqs[idx] for idx in perm[:n_unlabeled_samples_per_iter]]
+            n_batches_u = (len(cur_unlabeled_word_seqs) + self.batch_size - 1) // self.batch_size
             for i in range(n_batches_u):
-                train_loss_u = self.__train_batch_unsupervised(unsupervised_word_seqs, i, lr, dropout)
+                train_loss_u = self.__train_batch_unsupervised(cur_unlabeled_word_seqs, i, lr, dropout)
                 losses_u.append(train_loss_u)
 
             loss_l = sum(losses_l)
             loss_u = sum(losses_u)
             # print(loss_l, loss_u)
 
-            self.update_decoder_probs_mat(data_train.word_idxs_list, data_train.labels_list, unsupervised_word_seqs)
+            self.update_decoder_probs_mat(data_train.word_idxs_list, data_train.labels_list, cur_unlabeled_word_seqs)
 
     def predict_all(self, word_idxs_list, feat_list):
         label_seq_list = list()

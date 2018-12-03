@@ -15,45 +15,37 @@ if __name__ == '__main__':
     n_train = -1
     label_opinions = True
 
-    # dataset = 'se14-laptops'
-    dataset = 'se14-restaurants'
-    if dataset == 'se14-laptops':
-        word_vecs_file = config.SE14_LAPTOP_AMAZON_WORD_VEC_FILE
-        train_valid_split_file = config.SE14_LAPTOP_TRAIN_VALID_SPLIT_FILE
-        train_tok_texts_file = config.SE14_LAPTOP_TRAIN_TOK_TEXTS_FILE
-        train_sents_file = config.SE14_LAPTOP_TRAIN_SENTS_FILE
-        test_tok_texts_file = config.SE14_LAPTOP_TEST_TOK_TEXTS_FILE
-        test_sents_file = config.SE14_LAPTOP_TEST_SENTS_FILE
-        # unsupervised_tok_texts_file = config.SE14_LAPTOP_TRAIN_TOK_TEXTS_FILE
-        unsupervised_tok_texts_file = config.AMAZON_TOK_TEXTS_FILE
-    else:
-        word_vecs_file = 'd:/data/aspect/semeval14/model-data/yelp-w2v-sg-100-n10-i30-w5.pkl'
-        train_valid_split_file = config.SE14_REST_TRAIN_VALID_SPLIT_FILE
-        train_tok_texts_file = config.SE14_REST_TRAIN_TOK_TEXTS_FILE
-        train_sents_file = config.SE14_REST_TRAIN_SENTS_FILE
-        test_tok_texts_file = config.SE14_REST_TEST_TOK_TEXTS_FILE
-        test_sents_file = config.SE14_REST_TEST_SENTS_FILE
-        # unsupervised_tok_texts_file = config.SE14_LAPTOP_TRAIN_TOK_TEXTS_FILE
-        unsupervised_tok_texts_file = 'd:/data/yelp/yelp-review-eng-tok-sents-round-9.txt'
+    # dataset = 'se14l'
+    dataset = 'se14r'
+    dataset_files = config.DATA_FILES[dataset]
 
+    word_vecs_file = dataset_files['word_vecs_file']
     logging.info('word_vec_file: {}'.format(word_vecs_file))
-    logging.info(test_sents_file)
+    logging.info(dataset_files['test_sents_file'])
     print('loading data ...')
     with open(word_vecs_file, 'rb') as f:
         vocab, word_vecs_matrix = pickle.load(f)
         # print(vocab)
 
     word_idx_dict = {w: i + 1 for i, w in enumerate(vocab)}
-    unsupervised_word_seqs = datautils.read_sents_to_word_idx_seqs(unsupervised_tok_texts_file, word_idx_dict)
-    print(len(unsupervised_word_seqs), 'unsupervised sents')
+    unlabeled_word_seqs = datautils.read_sents_to_word_idx_seqs(
+        dataset_files['unlabeled_tok_sents_file'], word_idx_dict)
+    print(len(unlabeled_word_seqs), 'unsupervised sents')
 
-    n_unsupervised_sents_used = 1000
-    unsupervised_word_seqs = unsupervised_word_seqs[:n_unsupervised_sents_used]
-    logging.info('{} unsupervised sents used.'.format(n_unsupervised_sents_used))
+    # n_unlabeled_sents_used = 1000
+    n_unlabeled_sents_used = len(unlabeled_word_seqs)
+    n_unlabeled_samples_per_iter = 1000
+    unsupervised_word_seqs = unlabeled_word_seqs[:n_unlabeled_sents_used]
+    logging.info('{} unsupervised sents used.'.format(n_unlabeled_sents_used))
 
     train_data, valid_data, test_data = datautils.get_data_semeval(
-        train_sents_file, train_tok_texts_file, train_valid_split_file, test_sents_file, test_tok_texts_file,
+        dataset_files['train_sents_file'], dataset_files['train_tok_texts_file'],
+        dataset_files['train_valid_split_file'],
+        dataset_files['test_sents_file'], dataset_files['test_tok_texts_file'],
         vocab, n_train, label_opinions)
     ncrfae = NeuCRFAutoEncoder(n_tags, word_vecs_matrix, batch_size=3, lr_method='adam')
     # ncrfae.test_model(train_data)
-    ncrfae.train(train_data, valid_data, test_data, unsupervised_word_seqs, n_epochs=500, lr=0.001)
+    ncrfae.train(
+        data_train=train_data, data_valid=valid_data, data_test=test_data,
+        unlabeled_word_seqs=unlabeled_word_seqs, n_unlabeled_samples_per_iter=n_unlabeled_samples_per_iter,
+        n_epochs=500, lr=0.001)

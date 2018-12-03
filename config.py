@@ -125,7 +125,8 @@ SE14L_FILES = {
     'aspect_rule_patterns_file': join(SE14_DIR, 'laptops/aspect_mined_rule_patterns.txt'),
     'opinion_rule_patterns_file': join(SE14_DIR, 'laptops/opinion_mined_rule_patterns.txt'),
     'rule_aspect_result_file': join(SE14_DIR, 'laptops/amazon-laptops-aspect-rm-rule-result.txt'),
-    'rule_opinion_result_file': join(SE14_DIR, 'laptops/amazon-laptops-opinion-rule-result.txt')
+    'rule_opinion_result_file': join(SE14_DIR, 'laptops/amazon-laptops-opinion-rule-result.txt'),
+    'unlabeled_tok_sents_file': join(AMAZON_DATA_DIR, 'laptops-reivews-sent-tok-text.txt')
 }
 
 SE14R_FILES = {
@@ -146,6 +147,7 @@ SE14R_FILES = {
     'aspect_rule_patterns_file': join(SE14_DIR, 'restaurants/aspect_mined_rule_patterns.txt'),
     'opinion_rule_patterns_file': join(SE14_DIR, 'restaurants/opinion_mined_rule_patterns.txt'),
     'bert_init_checkpoint': join(BERT_BASE_DIR, 'yelp/model.ckpt-10000'),
+    'unlabeled_tok_sents_file': join(RES_DIR, 'yelp/eng-part/yelp-rest-sents-r9-tok-eng-p0_04.txt'),
     'pretrain_aspect_terms_file': join(SE14_DIR, 'restaurants/se14r-yelpr9-rest-p0_04-aspect-rule-result.txt'),
     'pretrain_opinion_terms_file': join(SE14_DIR, 'restaurants/se14r-yelpr9-rest-p0_04-opinion-rule-result.txt'),
     'pretrain_train_aspect_tfrec_file': join(SE14_DIR, 'restaurants/se14r-yelpr9-rest-p0_04-train-aspect.tfrecord'),
