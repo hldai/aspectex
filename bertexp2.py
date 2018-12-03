@@ -103,7 +103,7 @@ def __load_terms_list(sample_idxs, terms_list_file):
 
 def __pretrain_bertnrdj(dataset, n_labels, seq_length, n_steps, batch_size, dst_model_file):
     str_today = datetime.date.today().strftime('%y-%m-%d')
-    init_logging('log/pre-bertnrdj-{}-{}.log'.format(utils.get_machine_name(), str_today), mode='a', to_stdout=True)
+    init_logging('log/pre-bertnrdj2-{}-{}.log'.format(utils.get_machine_name(), str_today), mode='a', to_stdout=True)
 
     dataset_files = config.DATA_FILES[dataset]
 
@@ -141,7 +141,7 @@ def __pretrain_bertnrdj(dataset, n_labels, seq_length, n_steps, batch_size, dst_
 
 def __train_bertnrdj(dataset, n_labels, batch_size, model_file):
     str_today = datetime.date.today().strftime('%y-%m-%d')
-    init_logging('log/bertnrdj-{}.log'.format(str_today), mode='a', to_stdout=True)
+    init_logging('log/bertnrdj2-{}.log'.format(str_today), mode='a', to_stdout=True)
 
     dataset_files = config.DATA_FILES[dataset]
 

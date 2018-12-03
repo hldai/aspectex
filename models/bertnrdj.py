@@ -312,7 +312,7 @@ class BertNRDJ:
             losses_aspect.append(train_loss_apect)
             train_loss_opinion = self.__train_batch(robert_model, next_opinion_train_example, lr, dropout, 'src2')
             losses_opinion.append(train_loss_opinion)
-            if (step + 1) % 50 == 0:
+            if (step + 1) % 100 == 0:
                 loss_aspect, loss_opinion = sum(losses_aspect), sum(losses_opinion)
                 losses_aspect, losses_opinion = list(), list()
                 a_p, a_r, a_f1 = self.__evaluate_single_term_type(
@@ -320,8 +320,9 @@ class BertNRDJ:
                 o_p, o_r, o_f1 = self.__evaluate_single_term_type(
                     dataset_opinion_valid, token_seqs_valid, valid_opinion_terms_list, robert_model, 'src2')
                 logging.info(
-                    'step={}, al={:.4f}, ol={:.4f}, p={:.4f}, r={:.4f}, a_f1={:.4f}, p={:.4f}, r={:.4f}, o_f1={:.4f}'.format(
-                        step, loss_aspect, loss_opinion, a_p, a_r, a_f1, o_p, o_r, o_f1
+                    'step={}, al={:.4f}, ol={:.4f}, p={:.4f}, r={:.4f}, '
+                    'a_f1={:.4f}, p={:.4f}, r={:.4f}, o_f1={:.4f}'.format(
+                        step + 1, loss_aspect, loss_opinion, a_p, a_r, a_f1, o_p, o_r, o_f1
                     ))
                 if a_f1 + o_f1 > best_f1_sum:
                     best_f1_sum = a_f1 + o_f1
