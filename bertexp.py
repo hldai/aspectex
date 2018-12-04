@@ -172,7 +172,7 @@ if __name__ == '__main__':
     # dataset = 'se14l'
     # dataset = 'se14r'
     dataset = 'se15r'
-    pretrain_dropout = 0.9
+    pretrain_dropout = 0.5
     dropout = 0.9
     n_labels = 5
     seq_length = 128
