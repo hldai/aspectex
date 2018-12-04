@@ -348,7 +348,7 @@ class BertNRDJ:
     def train(
             self, robert_model: Robert, train_tfrec_file, valid_tfrec_file, test_tfrec_file, seq_length,
             n_train, data_valid: ValidDataBertOL, data_test: ValidDataBertOL,
-            n_epochs=100, lr=0.001, dropout=0.5):
+            n_epochs=100, lr=0.001, dropout=0.5, start_eval_spoch=-1):
         from models import robert
 
         logging.info('n_epochs={}, lr={}, dropout={}'.format(n_epochs, lr, dropout))
@@ -375,7 +375,7 @@ class BertNRDJ:
                 ' p={:.4f}, r={:.4f}, f1={:.4f}; best_f1_sum={:.4f}'.format(
                     epoch, loss, a_p_v, a_r_v, a_f1_v, o_p_v, o_r_v,
                     o_f1_v, best_f1_sum))
-            if a_f1_v + o_f1_v > best_f1_sum:
+            if epoch > start_eval_spoch and a_f1_v + o_f1_v > best_f1_sum:
                 best_f1_sum = a_f1_v + o_f1_v
                 a_p_t, a_r_t, a_f1_t, o_p_t, o_r_t, o_f1_t = self.__evaluate_ol(
                     dataset_test, data_test.token_seqs, data_test.aspects_true_list,

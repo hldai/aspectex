@@ -134,7 +134,7 @@ def __pretrain_bertnrdj(
     )
 
 
-def __train_bertnrdj(dataset, n_labels, batch_size, model_file, dropout):
+def __train_bertnrdj(dataset, n_labels, batch_size, model_file, dropout, start_eval_epoch):
     init_logging('log/{}-bertnrdj-{}.log'.format(
         cur_script_name, str_today), mode='a', to_stdout=True)
 
@@ -161,7 +161,7 @@ def __train_bertnrdj(dataset, n_labels, batch_size, model_file, dropout):
         robert_model=bm, train_tfrec_file=dataset_files['train_tfrecord_file'],
         valid_tfrec_file=dataset_files['valid_tfrecord_file'], test_tfrec_file=dataset_files['test_tfrecord_file'],
         seq_length=config.BERT_SEQ_LEN, n_train=n_train, data_valid=data_valid, data_test=data_test,
-        dropout=dropout
+        dropout=dropout, start_eval_spoch=start_eval_epoch
     )
 
 
@@ -180,6 +180,7 @@ if __name__ == '__main__':
     batch_size_pretrain = 32
     batch_size_train = 16
     hidden_size_lstm = 200
+    start_eval_epoch = 10
 
     if dataset == 'se14r':
         pretrain_load_model_file = os.path.join(
@@ -204,4 +205,4 @@ if __name__ == '__main__':
     #     batch_size=batch_size_pretrain, dropout=pretrain_dropout,
     #     load_model_file=pretrain_load_model_file, dst_model_file=model_file)
     __train_bertnrdj(dataset=dataset, n_labels=n_labels, batch_size=batch_size_train, model_file=model_file,
-                     dropout=dropout)
+                     dropout=dropout, start_eval_epoch=start_eval_epoch)
