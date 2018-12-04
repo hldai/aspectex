@@ -11,7 +11,7 @@ import config
 
 def __train_bert():
     str_today = datetime.date.today().strftime('%y-%m-%d')
-    init_logging('log/bertlstmcrf-{}.log'.format(str_today), mode='a', to_stdout=True)
+    init_logging('log/bertlstmcrf3-{}.log'.format(str_today), mode='a', to_stdout=True)
 
     # dataset = 'se14r'
     dataset = 'se15r'
@@ -57,7 +57,7 @@ def __train_bert():
 
 def __train_bertlstm_ol():
     str_today = datetime.date.today().strftime('%y-%m-%d')
-    init_logging('log/bertlstmcrfol-{}.log'.format(str_today), mode='a', to_stdout=True)
+    init_logging('log/bertlstmcrfol3-{}.log'.format(str_today), mode='a', to_stdout=True)
 
     # dataset = 'se14r'
     dataset = 'se15r'
@@ -93,9 +93,10 @@ def __load_terms_list(sample_idxs, terms_list_file):
     return dst_terms_list
 
 
-def __pretrain_bertnrdj(dataset, n_labels, seq_length, n_steps, batch_size, dropout, load_model_file, dst_model_file):
-    str_today = datetime.date.today().strftime('%y-%m-%d')
-    init_logging('log/pre-bertnrdj-{}-{}.log'.format(utils.get_machine_name(), str_today), mode='a', to_stdout=True)
+def __pretrain_bertnrdj(
+        dataset, n_labels, seq_length, n_steps, batch_size, dropout, load_model_file, dst_model_file):
+    init_logging('log/{}-pre-bertnrdj-{}-{}.log'.format(
+        cur_script_name, utils.get_machine_name(), str_today), mode='a', to_stdout=True)
 
     dataset_files = config.DATA_FILES[dataset]
 
@@ -134,8 +135,8 @@ def __pretrain_bertnrdj(dataset, n_labels, seq_length, n_steps, batch_size, drop
 
 
 def __train_bertnrdj(dataset, n_labels, batch_size, model_file, dropout):
-    str_today = datetime.date.today().strftime('%y-%m-%d')
-    init_logging('log/bertnrdj-{}.log'.format(str_today), mode='a', to_stdout=True)
+    init_logging('log/{}-bertnrdj-{}.log'.format(
+        cur_script_name, str_today), mode='a', to_stdout=True)
 
     dataset_files = config.DATA_FILES[dataset]
 
@@ -165,6 +166,9 @@ def __train_bertnrdj(dataset, n_labels, batch_size, model_file, dropout):
 
 
 if __name__ == '__main__':
+    str_today = datetime.date.today().strftime('%y-%m-%d')
+    cur_script_name = os.path.basename(__file__)[:-3]
+
     # dataset = 'se14l'
     # dataset = 'se14r'
     dataset = 'se15r'

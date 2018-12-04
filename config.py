@@ -232,4 +232,4 @@ DATA_FILES = {
 BERT_CONFIG_FILE = join(BERT_BASE_DIR, 'uncased_L-12_H-768_A-12/bert_config.json')
 BERT_VOCAB_FILE = join(BERT_BASE_DIR, 'uncased_L-12_H-768_A-12/vocab.txt')
 BERT_SEQ_LEN = 128
-BERT_EMBED_DIM = 768
+BERT_EMBED_DIM = 3072
