@@ -200,6 +200,17 @@ class BertNRDJ:
 
         return viterbi_sequences
 
+    def __get_batch_input(self, all_layers, seq_lens):
+        seq_embeds = np.concatenate(
+            [all_layers[-1], all_layers[-2], all_layers[-3], all_layers[-4]], axis=-1)
+        # seq_embeds = np.concatenate(
+        #     [all_layers[-1], all_layers[-2]], axis=-1)
+        # seq_embeds = all_layers[-1]
+        seq_lens = np.squeeze(seq_lens, axis=-1)
+        max_seq_len = np.max(seq_lens)
+        embed_arr = seq_embeds[:, :max_seq_len, :]
+        return embed_arr, seq_lens
+
     def __evaluate_ol(self, tfrec_dataset, token_seqs, at_true_list, ot_true_list, robert_model):
         next_valid_example = tfrec_dataset.make_one_shot_iterator().get_next()
         all_preds = list()
@@ -212,12 +223,13 @@ class BertNRDJ:
                     robert_model.segment_ids: features["segment_ids"], robert_model.label_ids: features["label_ids"],
                     robert_model.hidden_dropout: 1.0, robert_model.attention_dropout: 1.0
                 })
-                seq_embeds = np.concatenate(
-                    [all_layers[-1], all_layers[-2], all_layers[-3], all_layers[-4]], axis=-1)
                 idx += 1
-                seq_lens = np.squeeze(features['seq_len'], axis=-1)
-                max_seq_len = np.max(seq_lens)
-                embed_arr = seq_embeds[:, :max_seq_len, :]
+                # seq_embeds = np.concatenate(
+                #     [all_layers[-1], all_layers[-2], all_layers[-3], all_layers[-4]], axis=-1)
+                # seq_lens = np.squeeze(features['seq_len'], axis=-1)
+                # max_seq_len = np.max(seq_lens)
+                # embed_arr = seq_embeds[:, :max_seq_len, :]
+                embed_arr, seq_lens = self.__get_batch_input(all_layers, features['seq_len'])
 
                 preds = self.predict_batch_ol(embed_arr, seq_lens, 'tar')
 
@@ -243,12 +255,13 @@ class BertNRDJ:
                     robert_model.segment_ids: features["segment_ids"], robert_model.label_ids: features["label_ids"],
                     robert_model.hidden_dropout: 1.0, robert_model.attention_dropout: 1.0
                 })
-                seq_embeds = np.concatenate(
-                    [all_layers[-1], all_layers[-2], all_layers[-3], all_layers[-4]], axis=-1)
                 idx += 1
-                seq_lens = np.squeeze(features['seq_len'], axis=-1)
-                max_seq_len = np.max(seq_lens)
-                embed_arr = seq_embeds[:, :max_seq_len, :]
+                # seq_embeds = np.concatenate(
+                #     [all_layers[-1], all_layers[-2], all_layers[-3], all_layers[-4]], axis=-1)
+                # seq_lens = np.squeeze(features['seq_len'], axis=-1)
+                # max_seq_len = np.max(seq_lens)
+                # embed_arr = seq_embeds[:, :max_seq_len, :]
+                embed_arr, seq_lens = self.__get_batch_input(all_layers, features['seq_len'])
 
                 preds = self.predict_batch_ol(embed_arr, seq_lens, task)
 
@@ -268,11 +281,12 @@ class BertNRDJ:
             robert_model.segment_ids: features["segment_ids"], robert_model.label_ids: features["label_ids"],
             robert_model.hidden_dropout: 1.0, robert_model.attention_dropout: 1.0
         })
-        seq_embeds = np.concatenate(
-            [all_layers[-1], all_layers[-2], all_layers[-3], all_layers[-4]], axis=-1)
-        seq_lens = np.squeeze(features['seq_len'], axis=-1)
+        # seq_embeds = np.concatenate(
+        #     [all_layers[-1], all_layers[-2], all_layers[-3], all_layers[-4]], axis=-1)
+        # seq_lens = np.squeeze(features['seq_len'], axis=-1)
+        # embed_arr = seq_embeds[:, :max_seq_len, :]
+        embed_arr, seq_lens = self.__get_batch_input(all_layers, features['seq_len'])
         max_seq_len = np.max(seq_lens)
-        embed_arr = seq_embeds[:, :max_seq_len, :]
         label_seqs = features["label_ids"][:, :max_seq_len]
 
         feed_dict = self.get_feed_dict_ol(embed_arr, seq_lens, lr, dropout, task=task, label_seqs=label_seqs)
