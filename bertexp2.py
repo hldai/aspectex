@@ -16,35 +16,27 @@ def __train_bert():
     # dataset = 'se14r'
     dataset = 'se15r'
 
+    dataset_files = config.DATA_FILES[dataset]
     if dataset == 'se14l':
-        bert_embed_file_train = os.path.join(config.DATA_DIR_SE14, 'laptops/laptops_train_texts_tok_bert.txt')
-        bert_embed_file_test = os.path.join(config.DATA_DIR_SE14, 'laptops/laptops_test_texts_tok_bert.txt')
-        train_valid_split_file = config.SE14_LAPTOP_TRAIN_VALID_SPLIT_FILE
-        train_sents_file = config.SE14_LAPTOP_TRAIN_SENTS_FILE
-        test_sents_file = config.SE14_LAPTOP_TEST_SENTS_FILE
+        bert_embed_file_train = os.path.join(config.SE14_DIR, 'laptops/laptops_train_texts_tok_bert.txt')
+        bert_embed_file_test = os.path.join(config.SE14_DIR, 'laptops/laptops_test_texts_tok_bert.txt')
         # dst_aspects_file = 'd:/data/aspect/semeval14/lstmcrf-aspects.txt'
         # dst_opinions_file = 'd:/data/aspect/semeval14/lstmcrf-opinions.txt'
     elif dataset == 'se14r':
         bert_embed_file_train = os.path.join(
-            config.DATA_DIR_SE14, 'restaurants/restaurants_train_texts_tok_bert.txt')
+            config.SE14_DIR, 'restaurants/restaurants_train_texts_tok_bert.txt')
         bert_embed_file_test = os.path.join(
-            config.DATA_DIR_SE14, 'restaurants/restaurants_test_texts_tok_bert.txt')
-        train_valid_split_file = config.SE14_REST_TRAIN_VALID_SPLIT_FILE
-        train_sents_file = config.SE14_REST_TRAIN_SENTS_FILE
-        test_sents_file = config.SE14_REST_TEST_SENTS_FILE
+            config.SE14_DIR, 'restaurants/restaurants_test_texts_tok_bert.txt')
     else:
         bert_embed_file_train = os.path.join(
             config.SE15_DIR, 'restaurants/restaurants_train_texts_tok_bert.txt')
         bert_embed_file_test = os.path.join(
             config.SE15_DIR, 'restaurants/restaurants_test_texts_tok_bert.txt')
-        train_valid_split_file = config.SE15_REST_TRAIN_VALID_SPLIT_FILE
-        train_sents_file = config.SE15_REST_TRAIN_SENTS_FILE
-        test_sents_file = config.SE15_REST_TEST_SENTS_FILE
 
     print('loading data ...')
     data_train, data_valid = bldatautils.load_train_data_bert(
-        bert_embed_file_train, train_sents_file, train_valid_split_file)
-    data_test = bldatautils.load_valid_data_bert(bert_embed_file_test, test_sents_file)
+        bert_embed_file_train, dataset_files['train_sents_file'], dataset_files['train_valid_split_file'])
+    data_test = bldatautils.load_valid_data_bert(bert_embed_file_test, dataset_files['test_sents_file'])
     print('done')
 
     word_embed_dim = len(data_train.word_embed_seqs[0][0])
@@ -55,7 +47,7 @@ def __train_bert():
     # with open(word_vecs_file, 'rb') as f:
     #     vocab, word_vecs_matrix = pickle.load(f)
 
-    logging.info(test_sents_file)
+    logging.info(dataset_files['test_sents_file'])
     logging.info('token_embed_dim={}'.format(word_embed_dim))
 
     save_model_file = None
@@ -101,7 +93,7 @@ def __load_terms_list(sample_idxs, terms_list_file):
     return dst_terms_list
 
 
-def __pretrain_bertnrdj(dataset, n_labels, seq_length, n_steps, batch_size, dst_model_file):
+def __pretrain_bertnrdj(dataset, n_labels, seq_length, n_steps, batch_size, load_model_file, dst_model_file):
     str_today = datetime.date.today().strftime('%y-%m-%d')
     init_logging('log/pre-bertnrdj2-{}-{}.log'.format(utils.get_machine_name(), str_today), mode='a', to_stdout=True)
 
@@ -127,7 +119,9 @@ def __pretrain_bertnrdj(dataset, n_labels, seq_length, n_steps, batch_size, dst_
     print('done')
 
     bertnrdj_model = BertNRDJ(
-        n_labels, config.BERT_EMBED_DIM, hidden_size_lstm=hidden_size_lstm, batch_size=batch_size)
+        n_labels, config.BERT_EMBED_DIM, hidden_size_lstm=hidden_size_lstm, batch_size=batch_size,
+        model_file=load_model_file
+    )
     bertnrdj_model.pretrain(
         robert_model=robert_model, train_aspect_tfrec_file=dataset_files['pretrain_train_aspect_tfrec_file'],
         valid_aspect_tfrec_file=dataset_files['pretrain_valid_aspect_tfrec_file'],
@@ -181,18 +175,23 @@ if __name__ == '__main__':
     hidden_size_lstm = 200
 
     if dataset == 'se14r':
+        pretrain_load_model_file = os.path.join(
+            config.SE14_DIR, 'model-data/se14r-yelpr9-rest-p0_04-bert-200h.ckpt')
         # model_file = None
         model_file = os.path.join(config.SE14_DIR, 'model-data/se14r-yelpr9-rest-p0_04-bert-200h.ckpt')
     elif dataset == 'se15r':
+        pretrain_load_model_file = os.path.join(
+            config.SE15_DIR, 'model-data/se15r-yelpr9-rest-p0_04-bert-200h-668.ckpt')
         # model_file = None
-        model_file = os.path.join(config.SE14_DIR, 'model-data/se15r-yelpr9-rest-p0_04-bert-200h.ckpt')
+        model_file = os.path.join(config.SE15_DIR, 'model-data/se15r-yelpr9-rest-p0_04-bert-200h.ckpt')
     else:
+        pretrain_load_model_file = os.path.join(config.SE14_DIR, 'model-data/se14l-amazon-200h.ckpt')
         # model_file = None
         model_file = os.path.join(config.SE14_DIR, 'model-data/se14l-amazon-200h.ckpt')
 
     # __train_bert()
     # __train_bertlstm_ol()
-    __pretrain_bertnrdj(
-        dataset=dataset, n_labels=n_labels, seq_length=seq_length, n_steps=n_steps,
-        batch_size=batch_size_pretrain, dst_model_file=model_file)
-    # __train_bertnrdj(dataset=dataset, n_labels=n_labels, batch_size=batch_size_train, model_file=model_file)
+    # __pretrain_bertnrdj(
+    #     dataset=dataset, n_labels=n_labels, seq_length=seq_length, n_steps=n_steps,
+    #     batch_size=batch_size_pretrain, load_model_file=pretrain_load_model_file, dst_model_file=model_file)
+    __train_bertnrdj(dataset=dataset, n_labels=n_labels, batch_size=batch_size_train, model_file=model_file)

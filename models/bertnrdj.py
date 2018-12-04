@@ -334,7 +334,7 @@ class BertNRDJ:
     def train(
             self, robert_model: Robert, train_tfrec_file, valid_tfrec_file, test_tfrec_file, seq_length,
             n_train, data_valid: ValidDataBertOL, data_test: ValidDataBertOL,
-            n_epochs=10, lr=0.001, dropout=0.5):
+            n_epochs=100, lr=0.001, dropout=0.5):
         from models import robert
 
         logging.info('n_epochs={}, lr={}, dropout={}'.format(n_epochs, lr, dropout))
