@@ -191,7 +191,7 @@ if __name__ == '__main__':
     elif dataset == 'se15r':
         # pretrain_load_model_file = None
         pretrain_load_model_file = os.path.join(
-            config.SE15_DIR, 'model-data/se15r-yelpr9-rest-p0_04-bert-200h-1009.ckpt')
+            config.SE15_DIR, 'model-data/se15r-yelpr9-rest-p0_04-bert-200h.ckpt-1009')
         # model_file = None
         model_file = os.path.join(config.SE15_DIR, 'model-data/se15r-yelpr9-rest-p0_04-bert-200h.ckpt')
     else:
