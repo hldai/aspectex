@@ -137,8 +137,8 @@ def __pretrain_bertnrdj(
 
 def __train_bertnrdj(dataset, n_labels, batch_size, model_file, dropout,
                      n_epochs, learning_rate, start_eval_epoch):
-    init_logging('log/{}-bertnrdj-{}.log'.format(
-        cur_script_name, str_today), mode='a', to_stdout=True)
+    init_logging('log/{}-bertnrdj-{}-{}.log'.format(
+        cur_script_name, utils.get_machine_name(), str_today), mode='a', to_stdout=True)
 
     dataset_files = config.DATA_FILES[dataset]
 
