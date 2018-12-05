@@ -134,7 +134,7 @@ def __pretrain_bertnrdj(
     )
 
 
-def __train_bertnrdj(dataset, n_labels, batch_size, model_file, dropout, start_eval_epoch):
+def __train_bertnrdj(dataset, n_labels, batch_size, model_file, dropout, n_epochs, start_eval_epoch):
     init_logging('log/{}-bertnrdj-{}.log'.format(
         cur_script_name, str_today), mode='a', to_stdout=True)
 
@@ -161,7 +161,7 @@ def __train_bertnrdj(dataset, n_labels, batch_size, model_file, dropout, start_e
         robert_model=bm, train_tfrec_file=dataset_files['train_tfrecord_file'],
         valid_tfrec_file=dataset_files['valid_tfrecord_file'], test_tfrec_file=dataset_files['test_tfrecord_file'],
         seq_length=config.BERT_SEQ_LEN, n_train=n_train, data_valid=data_valid, data_test=data_test,
-        dropout=dropout, start_eval_spoch=start_eval_epoch
+        dropout=dropout, start_eval_spoch=start_eval_epoch, n_epochs=n_epochs
     )
 
 
@@ -170,8 +170,8 @@ if __name__ == '__main__':
     cur_script_name = os.path.basename(__file__)[:-3]
 
     # dataset = 'se14l'
-    dataset = 'se14r'
-    # dataset = 'se15r'
+    # dataset = 'se14r'
+    dataset = 'se15r'
     pretrain_dropout = 0.5
     dropout = 0.9
     n_labels = 5
@@ -180,21 +180,22 @@ if __name__ == '__main__':
     batch_size_pretrain = 32
     batch_size_train = 16
     hidden_size_lstm = 200
-    start_eval_epoch = 10
+    start_eval_epoch = 5
+    n_train_epochs = 200
 
     if dataset == 'se14r':
         pretrain_load_model_file = os.path.join(
-            config.SE14_DIR, 'model-data/se14r-yelpr9-rest-p0_04-bert-200h.ckpt-264')
+            config.SE14_DIR, 'model-data/se14r-yelpr9-rest-p0_04-bert-200h.ckpt-439')
         # model_file = None
         model_file = os.path.join(config.SE14_DIR, 'model-data/se14r-yelpr9-rest-p0_04-bert-200h.ckpt')
     elif dataset == 'se15r':
-        pretrain_load_model_file = None
-        # pretrain_load_model_file = os.path.join(
-        #     config.SE15_DIR, 'model-data/se15r-yelpr9-rest-p0_04-bert-200h-668.ckpt')
-        model_file = None
-        # model_file = os.path.join(config.SE15_DIR, 'model-data/se15r-yelpr9-rest-p0_04-bert-200h.ckpt')
+        # pretrain_load_model_file = None
+        pretrain_load_model_file = os.path.join(
+            config.SE15_DIR, 'model-data/se15r-yelpr9-rest-p0_04-bert-200h-1009.ckpt')
+        # model_file = None
+        model_file = os.path.join(config.SE15_DIR, 'model-data/se15r-yelpr9-rest-p0_04-bert-200h.ckpt')
     else:
-        pretrain_load_model_file = os.path.join(config.SE14_DIR, 'model-data/se14l-amazon-200h.ckpt')
+        pretrain_load_model_file = os.path.join(config.SE14_DIR, 'model-data/se14l-amazon-200h-454.ckpt')
         # model_file = None
         model_file = os.path.join(config.SE14_DIR, 'model-data/se14l-amazon-200h.ckpt')
 
@@ -205,4 +206,4 @@ if __name__ == '__main__':
         batch_size=batch_size_pretrain, dropout=pretrain_dropout,
         load_model_file=pretrain_load_model_file, dst_model_file=model_file)
     # __train_bertnrdj(dataset=dataset, n_labels=n_labels, batch_size=batch_size_train, model_file=model_file,
-    #                  dropout=dropout, start_eval_epoch=start_eval_epoch)
+    #                  dropout=dropout, n_epochs=n_train_epochs, start_eval_epoch=start_eval_epoch)
