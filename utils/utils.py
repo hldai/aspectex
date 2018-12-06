@@ -55,6 +55,7 @@ def prf1_for_single_term_type(preds, token_seqs, terms_list, label_beg=1, label_
         with open(terms_output_file, 'w', encoding='utf-8') as fout:
             for terms in terms_sys_list:
                 fout.write('{}\n'.format(json.dumps(terms, ensure_ascii=False)))
+        print('{}, {} terms saved to {}'.format(label_beg, label_in, terms_output_file))
 
     p, r, f1 = prf1(true_cnt, sys_cnt, hit_cnt)
     return p, r, f1
