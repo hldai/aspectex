@@ -1,5 +1,6 @@
 import json
 import config
+import os
 from utils import utils
 from models import rules, opinionrules, rulescommon
 from models.aspectminehelper import AspectMineHelper
@@ -270,10 +271,10 @@ def __rule_insight(opinion_term_dict_file, filter_nouns_file, dep_tags_file, pos
 
 
 def __run_with_mined_rules(mine_helper, rule_patterns_file, term_hit_rate_file, dep_tags_file, pos_tags_file,
-                           sent_texts_file, filter_terms_vocab_file,
+                           sent_texts_file, filter_terms_vocab_file, term_hit_rate_thres=0.6,
                            dst_result_file=None, sents_file=None):
     l1_rules, l2_rules = rulescommon.load_rule_patterns_file(rule_patterns_file)
-    term_vocab = rulescommon.get_term_vocab(term_hit_rate_file, 0.6)
+    term_vocab = rulescommon.get_term_vocab(term_hit_rate_file, term_hit_rate_thres)
 
     dep_tags_list = utils.load_dep_tags_list(dep_tags_file)
     pos_tags_list = utils.load_pos_tags(pos_tags_file)
@@ -321,74 +322,32 @@ opinion_terms_file = 'd:/data/aspect/semeval14/opinion-terms-full.txt'
 laptops_filter_nouns_file = 'd:/data/aspect/semeval14/nouns-filter.txt'
 rest_filter_nouns_file = 'd:/data/aspect/semeval14/restaurants/aspect-nouns-filter.txt'
 
-# # dm = 'semeval14'
-# dm = 'semeval15'
-# # dataset = 'laptops-test'
-# # dataset = 'laptops-amazon'
-# # dataset = 'restaurants-test'
-# dataset = 'restaurants-yelp'
-#
-# filter_nouns_file = laptops_filter_nouns_file if dataset.startswith('laptops') else rest_filter_nouns_file
-#
-# dep_tags_file, pos_tags_file, sent_texts_file, sents_file = None, None, None, None
-# train_sents_file, aspect_result_file, opinion_result_file = None, None, None
-#
-# ds1, ds2 = dataset.split('-')
-# aspect_filter_terms_vocab_file = 'd:/data/aspect/{}/{}/aspect_filter_vocab_full.txt'.format(dm, ds1)
-# opinion_filter_terms_vocab_file = 'd:/data/aspect/{}/{}/opinion_filter_vocab_full.txt'.format(dm, ds1)
-# aspect_term_hit_rate_file = 'd:/data/aspect/{}/{}/aspect-term-hit-rate.txt'.format(dm, ds1)
-# opinion_term_hit_rate_file = 'd:/data/aspect/{}/{}/opinion-term-hit-rate.txt'.format(dm, ds1)
-# aspect_rule_patterns_file = 'd:/data/aspect/{}/{}/aspect_mined_rule_patterns.txt'.format(dm, ds1)
-# opinion_rule_patterns_file = 'd:/data/aspect/{}/{}/opinion_mined_rule_patterns.txt'.format(dm, ds1)
-#
-# if dataset.endswith('test') or dataset.endswith('train'):
-#     dep_tags_file = 'd:/data/aspect/{}/{}/{}-{}-rule-dep.txt'.format(dm, ds1, ds1, ds2)
-#     pos_tags_file = 'd:/data/aspect/{}/{}/{}-{}-rule-pos.txt'.format(dm, ds1, ds1, ds2)
-#     aspect_result_file = 'd:/data/aspect/{}/{}/{}-{}-aspect-rule-result.txt'.format(dm, ds1, ds1, ds2)
-#     opinion_result_file = 'd:/data/aspect/{}/{}/{}-{}-opinion-rule-result.txt'.format(dm, ds1, ds1, ds2)
-#     sent_texts_file = 'd:/data/aspect/{}/{}/{}_{}_texts.txt'.format(dm, ds1, ds1, ds2)
-#
-# if dataset.startswith('laptops'):
-#     train_sents_file = config.SE14_LAPTOP_TRAIN_SENTS_FILE
-# else:
-#     train_sents_file = config.SE14_REST_TRAIN_SENTS_FILE
-#
-# if dataset == 'laptops-test':
-#     sents_file = config.SE14_LAPTOP_TEST_SENTS_FILE
-# if dataset == 'laptops-train':
-#     sents_file = config.SE14_LAPTOP_TRAIN_SENTS_FILE
-# if dataset == 'restaurants-test' and dm == 'semeval14':
-#     sents_file = config.SE14_REST_TEST_SENTS_FILE
-# if dataset == 'restaurants-train' and dm == 'semeval14':
-#     sents_file = config.SE14_REST_TRAIN_SENTS_FILE
-# if dataset == 'restaurants-test' and dm == 'semeval15':
-#     sents_file = config.SE15_REST_TEST_SENTS_FILE
-# if dataset == 'restaurants-train' and dm == 'semeval15':
-#     sents_file = config.SE15_REST_TRAIN_SENTS_FILE
-# if dataset == 'laptops-amazon':
-#     dep_tags_file = 'd:/data/amazon/laptops-rule-dep.txt'
-#     pos_tags_file = 'd:/data/amazon/laptops-rule-pos.txt'
-#     opinion_result_file = 'd:/data/amazon/laptops-opinion-rule-result.txt'
-#     aspect_result_file = 'd:/data/amazon/laptops-aspect-rm-rule-result.txt'
-#     sent_texts_file = 'd:/data/amazon/laptops-reivews-sent-text.txt'
-# if dataset == 'restaurants-yelp':
-#     # dep_tags_file = 'd:/data/res/yelp-review-round-9-dep.txt'
-#     # pos_tags_file = 'd:/data/res/yelp-review-round-9-pos.txt'
-#     dep_tags_file = 'd:/data/res/yelp/eng-part/yelp-rest-sents-r9-tok-eng-part0_04-dep.txt'
-#     pos_tags_file = 'd:/data/res/yelp/eng-part/yelp-rest-sents-r9-tok-eng-part0_04-pos.txt'
-#     sent_texts_file = 'd:/data/res/yelp/eng-part/yelp-rest-sents-r9-tok-eng-part0_04.txt'
-#     # aspect_result_file = 'd:/data/aspect/semeval14/restaurant/yelp-aspect-rule-result-p.txt'
-#     aspect_result_file = 'd:/data/aspect/{}/restaurants/yelpr9-rest-part0_04-aspect-rule-result.txt'.format(dm)
-#     opinion_result_file = 'd:/data/aspect/{}/restaurants/yelpr9-rest-part0_04-opinion-rule-result.txt'.format(dm)
-
-# task = 'aspect'
-task = 'opinion'
-target_dataset = 'se14-restaurants'
+# term_type = 'aspect'
+term_type = 'opinion'
+# target_dataset = 'se14r'
+target_dataset = 'se15r'
 res_dataset = 'restaurants-yelp'
 target_dataset_files, res_dataset_files = config.DATA_FILES[target_dataset], config.DATA_FILES[res_dataset]
-sents_file = None
+# task = 'eval'
+task = 'apply'
+if task == 'apply':
+    sents_file = None
+    result_output_file = os.path.join(
+        config.SE15_DIR, 'restaurants/yelpr9-rest-p0_04-rule-ot-highrecall.txt')
+    # result_output_file = target_dataset_files['rule_opinion_result_file']
+    sent_tok_texts_file = res_dataset_files['sent_texts_file']
+    dep_tags_file = res_dataset_files['dep_tags_file']
+    pos_tags_file = res_dataset_files['pos_tags_file']
+else:
+    sents_file = target_dataset_files['test_sents_file']
+    result_output_file = None
+    sent_tok_texts_file = target_dataset_files['test_tok_texts_file']
+    dep_tags_file = target_dataset_files['test_dep_tags_file']
+    pos_tags_file = target_dataset_files['test_pos_tags_file']
 
-if task == 'aspect':
+hit_rate_thres = 0.2
+
+if term_type == 'aspect':
     # __rule_insight(opinion_terms_file, filter_nouns_file, dep_tags_file, pos_tags_file, sent_texts_file,
     #                train_sents_file, dst_result_file=aspect_result_file, sents_file=sents_file)
     mine_helper = AspectMineHelper(opinion_terms_file)
@@ -401,14 +360,14 @@ if task == 'aspect':
     # __run_with_mined_rules(
     #     mine_helper, aspect_rule_patterns_file, aspect_term_hit_rate_file, dep_tags_file, pos_tags_file,
     #     sent_texts_file, aspect_filter_terms_vocab_file, dst_result_file=aspect_result_file, sents_file=sents_file)
-if task == 'opinion':
+if term_type == 'opinion':
     # terms_vocab = __load_opinion_terms_in_train(train_sents_file)
     # __opinion_rule_insight(dep_tags_file, pos_tags_file, sent_texts_file, terms_vocab,
     #                        dst_result_file=opinion_result_file, sents_file=sents_file)
     mine_helper = OpinionMineHelper()
     __run_with_mined_rules(
         mine_helper, target_dataset_files['opinion_rule_patterns_file'],
-        target_dataset_files['opinion_term_hit_rate_file'], res_dataset_files['dep_tags_file'],
-        res_dataset_files['pos_tags_file'], res_dataset_files['sent_texts_file'],
-        target_dataset_files['opinion_term_filter_vocab_file'],
-        dst_result_file=target_dataset_files['rule_opinion_result_file'], sents_file=sents_file)
+        target_dataset_files['opinion_term_hit_rate_file'], dep_tags_file,
+        pos_tags_file, sent_tok_texts_file, target_dataset_files['opinion_term_filter_vocab_file'],
+        term_hit_rate_thres=hit_rate_thres,
+        dst_result_file=result_output_file, sents_file=sents_file)

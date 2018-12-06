@@ -475,41 +475,42 @@ def __gen_term_hit_rate_file(mine_helper, train_sents_file, dep_tags_file, pos_t
 
 
 # dataset = 'semeval14'
-dataset = 'semeval15'
+dataset_name = 'semeval15'
 # sub_dataset = 'laptops'
 sub_dataset = 'restaurants'
-# target = 'opinion'
-target = 'aspect'
+target = 'opinion'
+# target = 'aspect'
 
 if target == 'aspect':
     term_filter_rate = 0.1
     pattern_filter_rate = 0.6
 else:
     term_filter_rate = 0.1
-    pattern_filter_rate = 0.6
+    pattern_filter_rate = 0.5
 
 opinion_terms_file = 'd:/data/aspect/semeval14/opinion-terms-full.txt'
 
-dep_tags_file = 'd:/data/aspect/{}/{}/{}-train-rule-dep.txt'.format(dataset, sub_dataset, sub_dataset)
-pos_tags_file = 'd:/data/aspect/{}/{}/{}-train-rule-pos.txt'.format(dataset, sub_dataset, sub_dataset)
-sent_texts_file = 'd:/data/aspect/{}/{}/{}_train_texts.txt'.format(dataset, sub_dataset, sub_dataset)
-word_cnts_file = 'd:/data/aspect/{}/{}/word_cnts.txt'.format(dataset, sub_dataset)
+dep_tags_file = 'd:/data/aspect/{}/{}/{}-train-rule-dep.txt'.format(dataset_name, sub_dataset, sub_dataset)
+pos_tags_file = 'd:/data/aspect/{}/{}/{}-train-rule-pos.txt'.format(dataset_name, sub_dataset, sub_dataset)
+sent_texts_file = 'd:/data/aspect/{}/{}/{}_train_texts.txt'.format(dataset_name, sub_dataset, sub_dataset)
+word_cnts_file = 'd:/data/aspect/{}/{}/word_cnts.txt'.format(dataset_name, sub_dataset)
 
 if target == 'aspect':
-    patterns_file = 'd:/data/aspect/{}/{}/aspect_mined_rule_patterns_tmp.txt'.format(dataset, sub_dataset)
-    term_hit_rate_file = 'd:/data/aspect/{}/{}/aspect-term-hit-rate.txt'.format(dataset, sub_dataset)
+    patterns_file = 'd:/data/aspect/{}/{}/aspect_mined_rule_patterns_tmp.txt'.format(dataset_name, sub_dataset)
+    term_hit_rate_file = 'd:/data/aspect/{}/{}/aspect-term-hit-rate.txt'.format(dataset_name, sub_dataset)
     full_train_term_filter_file = 'd:/data/aspect/{}/{}/aspect_filter_vocab_full.txt'.format(
-        dataset, sub_dataset)
+        dataset_name, sub_dataset)
 else:
-    patterns_file = 'd:/data/aspect/{}/{}/opinion_mined_rule_patterns_tmp.txt'.format(dataset, sub_dataset)
-    term_hit_rate_file = 'd:/data/aspect/{}/{}/opinion-term-hit-rate.txt'.format(dataset, sub_dataset)
+    patterns_file = 'd:/data/aspect/{}/{}/opinion_mined_rule_patterns_highrecall.txt'.format(
+        dataset_name, sub_dataset)
+    term_hit_rate_file = 'd:/data/aspect/{}/{}/opinion-term-hit-rate.txt'.format(dataset_name, sub_dataset)
     full_train_term_filter_file = 'd:/data/aspect/{}/{}/opinion_filter_vocab_full.txt'.format(
-        dataset, sub_dataset)
+        dataset_name, sub_dataset)
 
 if sub_dataset == 'laptops':
     train_valid_split_file = config.SE14_LAPTOP_TRAIN_VALID_SPLIT_FILE
     sents_file = config.SE14_LAPTOP_TRAIN_SENTS_FILE
-elif dataset == 'semeval14':
+elif dataset_name == 'semeval14':
     train_valid_split_file = config.SE14_REST_TRAIN_VALID_SPLIT_FILE
     sents_file = config.SE14_REST_TRAIN_SENTS_FILE
 else:

@@ -271,6 +271,31 @@ def __missing_terms():
             print(t, cnt, t in opinion_terms_vocab)
 
 
+def __count_hits(terms_true, terms_sys):
+    cnt = 0
+    for t in terms_true:
+        if t in terms_sys:
+            cnt += 1
+    return cnt
+
+
+def __check_opinion_errors():
+    terms_sys_list = utils.load_json_objs('d:/onedrive/opinion_terms_bert_output_r.txt')
+    terms_sys_nr_list = utils.load_json_objs('d:/onedrive/opinion_terms_bert_output.txt')
+    test_sents = utils.load_json_objs(config.SE15R_FILES['test_sents_file'])
+    terms_true_list = [s['opinions'] for s in test_sents]
+    for s, terms_true, terms_sys, terms_sys_nr in zip(
+            test_sents, terms_true_list, terms_sys_list, terms_sys_nr_list):
+        if not terms_true and not terms_sys:
+            continue
+        terms_true = [t.lower() for t in terms_true]
+        if len(terms_true) == len(terms_sys) and __count_hits(terms_true, terms_sys) == len(terms_true):
+            continue
+        print(s['text'])
+        print(terms_true, terms_sys, terms_sys_nr)
+        print()
+
+
 # __count_adj_phrases()
 # __semeval_rule_insight()
 # __dataset_statistics()
@@ -283,4 +308,5 @@ def __missing_terms():
 # __count_words('d:/data/aspect/semeval14/restaurants/restaurants_train_texts_tok.txt')
 # __count_words('d:/data/aspect/semeval15/restaurants/restaurants_train_texts_tok.txt')
 # __count_words('d:/data/aspect/semeval15/restaurants/restaurants_test_texts_tok.txt')
-__missing_terms()
+# __missing_terms()
+__check_opinion_errors()

@@ -195,11 +195,11 @@ if __name__ == '__main__':
         # model_file = None
         model_file = os.path.join(config.SE14_DIR, 'model-data/se14r-yelpr9-rest-p0_04-bert-200h.ckpt')
     elif dataset == 'se15r':
-        # pretrain_load_model_file = None
-        pretrain_load_model_file = os.path.join(
-            config.SE15_DIR, 'model-data/se15r-yelpr9-rest-p0_04-bert-200h.ckpt-1009')
+        pretrain_load_model_file = None
+        # pretrain_load_model_file = os.path.join(
+        #     config.SE15_DIR, 'model-data/se15r-yelpr9-rest-p0_04-bert-200h.ckpt-1009')
         # model_file = None
-        model_file = os.path.join(config.SE15_DIR, 'model-data/se15r-yelpr9-rest-p0_04-bert-200h.ckpt')
+        model_file = os.path.join(config.SE15_DIR, 'model-data/se15r-yelpr9-rest-p0_04-bert-200h-hr.ckpt')
     else:
         pretrain_load_model_file = os.path.join(config.SE14_DIR, 'model-data/se14l-amazon-200h.ckpt-454')
         # model_file = None
