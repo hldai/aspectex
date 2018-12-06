@@ -234,7 +234,8 @@ class BertNRDJ:
                 break
         return embed_arr_list, seq_lens_list
 
-    def __evaluate_ol(self, embed_arr_list, seq_lens_list, token_seqs, at_true_list, ot_true_list):
+    def __evaluate_ol(self, embed_arr_list, seq_lens_list, token_seqs, at_true_list, ot_true_list,
+                      opinion_terms_output_file=None):
         all_preds = list()
         for embed_arr, seq_lens in zip(embed_arr_list, seq_lens_list):
             preds = self.predict_batch_ol(embed_arr, seq_lens, 'tar')
@@ -244,7 +245,7 @@ class BertNRDJ:
         assert len(all_preds) == len(at_true_list)
         token_seqs = [token_seq[1:len(token_seq) - 1] for token_seq in token_seqs]
         (a_p, a_r, a_f1, o_p, o_r, o_f1
-         ) = utils.prf1_for_terms(all_preds, token_seqs, at_true_list, ot_true_list)
+         ) = utils.prf1_for_terms(all_preds, token_seqs, at_true_list, ot_true_list, opinion_terms_output_file)
         return a_p, a_r, a_f1, o_p, o_r, o_f1
 
     def __evaluate_single_term_type(
@@ -339,7 +340,7 @@ class BertNRDJ:
     def train(
             self, robert_model: Robert, train_tfrec_file, valid_tfrec_file, test_tfrec_file, seq_length,
             n_train, data_valid: ValidDataBertOL, data_test: ValidDataBertOL,
-            n_epochs=100, lr=0.001, dropout=0.5, start_eval_spoch=0):
+            n_epochs=100, lr=0.001, dropout=0.5, start_eval_spoch=0, opinion_terms_output_file=None):
         from models import robert
 
         logging.info('n_epochs={}, lr={}, dropout={}'.format(n_epochs, lr, dropout))
@@ -373,7 +374,7 @@ class BertNRDJ:
                 best_f1_sum = a_f1_v + o_f1_v
                 a_p_t, a_r_t, a_f1_t, o_p_t, o_r_t, o_f1_t = self.__evaluate_ol(
                     test_embed_arr_list, test_seq_lens_list, data_test.token_seqs, data_test.aspects_true_list,
-                    data_test.opinions_true_list)
+                    data_test.opinions_true_list, opinion_terms_output_file)
                 logging.info(
                     'Test, p={:.4f}, r={:.4f}, a_f1={:.4f};'
                     ' p={:.4f}, r={:.4f}, o_f1={:.4f}'.format(

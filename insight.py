@@ -1,5 +1,6 @@
 import json
 from utils import utils
+import config
 
 
 def __posible_alt(w, wt):
@@ -250,15 +251,36 @@ def __count_words(tok_texts_file):
     print(n_min, n_max)
 
 
+def __missing_terms():
+    opinion_terms_file = 'd:/data/aspect/semeval14/opinion-terms-full.txt'
+    opinion_terms_vocab = set(utils.read_lines(opinion_terms_file))
+    train_sents = utils.load_json_objs(config.SE15R_FILES['train_sents_file'])
+    test_sents = utils.load_json_objs(config.SE15R_FILES['test_sents_file'])
+    train_terms = set()
+    test_terms = dict()
+    for s in train_sents:
+        for t in s['opinions']:
+            train_terms.add(t.lower())
+    for s in test_sents:
+        for t in s['opinions']:
+            cnt = test_terms.get(t.lower(), 0)
+            test_terms[t.lower()] = cnt + 1
+            # test_terms.add(t.lower())
+    for t, cnt in test_terms.items():
+        if t not in train_terms:
+            print(t, cnt, t in opinion_terms_vocab)
+
+
 # __count_adj_phrases()
 # __semeval_rule_insight()
 # __dataset_statistics()
 # __amazon_statistics()
 # __check_errors()
 # __count_rule_extracted_terms()
-__count_words('d:/data/aspect/semeval14/laptops/laptops_train_texts_tok.txt')
-__count_words('d:/data/aspect/semeval14/laptops/laptops_test_texts_tok.txt')
-__count_words('d:/data/aspect/semeval14/restaurants/restaurants_test_texts_tok.txt')
-__count_words('d:/data/aspect/semeval14/restaurants/restaurants_train_texts_tok.txt')
-__count_words('d:/data/aspect/semeval15/restaurants/restaurants_train_texts_tok.txt')
-__count_words('d:/data/aspect/semeval15/restaurants/restaurants_test_texts_tok.txt')
+# __count_words('d:/data/aspect/semeval14/laptops/laptops_train_texts_tok.txt')
+# __count_words('d:/data/aspect/semeval14/laptops/laptops_test_texts_tok.txt')
+# __count_words('d:/data/aspect/semeval14/restaurants/restaurants_test_texts_tok.txt')
+# __count_words('d:/data/aspect/semeval14/restaurants/restaurants_train_texts_tok.txt')
+# __count_words('d:/data/aspect/semeval15/restaurants/restaurants_train_texts_tok.txt')
+# __count_words('d:/data/aspect/semeval15/restaurants/restaurants_test_texts_tok.txt')
+__missing_terms()

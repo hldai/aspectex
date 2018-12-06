@@ -37,11 +37,13 @@ def prf1(n_true, n_sys, n_hit):
     return p, r, f1
 
 
-def prf1_for_single_term_type(preds, token_seqs, terms_list, label_beg=1, label_in=2):
+def prf1_for_single_term_type(preds, token_seqs, terms_list, label_beg=1, label_in=2, terms_output_file=None):
     true_cnt, sys_cnt, hit_cnt = 0, 0, 0
+    terms_sys_list = list()
     for i, (p_seq, token_seq) in enumerate(zip(preds, token_seqs)):
         seq_len = len(token_seq)
         terms_sys = get_terms_from_label_list_tok(p_seq[:seq_len], token_seq, label_beg, label_in)
+        terms_sys_list.append(terms_sys)
         terms_true = terms_list[i]
         sys_cnt += len(terms_sys)
         true_cnt += len(terms_true)
@@ -49,13 +51,20 @@ def prf1_for_single_term_type(preds, token_seqs, terms_list, label_beg=1, label_
         new_hit_cnt = count_hit(terms_true, terms_sys)
         hit_cnt += new_hit_cnt
 
+    if terms_output_file is not None:
+        with open(terms_output_file, 'w', encoding='utf-8') as fout:
+            for terms in terms_sys_list:
+                fout.write('{}\n'.format(json.dumps(terms, ensure_ascii=False)))
+
     p, r, f1 = prf1(true_cnt, sys_cnt, hit_cnt)
     return p, r, f1
 
 
-def prf1_for_terms(preds, token_seqs, aspect_terms_true_list, opinion_terms_true_list):
+def prf1_for_terms(preds, token_seqs, aspect_terms_true_list, opinion_terms_true_list,
+                   opinion_terms_output_file):
     aspect_p, aspect_r, aspect_f1 = prf1_for_single_term_type(preds, token_seqs, aspect_terms_true_list, 1, 2)
-    opinion_p, opinion_r, opinion_f1 = prf1_for_single_term_type(preds, token_seqs, opinion_terms_true_list, 3, 4)
+    opinion_p, opinion_r, opinion_f1 = prf1_for_single_term_type(
+        preds, token_seqs, opinion_terms_true_list, 3, 4, opinion_terms_output_file)
     return aspect_p, aspect_r, aspect_f1, opinion_p, opinion_r, opinion_f1
 
 
