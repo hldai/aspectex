@@ -94,7 +94,7 @@ def __load_terms_list(sample_idxs, terms_list_file):
 
 
 def __pretrain_bertnrdj(
-        dataset, n_labels, seq_length, n_steps, batch_size, dropout, n_layers, l2_on_lstm,
+        dataset, n_labels, seq_length, n_steps, batch_size, dropout, n_layers, l2_on_lstm, lamb,
         load_model_file, dst_model_file):
     init_logging('log/{}-pre-bertnrdj-{}-{}.log'.format(
         cur_script_name, utils.get_machine_name(), str_today), mode='a', to_stdout=True)
@@ -122,7 +122,7 @@ def __pretrain_bertnrdj(
 
     bertnrdj_model = BertNRDJ(
         n_labels, config.BERT_EMBED_DIM, hidden_size_lstm=hidden_size_lstm, batch_size=batch_size,
-        model_file=load_model_file, n_lstm_layers=n_layers, l2_on_lstm_src=l2_on_lstm
+        model_file=load_model_file, n_lstm_layers=n_layers, l2_on_lstm_src=l2_on_lstm, lamb=lamb
     )
     bertnrdj_model.pretrain(
         robert_model=robert_model, train_aspect_tfrec_file=dataset_files['pretrain_train_aspect_tfrec_file'],
@@ -219,7 +219,8 @@ if __name__ == '__main__':
     __pretrain_bertnrdj(
         dataset=dataset, n_labels=n_labels, seq_length=seq_length, n_steps=n_steps,
         batch_size=batch_size_pretrain, dropout=pretrain_dropout, n_layers=n_layers,
-        l2_on_lstm=l2_on_lstm_src, load_model_file=pretrain_load_model_file, dst_model_file=model_file)
+        l2_on_lstm=l2_on_lstm_src, lamb=lamb, load_model_file=pretrain_load_model_file,
+        dst_model_file=model_file)
     # __train_bertnrdj(dataset=dataset, n_labels=n_labels, batch_size=batch_size_train, model_file=model_file,
     #                  dropout=dropout, n_epochs=n_train_epochs, learning_rate=learning_rate,
     #                  start_eval_epoch=start_eval_epoch, n_layers=n_layers, l2_on_lstm=l2_on_lstm_tar,

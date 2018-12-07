@@ -190,7 +190,7 @@ if __name__ == '__main__':
     hidden_size_lstm = 200
     start_eval_epoch = 5
     n_train_epochs = 500
-    lamb = 0.0005
+    lamb = 0.005
     l2_on_lstm_tar = False
     l2_on_lstm_src = True
     learning_rate = 0.001
@@ -207,7 +207,7 @@ if __name__ == '__main__':
         # pretrain_load_model_file = os.path.join(
         #     config.SE15_DIR, 'model-data/se15r-yelpr9-rest-p0_04-bert-200h.ckpt-1009')
         # model_file = None
-        model_file = os.path.join(config.SE15_DIR, 'model-data/se15r-yelpr9-rest-p0_04-bert-200h-reg-0_5-5e4.ckpt')
+        model_file = os.path.join(config.SE15_DIR, 'model-data/se15r-yelpr9-rest-p0_04-bert-200h-reg-0_5-5e3.ckpt')
         # opinion_terms_output_file = os.path.join(config.SE15_DIR, 'opinion_terms_bert_output.txt')
     else:
         pretrain_load_model_file = os.path.join(config.SE14_DIR, 'model-data/se14l-amazon-200h.ckpt-454')
