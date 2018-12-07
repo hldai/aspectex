@@ -43,14 +43,14 @@ class BertNRDJ:
         self.__add_train_op(self.lr_method, self.lr)
         self.__init_session(model_file)
 
-        ck0 = self.lstm_cells[0].trainable_variables[0]
-        self.decrease_cell0 = tf.assign(ck0, ck0 / 10.0)
-        ck1 = self.lstm_cells[1].trainable_variables[1]
-        self.decrease_cell1 = tf.assign(ck1, ck1 / 10.0)
-        bias0 = self.lstm_cells[0].trainable_variables[1]
-        self.kill_bias0 = tf.assign(bias0, bias0 * 0.0)
-        bias1 = self.lstm_cells[0].trainable_variables[1]
-        self.kill_bias1 = tf.assign(bias1, bias1 * 0.0)
+        # ck0 = self.lstm_cells[0].trainable_variables[0]
+        # self.decrease_cell0 = tf.assign(ck0, ck0 / 10.0)
+        # ck1 = self.lstm_cells[1].trainable_variables[1]
+        # self.decrease_cell1 = tf.assign(ck1, ck1 / 10.0)
+        # bias0 = self.lstm_cells[0].trainable_variables[1]
+        # self.kill_bias0 = tf.assign(bias0, bias0 * 0.0)
+        # bias1 = self.lstm_cells[0].trainable_variables[1]
+        # self.kill_bias1 = tf.assign(bias1, bias1 * 0.0)
 
     def __add_logits_op(self):
         lstm_output1 = self.word_embeddings
@@ -119,8 +119,9 @@ class BertNRDJ:
 
     def __add_loss_op(self):
         lstm_l2_reg = 0
-        for lstm_cell in self.lstm_cells:
-            lstm_l2_reg += self.lamb * tf.nn.l2_loss(lstm_cell.trainable_variables[0])
+        if self.l2_on_lstm_src or self.l2_on_lstm_tar:
+            for lstm_cell in self.lstm_cells:
+                lstm_l2_reg += self.lamb * tf.nn.l2_loss(lstm_cell.trainable_variables[0])
 
         with tf.variable_scope("crf-src1"):
             log_likelihood, self.trans_params_src1 = tf.contrib.crf.crf_log_likelihood(

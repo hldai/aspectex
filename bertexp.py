@@ -224,4 +224,3 @@ if __name__ == '__main__':
     #                  dropout=dropout, n_epochs=n_train_epochs, learning_rate=learning_rate,
     #                  start_eval_epoch=start_eval_epoch, n_layers=n_layers, l2_on_lstm=l2_on_lstm_tar,
     #                  opinion_terms_output_file=opinion_terms_output_file)
-#
