@@ -175,8 +175,8 @@ if __name__ == '__main__':
     cur_script_name = os.path.basename(__file__)[:-3]
 
     # dataset = 'se14l'
-    # dataset = 'se14r'
-    dataset = 'se15r'
+    dataset = 'se14r'
+    # dataset = 'se15r'
     pretrain_dropout = 0.5
     dropout = 0.9
     n_labels = 5
@@ -188,7 +188,7 @@ if __name__ == '__main__':
     start_eval_epoch = 5
     n_train_epochs = 500
     learning_rate = 0.001
-    n_layers = 2
+    n_layers = 1
 
     if dataset == 'se14r':
         pretrain_load_model_file = os.path.join(
@@ -208,10 +208,10 @@ if __name__ == '__main__':
 
     # __train_bert()
     # __train_bertlstm_ol()
-    __pretrain_bertnrdj(
-        dataset=dataset, n_labels=n_labels, seq_length=seq_length, n_steps=n_steps,
-        batch_size=batch_size_pretrain, dropout=pretrain_dropout, n_layers=n_layers,
-        load_model_file=pretrain_load_model_file, dst_model_file=model_file)
-    # __train_bertnrdj(dataset=dataset, n_labels=n_labels, batch_size=batch_size_train, model_file=model_file,
-    #                  dropout=dropout, n_epochs=n_train_epochs, learning_rate=learning_rate,
-    #                  start_eval_epoch=start_eval_epoch, n_layers=n_layers)
+    # __pretrain_bertnrdj(
+    #     dataset=dataset, n_labels=n_labels, seq_length=seq_length, n_steps=n_steps,
+    #     batch_size=batch_size_pretrain, dropout=pretrain_dropout, n_layers=n_layers,
+    #     load_model_file=pretrain_load_model_file, dst_model_file=model_file)
+    __train_bertnrdj(dataset=dataset, n_labels=n_labels, batch_size=batch_size_train, model_file=model_file,
+                     dropout=dropout, n_epochs=n_train_epochs, learning_rate=learning_rate,
+                     start_eval_epoch=start_eval_epoch, n_layers=n_layers)
