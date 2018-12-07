@@ -42,6 +42,15 @@ class BertNRDJ:
         self.__add_train_op(self.lr_method, self.lr)
         self.__init_session(model_file)
 
+        ck0 = self.lstm_cells[0].trainable_variables[0]
+        self.decrease_cell0 = tf.assign(ck0, ck0 / 10.0)
+        ck1 = self.lstm_cells[1].trainable_variables[1]
+        self.decrease_cell1 = tf.assign(ck1, ck1 / 10.0)
+        bias0 = self.lstm_cells[0].trainable_variables[1]
+        self.kill_bias0 = tf.assign(bias0, bias0 * 0.0)
+        bias1 = self.lstm_cells[0].trainable_variables[1]
+        self.kill_bias1 = tf.assign(bias1, bias1 * 0.0)
+
     def __add_logits_op(self):
         lstm_output1 = self.word_embeddings
         self.lstm_cells = list()

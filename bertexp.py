@@ -162,7 +162,11 @@ def __train_bertnrdj(
     bertnrdj_model = BertNRDJ(
         n_labels, config.BERT_EMBED_DIM, hidden_size_lstm=hidden_size_lstm, batch_size=batch_size,
         model_file=model_file, n_lstm_layers=n_layers, l2_on_lstm=l2_on_lstm)
+    bertnrdj_model.sess.run(bertnrdj_model.decrease_cell0)
+    bertnrdj_model.sess.run(bertnrdj_model.kill_bias0)
     v = bertnrdj_model.sess.run(bertnrdj_model.lstm_cells[0].trainable_variables[0])
+    print(v)
+    v = bertnrdj_model.sess.run(bertnrdj_model.lstm_cells[0].trainable_variables[1])
     print(v)
     exit()
     bertnrdj_model.train(
