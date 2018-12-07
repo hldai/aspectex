@@ -162,6 +162,9 @@ def __train_bertnrdj(
     bertnrdj_model = BertNRDJ(
         n_labels, config.BERT_EMBED_DIM, hidden_size_lstm=hidden_size_lstm, batch_size=batch_size,
         model_file=model_file, n_lstm_layers=n_layers, l2_on_lstm=l2_on_lstm)
+    v = bertnrdj_model.sess.run(bertnrdj_model.lstm_cells[0].trainable_variables[0])
+    print(v)
+    exit()
     bertnrdj_model.train(
         robert_model=bm, train_tfrec_file=dataset_files['train_tfrecord_file'],
         valid_tfrec_file=dataset_files['valid_tfrecord_file'], test_tfrec_file=dataset_files['test_tfrecord_file'],
@@ -203,9 +206,9 @@ if __name__ == '__main__':
         # pretrain_load_model_file = None
         pretrain_load_model_file = os.path.join(
             config.SE15_DIR, 'model-data/se15r-yelpr9-rest-p0_04-bert-200h.ckpt-1009')
-        # model_file = None
-        model_file = os.path.join(config.SE15_DIR, 'model-data/se15r-yelpr9-rest-p0_04-bert-200h.ckpt')
-        opinion_terms_output_file = os.path.join(config.SE15_DIR, 'opinion_terms_bert_output.txt')
+        model_file = None
+        # model_file = os.path.join(config.SE15_DIR, 'model-data/se15r-yelpr9-rest-p0_04-bert-200h.ckpt')
+        # opinion_terms_output_file = os.path.join(config.SE15_DIR, 'opinion_terms_bert_output.txt')
     else:
         pretrain_load_model_file = os.path.join(config.SE14_DIR, 'model-data/se14l-amazon-200h.ckpt-454')
         # model_file = None

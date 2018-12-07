@@ -328,12 +328,12 @@ term_type = 'opinion'
 target_dataset = 'se15r'
 res_dataset = 'restaurants-yelp'
 target_dataset_files, res_dataset_files = config.DATA_FILES[target_dataset], config.DATA_FILES[res_dataset]
-# task = 'eval'
-task = 'apply'
+task = 'eval'
+# task = 'apply'
 if task == 'apply':
     sents_file = None
     result_output_file = os.path.join(
-        config.SE15_DIR, 'restaurants/yelpr9-rest-p0_04-rule-ot-highrecall.txt')
+        config.SE15_DIR, 'restaurants/yelpr9-rest-p0_04-rule-ot-highrecall-5.txt')
     # result_output_file = target_dataset_files['rule_opinion_result_file']
     sent_tok_texts_file = res_dataset_files['sent_texts_file']
     dep_tags_file = res_dataset_files['dep_tags_file']
@@ -345,7 +345,7 @@ else:
     dep_tags_file = target_dataset_files['test_dep_tags_file']
     pos_tags_file = target_dataset_files['test_pos_tags_file']
 
-hit_rate_thres = 0.2
+hit_rate_thres = 0.6
 
 if term_type == 'aspect':
     # __rule_insight(opinion_terms_file, filter_nouns_file, dep_tags_file, pos_tags_file, sent_texts_file,

@@ -209,7 +209,8 @@ def __get_term_pos_type(term_pos_tags):
     return None
 
 
-def __find_rule_candidates(dep_tags_list, pos_tags_list, mine_helper, aspect_terms_list, word_cnts_file):
+def __find_rule_candidates(dep_tags_list, pos_tags_list, mine_helper, aspect_terms_list, word_cnts_file,
+                           freq_thres=10):
     word_freq_dict = __get_word_cnts_dict(word_cnts_file)
 
     # sents = utils.load_json_objs(sents_file)
@@ -245,8 +246,8 @@ def __find_rule_candidates(dep_tags_list, pos_tags_list, mine_helper, aspect_ter
         #     break
 
     # patterns_l1, patterns_l2 = set(), set()
-    patterns_l1 = {p for p, cnt in patterns_l1_cnts.items() if cnt > 10}
-    patterns_l2 = {p for p, cnt in patterns_l2_cnts.items() if cnt > 10}
+    patterns_l1 = {p for p, cnt in patterns_l1_cnts.items() if cnt > freq_thres}
+    patterns_l2 = {p for p, cnt in patterns_l2_cnts.items() if cnt > freq_thres}
 
     print(cnt_miss, 'terms missed')
     return patterns_l1, patterns_l2
@@ -376,7 +377,7 @@ def __get_term_filter_dict(dep_tag_seqs, pos_tag_seqs, terms_list_train, filter_
 
 
 def __gen_aspect_patterns(mine_helper, dep_tags_file, pos_tags_file, sents_file, train_valid_split_file,
-                          word_cnts_file, dst_file):
+                          word_cnts_file, freq_thres, dst_file):
     # opinion_terms_vocab = set(utils.read_lines(opinion_terms_file))
     data_train, data_valid = __load_data(dep_tags_file, pos_tags_file, sents_file, train_valid_split_file)
 
@@ -387,7 +388,7 @@ def __gen_aspect_patterns(mine_helper, dep_tags_file, pos_tags_file, sents_file,
 
     patterns_l1, patterns_l2 = __find_rule_candidates(
         data_train.dep_tag_seqs, data_train.pos_tag_seqs, mine_helper, terms_list_train,
-        word_cnts_file)
+        word_cnts_file, freq_thres)
     print(len(patterns_l1), 'l1 patterns', len(patterns_l2), 'l2 patterns')
 
     terms_list_valid = mine_helper.terms_list_from_sents(data_valid.sents)
@@ -486,7 +487,9 @@ if target == 'aspect':
     pattern_filter_rate = 0.6
 else:
     term_filter_rate = 0.1
-    pattern_filter_rate = 0.5
+    pattern_filter_rate = 0.6
+
+freq_thres = 5
 
 opinion_terms_file = 'd:/data/aspect/semeval14/opinion-terms-full.txt'
 
@@ -501,8 +504,8 @@ if target == 'aspect':
     full_train_term_filter_file = 'd:/data/aspect/{}/{}/aspect_filter_vocab_full.txt'.format(
         dataset_name, sub_dataset)
 else:
-    patterns_file = 'd:/data/aspect/{}/{}/opinion_mined_rule_patterns_highrecall.txt'.format(
-        dataset_name, sub_dataset)
+    patterns_file = 'd:/data/aspect/{}/{}/opinion_mined_rule_patterns_{}_{}.txt'.format(
+        dataset_name, sub_dataset, freq_thres, pattern_filter_rate)
     term_hit_rate_file = 'd:/data/aspect/{}/{}/opinion-term-hit-rate.txt'.format(dataset_name, sub_dataset)
     full_train_term_filter_file = 'd:/data/aspect/{}/{}/opinion_filter_vocab_full.txt'.format(
         dataset_name, sub_dataset)
@@ -524,7 +527,7 @@ else:
 
 tbeg = time()
 __gen_aspect_patterns(mine_helper, dep_tags_file, pos_tags_file, sents_file, train_valid_split_file,
-                      word_cnts_file, patterns_file)
+                      word_cnts_file, freq_thres, patterns_file)
 print(time() - tbeg, 'seconds')
 # __gen_filter_terms_vocab_file(mine_helper, dep_tags_file, pos_tags_file, sents_file, full_train_term_filter_file)
 # __gen_term_hit_rate_file(mine_helper, sents_file, dep_tags_file, pos_tags_file, term_hit_rate_file)

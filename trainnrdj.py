@@ -85,7 +85,6 @@ def __train_nrdj(word_vecs_file, train_tok_texts_file, train_sents_file, train_v
                               hidden_size_lstm=hidden_size_lstm,
                               model_file=load_model_file,
                               batch_size=batch_size)
-
     nrdj.train(train_data, valid_data, test_data, vocab, n_epochs=n_epochs, lr=lr, dst_aspects_file=dst_aspects_file,
                dst_opinions_file=dst_opinions_file)
 
