@@ -9,8 +9,8 @@ from models.robert import Robert
 
 class BertNRDJ:
     def __init__(self, n_tags, word_embed_dim, learning_rate=0.001, hidden_size_lstm=300, batch_size=5,
-                 lr_method='adam', manual_feat_len=0, model_file=None, n_lstm_layers=1, l2_on_lstm=False,
-                 lamb=0.001):
+                 lr_method='adam', manual_feat_len=0, model_file=None, n_lstm_layers=1, l2_on_lstm_tar=False,
+                 l2_on_lstm_src=False, lamb=0.001):
         self.n_tags_src = 3
         self.n_tags = n_tags
         self.hidden_size_lstm = hidden_size_lstm
@@ -20,7 +20,8 @@ class BertNRDJ:
         self.manual_feat_len = manual_feat_len
         self.init_learning_rate = learning_rate
         self.n_lstm_layers = n_lstm_layers
-        self.l2_on_lstm = l2_on_lstm
+        self.l2_on_lstm_tar = l2_on_lstm_tar
+        self.l2_on_lstm_src = l2_on_lstm_src
         self.lamb = lamb
 
         self.word_embed_pad = np.random.normal(size=word_embed_dim)
@@ -117,24 +118,31 @@ class BertNRDJ:
             self.logits_tar = tf.reshape(pred, [-1, nsteps, self.n_tags])
 
     def __add_loss_op(self):
+        lstm_l2_reg = 0
+        for lstm_cell in self.lstm_cells:
+            lstm_l2_reg += self.lamb * tf.nn.l2_loss(lstm_cell.trainable_variables[0])
+
         with tf.variable_scope("crf-src1"):
             log_likelihood, self.trans_params_src1 = tf.contrib.crf.crf_log_likelihood(
                     self.logits_src1, self.labels_src1, self.sequence_lengths)
             self.loss_src1 = tf.reduce_mean(-log_likelihood)
+            if self.l2_on_lstm_src:
+                self.loss_src1 += lstm_l2_reg
 
         with tf.variable_scope("crf-src2"):
             log_likelihood, self.trans_params_src2 = tf.contrib.crf.crf_log_likelihood(
                     self.logits_src2, self.labels_src2, self.sequence_lengths)
             self.loss_src2 = tf.reduce_mean(-log_likelihood)
+            if self.l2_on_lstm_src:
+                self.loss_src2 += lstm_l2_reg
 
         with tf.variable_scope("crf-tar"):
             log_likelihood, self.trans_params_tar = tf.contrib.crf.crf_log_likelihood(
                     self.logits_tar, self.labels_tar, self.sequence_lengths)
             # self.loss_tar = tf.reduce_mean(-log_likelihood)
             self.loss_tar = tf.reduce_mean(-log_likelihood) + self.lamb * tf.nn.l2_loss(self.W_tar)
-            if self.l2_on_lstm:
-                for lstm_cell in self.lstm_cells:
-                    self.loss_tar += self.lamb * tf.nn.l2_loss(lstm_cell.trainable_variables[0])
+            if self.l2_on_lstm_tar:
+                self.loss_tar += lstm_l2_reg
 
     def __add_train_op(self, lr_method, lr):
         """Defines self.train_op that performs an update on a batch
@@ -337,6 +345,8 @@ class BertNRDJ:
             train_loss_opinion = self.__train_batch(robert_model, next_opinion_train_example, lr, dropout, 'src2')
             losses_opinion.append(train_loss_opinion)
             if (step + 1) % 100 == 0:
+                cell_params = self.sess.run(self.lstm_cells[0].trainable_variables[0])
+                print(cell_params[:10])
                 loss_aspect, loss_opinion = sum(losses_aspect), sum(losses_opinion)
                 losses_aspect, losses_opinion = list(), list()
                 a_p, a_r, a_f1 = self.__evaluate_single_term_type(
