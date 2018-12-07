@@ -9,7 +9,8 @@ from models.robert import Robert
 
 class BertNRDJ:
     def __init__(self, n_tags, word_embed_dim, learning_rate=0.001, hidden_size_lstm=300, batch_size=5,
-                 lr_method='adam', manual_feat_len=0, model_file=None, n_lstm_layers=1):
+                 lr_method='adam', manual_feat_len=0, model_file=None, n_lstm_layers=1, l2_on_lstm=False,
+                 lamb=0.001):
         self.n_tags_src = 3
         self.n_tags = n_tags
         self.hidden_size_lstm = hidden_size_lstm
@@ -19,6 +20,8 @@ class BertNRDJ:
         self.manual_feat_len = manual_feat_len
         self.init_learning_rate = learning_rate
         self.n_lstm_layers = n_lstm_layers
+        self.l2_on_lstm = l2_on_lstm
+        self.lamb = lamb
 
         self.word_embed_pad = np.random.normal(size=word_embed_dim)
 
@@ -41,13 +44,15 @@ class BertNRDJ:
 
     def __add_logits_op(self):
         lstm_output1 = self.word_embeddings
+        self.lstm_cells = list()
         for i in range(self.n_lstm_layers):
             with tf.variable_scope("bi-lstm-{}".format(i + 1)):
-                self.cell_fw = tf.contrib.rnn.LSTMCell(self.hidden_size_lstm)
+                cell_fw = tf.contrib.rnn.LSTMCell(self.hidden_size_lstm)
                 cell_bw = tf.contrib.rnn.LSTMCell(self.hidden_size_lstm)
                 (output_fw, output_bw), _ = tf.nn.bidirectional_dynamic_rnn(
-                    self.cell_fw, cell_bw, lstm_output1,
+                    cell_fw, cell_bw, lstm_output1,
                     sequence_length=self.sequence_lengths, dtype=tf.float32)
+                self.lstm_cells += [cell_fw, cell_bw]
                 self.lstm_output1 = tf.concat([output_fw, output_bw], axis=-1)
                 self.lstm_output1 = tf.nn.dropout(self.lstm_output1, self.dropout)
                 lstm_output1 = self.lstm_output1
@@ -60,6 +65,7 @@ class BertNRDJ:
                 (output_fw, output_bw), _ = tf.nn.bidirectional_dynamic_rnn(
                     cell_fw, cell_bw, lstm_output2,
                     sequence_length=self.sequence_lengths, dtype=tf.float32)
+                self.lstm_cells += [cell_fw, cell_bw]
                 self.lstm_output2 = tf.concat([output_fw, output_bw], axis=-1)
                 self.lstm_output2 = tf.nn.dropout(self.lstm_output2, self.dropout)
                 lstm_output2 = self.lstm_output2
@@ -116,7 +122,10 @@ class BertNRDJ:
             log_likelihood, self.trans_params_tar = tf.contrib.crf.crf_log_likelihood(
                     self.logits_tar, self.labels_tar, self.sequence_lengths)
             # self.loss_tar = tf.reduce_mean(-log_likelihood)
-            self.loss_tar = tf.reduce_mean(-log_likelihood) + 0.001 * tf.nn.l2_loss(self.W_tar)
+            self.loss_tar = tf.reduce_mean(-log_likelihood) + self.lamb * tf.nn.l2_loss(self.W_tar)
+            if self.l2_on_lstm:
+                for lstm_cell in self.lstm_cells:
+                    self.loss_tar += self.lamb * tf.nn.l2_loss(lstm_cell.trainable_variables[0])
 
     def __add_train_op(self, lr_method, lr):
         """Defines self.train_op that performs an update on a batch

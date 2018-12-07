@@ -94,7 +94,7 @@ str_today = datetime.date.today().strftime('%y-%m-%d')
 
 hidden_size_lstm = 100
 n_epochs = 200
-train_word_embeddings = True
+train_word_embeddings = False
 
 # dataset = 'se15r'
 # dataset = 'se14r'

@@ -135,8 +135,9 @@ def __pretrain_bertnrdj(
     )
 
 
-def __train_bertnrdj(dataset, n_labels, batch_size, model_file, dropout,
-                     n_epochs, learning_rate, start_eval_epoch, n_layers, opinion_terms_output_file=None):
+def __train_bertnrdj(
+        dataset, n_labels, batch_size, model_file, dropout, n_epochs, learning_rate, start_eval_epoch,
+        n_layers, l2_on_lstm=False, opinion_terms_output_file=None):
     init_logging('log/{}-bertnrdj-{}-{}.log'.format(
         cur_script_name, utils.get_machine_name(), str_today), mode='a', to_stdout=True)
 
@@ -160,7 +161,7 @@ def __train_bertnrdj(dataset, n_labels, batch_size, model_file, dropout,
     # model_file = None
     bertnrdj_model = BertNRDJ(
         n_labels, config.BERT_EMBED_DIM, hidden_size_lstm=hidden_size_lstm, batch_size=batch_size,
-        model_file=model_file, n_lstm_layers=n_layers)
+        model_file=model_file, n_lstm_layers=n_layers, l2_on_lstm=l2_on_lstm)
     bertnrdj_model.train(
         robert_model=bm, train_tfrec_file=dataset_files['train_tfrecord_file'],
         valid_tfrec_file=dataset_files['valid_tfrecord_file'], test_tfrec_file=dataset_files['test_tfrecord_file'],
@@ -187,6 +188,8 @@ if __name__ == '__main__':
     hidden_size_lstm = 200
     start_eval_epoch = 5
     n_train_epochs = 500
+    lamb = 0.001
+    l2_on_lstm = True
     learning_rate = 0.001
     n_layers = 1
     opinion_terms_output_file = None
@@ -216,5 +219,5 @@ if __name__ == '__main__':
     #     load_model_file=pretrain_load_model_file, dst_model_file=model_file)
     __train_bertnrdj(dataset=dataset, n_labels=n_labels, batch_size=batch_size_train, model_file=model_file,
                      dropout=dropout, n_epochs=n_train_epochs, learning_rate=learning_rate,
-                     start_eval_epoch=start_eval_epoch, n_layers=n_layers,
+                     start_eval_epoch=start_eval_epoch, n_layers=n_layers, l2_on_lstm=l2_on_lstm,
                      opinion_terms_output_file=opinion_terms_output_file)
