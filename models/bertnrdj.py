@@ -323,7 +323,7 @@ class BertNRDJ:
             lr=0.001, dropout=0.5, save_file=None):
         from models import robert
 
-        logging.info('l2={} lamb={} dropout={}'.format(self.l2_on_lstm_src, self.lamb, self.dropout))
+        logging.info('l2={} lamb={} dropout={}'.format(self.l2_on_lstm_src, self.lamb, dropout))
 
         if save_file is not None and self.saver is None:
             self.saver = tf.train.Saver()

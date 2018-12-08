@@ -55,13 +55,13 @@ def __train_bert():
     lstmcrf.train(data_train, data_valid, data_test, n_epochs=n_epochs, lr=lr)
 
 
-def __train_bertlstm_ol():
+def __train_bertlstm_ol(dataset):
     str_today = datetime.date.today().strftime('%y-%m-%d')
-    init_logging('log/bertlstmcrfol3-{}.log'.format(str_today), mode='a', to_stdout=True)
+    init_logging('log/{}-bertlstmcrfol-{}.log'.format(cur_script_name, str_today), mode='a', to_stdout=True)
 
-    # dataset = 'se14r'
-    dataset = 'se15r'
     n_labels = 5
+    hidden_size_lstm = 200
+    batch_size = 16
 
     dataset_files = config.DATA_FILES[dataset]
 
@@ -77,7 +77,7 @@ def __train_bertlstm_ol():
         init_checkpoint=dataset_files['bert_init_checkpoint']
     )
 
-    lstmcrf = BertLSTMCRF(n_labels, config.BERT_EMBED_DIM, hidden_size_lstm=500, batch_size=5)
+    lstmcrf = BertLSTMCRF(n_labels, config.BERT_EMBED_DIM, hidden_size_lstm=hidden_size_lstm, batch_size=batch_size)
     lstmcrf.train_ol(
         robert_model=bm, train_tfrec_file=dataset_files['train_tfrecord_file'],
         valid_tfrec_file=dataset_files['valid_tfrecord_file'], test_tfrec_file=dataset_files['test_tfrecord_file'],
@@ -215,11 +215,13 @@ if __name__ == '__main__':
         model_file = os.path.join(config.SE14_DIR, 'model-data/se14l-amazon-200h.ckpt')
 
     # __train_bert()
-    # __train_bertlstm_ol()
-    __pretrain_bertnrdj(
-        dataset=dataset, n_labels=n_labels, seq_length=seq_length, n_steps=n_steps,
-        batch_size=batch_size_pretrain, dropout=pretrain_dropout, n_layers=n_layers,
-        l2_on_lstm=l2_on_lstm_src, load_model_file=pretrain_load_model_file, dst_model_file=model_file)
+    __train_bertlstm_ol(dataset)
+
+    # __pretrain_bertnrdj(
+    #     dataset=dataset, n_labels=n_labels, seq_length=seq_length, n_steps=n_steps,
+    #     batch_size=batch_size_pretrain, dropout=pretrain_dropout, n_layers=n_layers,
+    #     l2_on_lstm=l2_on_lstm_src, load_model_file=pretrain_load_model_file, dst_model_file=model_file)
+
     # __train_bertnrdj(dataset=dataset, n_labels=n_labels, batch_size=batch_size_train, model_file=model_file,
     #                  dropout=dropout, n_epochs=n_train_epochs, learning_rate=learning_rate,
     #                  start_eval_epoch=start_eval_epoch, n_layers=n_layers, l2_on_lstm=l2_on_lstm_tar,

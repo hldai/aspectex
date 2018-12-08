@@ -62,7 +62,7 @@ def prf1_for_single_term_type(preds, token_seqs, terms_list, label_beg=1, label_
 
 
 def prf1_for_terms(preds, token_seqs, aspect_terms_true_list, opinion_terms_true_list,
-                   opinion_terms_output_file):
+                   opinion_terms_output_file=None):
     aspect_p, aspect_r, aspect_f1 = prf1_for_single_term_type(preds, token_seqs, aspect_terms_true_list, 1, 2)
     opinion_p, opinion_r, opinion_f1 = prf1_for_single_term_type(
         preds, token_seqs, opinion_terms_true_list, 3, 4, opinion_terms_output_file)
