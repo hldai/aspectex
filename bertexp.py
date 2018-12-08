@@ -180,9 +180,9 @@ if __name__ == '__main__':
     str_today = datetime.date.today().strftime('%y-%m-%d')
     cur_script_name = os.path.basename(__file__)[:-3]
 
-    # dataset = 'se14l'
+    dataset = 'se14l'
     # dataset = 'se14r'
-    dataset = 'se15r'
+    # dataset = 'se15r'
     pretrain_dropout = 0.9
     dropout = 0.9
     n_labels = 5

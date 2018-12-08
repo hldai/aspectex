@@ -169,31 +169,42 @@ class BertLSTMCRF:
         feed[self.dropout] = dropout
         return feed
 
-    def __evaluate_ol(self, tfrec_dataset_valid, token_seqs, at_true_list, ot_true_list, robert_model):
-        next_valid_example = tfrec_dataset_valid.make_one_shot_iterator().get_next()
-        all_preds = list()
-        idx = 0
+    def __get_batch_input(self, all_layers, seq_lens):
+        seq_embeds = np.concatenate(
+            [all_layers[-1], all_layers[-2], all_layers[-3], all_layers[-4]], axis=-1)
+        # seq_embeds = np.concatenate(
+        #     [all_layers[-1], all_layers[-2]], axis=-1)
+        # seq_embeds = all_layers[-1]
+        seq_lens = np.squeeze(seq_lens, axis=-1)
+        max_seq_len = np.max(seq_lens)
+        embed_arr = seq_embeds[:, :max_seq_len, :]
+        return embed_arr, seq_lens
+
+    def __get_all_inputs_from_tfrec(self, robert_model, tfrec_dataset):
+        next_example = tfrec_dataset.make_one_shot_iterator().get_next()
+        embed_arr_list, seq_lens_list = list(), list()
         while True:
             try:
-                features = self.sess.run(next_valid_example)
+                features = self.sess.run(next_example)
                 all_layers = self.sess.run(robert_model.all_layers, feed_dict={
                     robert_model.input_ids: features["input_ids"], robert_model.input_mask: features["input_mask"],
                     robert_model.segment_ids: features["segment_ids"], robert_model.label_ids: features["label_ids"],
                     robert_model.hidden_dropout: 1.0, robert_model.attention_dropout: 1.0
                 })
-                seq_embeds = np.concatenate(
-                    [all_layers[-1], all_layers[-2], all_layers[-3], all_layers[-4]], axis=-1)
-                idx += 1
-                seq_lens = np.squeeze(features['seq_len'])
-                max_seq_len = np.max(seq_lens)
-                embed_arr = seq_embeds[:, :max_seq_len, :]
-
-                preds = self.predict_batch_ol(embed_arr, seq_lens)
-
-                for y_pred in preds:
-                    all_preds.append(y_pred[1:])
+                embed_arr, seq_lens = self.__get_batch_input(all_layers, features['seq_len'])
+                embed_arr_list.append(embed_arr)
+                seq_lens_list.append(seq_lens)
             except tf.errors.OutOfRangeError:
                 break
+        return embed_arr_list, seq_lens_list
+
+    def __evaluate_ol(self, embed_arr_list, seq_lens_list, token_seqs, at_true_list, ot_true_list):
+        all_preds = list()
+        for embed_arr, seq_lens in zip(embed_arr_list, seq_lens_list):
+            preds = self.predict_batch_ol(embed_arr, seq_lens)
+            for y_pred in preds:
+                all_preds.append(y_pred[1:])
+
         assert len(all_preds) == len(at_true_list)
         token_seqs = [token_seq[1:len(token_seq) - 1] for token_seq in token_seqs]
         (a_p, a_r, a_f1, o_p, o_r, o_f1
@@ -211,7 +222,9 @@ class BertLSTMCRF:
 
         dataset_train = robert.get_dataset(train_tfrec_file, self.batch_size, True, seq_length)
         dataset_valid = robert.get_dataset(valid_tfrec_file, 8, False, seq_length)
+        valid_embed_arr_list, valid_seq_lens_list = self.__get_all_inputs_from_tfrec(robert_model, dataset_valid)
         dataset_test = robert.get_dataset(test_tfrec_file, 8, False, seq_length)
+        test_embed_arr_list, test_seq_lens_list = self.__get_all_inputs_from_tfrec(robert_model, dataset_test)
         next_train_example = dataset_train.make_one_shot_iterator().get_next()
         best_f1_sum = 0
         for epoch in range(n_epochs):
@@ -223,18 +236,15 @@ class BertLSTMCRF:
                     robert_model.segment_ids: features["segment_ids"], robert_model.label_ids: features["label_ids"],
                     robert_model.hidden_dropout: 1.0, robert_model.attention_dropout: 1.0
                 })
-                seq_embeds = np.concatenate(
-                    [all_layers[-1], all_layers[-2], all_layers[-3], all_layers[-4]], axis=-1)
-                # print(all_layers[-1].shape)
-                # print(seq_embeds.shape)
-                seq_lens = np.squeeze(features['seq_len'])
-                # print(seq_lens)
-                # print(all_layers[-1])
-                # print(seq_embeds)
-                # exit()
+                embed_arr, seq_lens = self.__get_batch_input(all_layers, features['seq_len'])
                 max_seq_len = np.max(seq_lens)
-                embed_arr = seq_embeds[:, :max_seq_len, :]
                 label_seqs = features["label_ids"][:, :max_seq_len]
+                # seq_embeds = np.concatenate(
+                #     [all_layers[-1], all_layers[-2], all_layers[-3], all_layers[-4]], axis=-1)
+                # seq_lens = np.squeeze(features['seq_len'])
+                # max_seq_len = np.max(seq_lens)
+                # embed_arr = seq_embeds[:, :max_seq_len, :]
+                # label_seqs = features["label_ids"][:, :max_seq_len]
                 feed_dict = self.get_feed_dict_ol(embed_arr, seq_lens, lr, dropout, label_seqs)
                 _, train_loss = self.sess.run(
                     [self.train_op, self.loss], feed_dict=feed_dict)
@@ -242,8 +252,8 @@ class BertLSTMCRF:
             loss = sum(losses)
 
             a_p_v, a_r_v, a_f1_v, o_p_v, o_r_v, o_f1_v = self.__evaluate_ol(
-                dataset_valid, data_valid.token_seqs, data_valid.aspects_true_list,
-                data_valid.opinions_true_list, robert_model)
+                valid_embed_arr_list, valid_seq_lens_list, data_valid.token_seqs, data_valid.aspects_true_list,
+                data_valid.opinions_true_list)
             logging.info(
                 'iter {}, loss={:.4f}, p={:.4f}, r={:.4f}, f1={:.4f};'
                 ' p={:.4f}, r={:.4f}, f1={:.4f}; best_f1_sum={:.4f}'.format(
@@ -252,8 +262,8 @@ class BertLSTMCRF:
             if a_f1_v + o_f1_v > best_f1_sum:
                 best_f1_sum = a_f1_v + o_f1_v
                 a_p_t, a_r_t, a_f1_t, o_p_t, o_r_t, o_f1_t = self.__evaluate_ol(
-                    dataset_test, data_test.token_seqs, data_test.aspects_true_list,
-                    data_test.opinions_true_list, robert_model)
+                    test_embed_arr_list, test_seq_lens_list, data_test.token_seqs, data_test.aspects_true_list,
+                    data_test.opinions_true_list)
                 logging.info(
                     'Test, p={:.4f}, r={:.4f}, a_f1={:.4f};'
                     ' p={:.4f}, r={:.4f}, o_f1={:.4f}'.format(
