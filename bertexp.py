@@ -62,6 +62,8 @@ def __train_bertlstm_ol(dataset):
     n_labels = 5
     hidden_size_lstm = 200
     batch_size = 16
+    n_epochs = 100
+    dropout = 0.5
 
     dataset_files = config.DATA_FILES[dataset]
 
@@ -81,7 +83,8 @@ def __train_bertlstm_ol(dataset):
     lstmcrf.train_ol(
         robert_model=bm, train_tfrec_file=dataset_files['train_tfrecord_file'],
         valid_tfrec_file=dataset_files['valid_tfrecord_file'], test_tfrec_file=dataset_files['test_tfrecord_file'],
-        seq_length=config.BERT_SEQ_LEN, n_train=n_train, data_valid=data_valid, data_test=data_test
+        seq_length=config.BERT_SEQ_LEN, n_train=n_train, data_valid=data_valid, data_test=data_test,
+        n_epochs=n_epochs, dropout=dropout
     )
 
 
