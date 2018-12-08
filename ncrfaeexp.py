@@ -43,7 +43,7 @@ if __name__ == '__main__':
         dataset_files['train_valid_split_file'],
         dataset_files['test_sents_file'], dataset_files['test_tok_texts_file'],
         vocab, n_train, label_opinions)
-    ncrfae = NeuCRFAutoEncoder(n_tags, word_vecs_matrix, batch_size=3, lr_method='adam')
+    ncrfae = NeuCRFAutoEncoder(n_tags, word_vecs_matrix, batch_size_l=4, batch_size_u=16, lr_method='adam')
     # ncrfae.test_model(train_data)
     ncrfae.train(
         data_train=train_data, data_valid=valid_data, data_test=test_data,

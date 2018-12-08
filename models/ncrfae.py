@@ -14,12 +14,14 @@ def np_softmax(vals):
 
 
 class NeuCRFAutoEncoder:
-    def __init__(self, n_tags, word_embeddings, hidden_size_lstm=100, batch_size=5, train_word_embeddings=False,
+    def __init__(self, n_tags, word_embeddings, hidden_size_lstm=100, batch_size_l=8, batch_size_u=8,
+                 train_word_embeddings=False,
                  lr_method='adam', manual_feat_len=0, model_file=None):
         self.n_tags = n_tags
         self.vals_word_embeddings = word_embeddings
         self.hidden_size_lstm = hidden_size_lstm
-        self.batch_size = batch_size
+        self.batch_size_l = batch_size_l
+        self.batch_size_u = batch_size_u
         self.lr_method = lr_method
         self.saver = None
         self.manual_feat_len = manual_feat_len
@@ -240,8 +242,8 @@ class NeuCRFAutoEncoder:
         return hidden_vecs_batch_list
 
     def __train_batch_supervised(self, word_idxs_list_train, labels_list_train, batch_idx, lr, dropout):
-        word_idxs_list_batch = word_idxs_list_train[batch_idx * self.batch_size: (batch_idx + 1) * self.batch_size]
-        labels_list_batch = labels_list_train[batch_idx * self.batch_size: (batch_idx + 1) * self.batch_size]
+        word_idxs_list_batch = word_idxs_list_train[batch_idx * self.batch_size_l: (batch_idx + 1) * self.batch_size_l]
+        labels_list_batch = labels_list_train[batch_idx * self.batch_size_l: (batch_idx + 1) * self.batch_size_l]
         feed_dict, _ = self.get_feed_dict(word_idxs_list_batch,
                                           label_seqs=labels_list_batch, lr=lr, dropout=dropout)
 
@@ -254,7 +256,7 @@ class NeuCRFAutoEncoder:
         return train_loss
 
     def __train_batch_unsupervised(self, word_idx_seqs, batch_idx, lr, dropout):
-        word_idx_seqs_batch = word_idx_seqs[batch_idx * self.batch_size: (batch_idx + 1) * self.batch_size]
+        word_idx_seqs_batch = word_idx_seqs[batch_idx * self.batch_size_u: (batch_idx + 1) * self.batch_size_u]
         feed_dict, _ = self.get_feed_dict(word_idx_seqs_batch, lr=lr, dropout=dropout)
         _, loss = self.sess.run([self.train_op_unsupervised, self.loss_u], feed_dict=feed_dict)
         return loss
@@ -263,7 +265,7 @@ class NeuCRFAutoEncoder:
         i = 0
         lr = 0.001
         dropout = 0.5
-        word_idxs_list_batch = train_data.word_idxs_list[i * self.batch_size: (i + 1) * self.batch_size]
+        word_idxs_list_batch = train_data.word_idxs_list[i * self.batch_size_u: (i + 1) * self.batch_size_u]
         # feat_list_batch = None
         # labels_list_batch = train_data.labels_list[i * self.batch_size: (i + 1) * self.batch_size]
         # feed_dict, _ = self.get_feed_dict(word_idxs_list_batch, labels_list_batch, lr, dropout, feat_list_batch)
@@ -279,7 +281,7 @@ class NeuCRFAutoEncoder:
             self.saver = tf.train.Saver()
 
         n_train_l = len(data_train.word_idxs_list)
-        n_batches_l = (n_train_l + self.batch_size - 1) // self.batch_size  # n_batches supervised
+        n_batches_l = (n_train_l + self.batch_size_l - 1) // self.batch_size_l  # n_batches supervised
         # n_train_u = len(unlabeled_word_seqs) if n_unlabeled_samples_per_iter < 0 else n_unlabeled_samples_per_iter
         # n_batches_u = (n_train_u + self.batch_size - 1) // self.batch_size  # n_batches unsupervised
 
@@ -290,6 +292,7 @@ class NeuCRFAutoEncoder:
             # self.update_decoder_probs_mat(data_train.word_idxs_list, data_train.labels_list, unsupervised_word_seqs)
 
             losses_l, losses_u, losses_seg = list(), list(), list()
+            # print(len(data_train.word_idxs_list), n_batches_l, self.batch_size_l)
             for i in range(n_batches_l):
                 train_loss_l = self.__train_batch_supervised(
                     data_train.word_idxs_list, data_train.labels_list, i, lr, dropout)
@@ -333,7 +336,7 @@ class NeuCRFAutoEncoder:
             if n_unlabeled_samples_per_iter > 0:
                 perm = np.random.permutation(len(unlabeled_word_seqs))
                 cur_unlabeled_word_seqs = [unlabeled_word_seqs[idx] for idx in perm[:n_unlabeled_samples_per_iter]]
-            n_batches_u = (len(cur_unlabeled_word_seqs) + self.batch_size - 1) // self.batch_size
+            n_batches_u = (len(cur_unlabeled_word_seqs) + self.batch_size_u - 1) // self.batch_size_u
             for i in range(n_batches_u):
                 train_loss_u = self.__train_batch_unsupervised(cur_unlabeled_word_seqs, i, lr, dropout)
                 losses_u.append(train_loss_u)
