@@ -14,7 +14,8 @@ class NeuRuleDoubleJoint:
     # TestData = namedtuple('TestData', ['word_idxs_list', 'texts', 'aspects_true_list', 'opinions_true_list'])
 
     def __init__(self, n_tags, word_embeddings, share_lstm, hidden_size_lstm=100, train_word_embeddings=False,
-                 batch_size=20, lr_method='adam', clip=-1, use_crf=True, model_file=None):
+                 batch_size=20, lr_method='adam', clip=-1, lamb=0.001, lstm_l2_src=False, lstm_l2_tar=False,
+                 use_crf=True, model_file=None):
         logging.info('hidden_size_lstm={}, batch_size={}, lr_method={}'.format(
             hidden_size_lstm, batch_size, lr_method))
 
@@ -26,6 +27,9 @@ class NeuRuleDoubleJoint:
         self.clip = clip
         self.saver = None
         self.share_lstm = share_lstm
+        self.lamb = lamb
+        self.lstm_l2_src = lstm_l2_src
+        self.lstm_l2_tar = lstm_l2_tar
 
         # self.n_words, self.dim_word = word_embeddings.shape
         self.use_crf = use_crf
@@ -64,6 +68,7 @@ class NeuRuleDoubleJoint:
         self.word_embeddings = tf.nn.dropout(word_embeddings, self.dropout)
 
     def __add_logits_op(self):
+        self.lstm_cells = list()
         if self.share_lstm:
             with tf.variable_scope("bi-lstm"):
                 cell_fw = tf.contrib.rnn.LSTMCell(self.hidden_size_lstm)
@@ -71,6 +76,7 @@ class NeuRuleDoubleJoint:
                 (output_fw, output_bw), _ = tf.nn.bidirectional_dynamic_rnn(
                         cell_fw, cell_bw, self.word_embeddings,
                         sequence_length=self.sequence_lengths, dtype=tf.float32)
+                self.lstm_cells += [cell_fw, cell_bw]
                 self.lstm_output = tf.concat([output_fw, output_bw], axis=-1)
                 self.lstm_output = tf.nn.dropout(self.lstm_output, self.dropout)
                 lstm_output1 = lstm_output2 = self.lstm_output
@@ -81,6 +87,7 @@ class NeuRuleDoubleJoint:
                 (output_fw, output_bw), _ = tf.nn.bidirectional_dynamic_rnn(
                         self.cell_fw1, cell_bw, self.word_embeddings,
                         sequence_length=self.sequence_lengths, dtype=tf.float32)
+                self.lstm_cells += [self.cell_fw1, cell_bw]
                 self.lstm_output1 = tf.concat([output_fw, output_bw], axis=-1)
                 self.lstm_output1 = tf.nn.dropout(self.lstm_output1, self.dropout)
                 lstm_output1 = self.lstm_output1
@@ -91,6 +98,7 @@ class NeuRuleDoubleJoint:
                 (output_fw, output_bw), _ = tf.nn.bidirectional_dynamic_rnn(
                         cell_fw, cell_bw, self.word_embeddings,
                         sequence_length=self.sequence_lengths, dtype=tf.float32)
+                self.lstm_cells += [cell_fw, cell_bw]
                 self.lstm_output2 = tf.concat([output_fw, output_bw], axis=-1)
                 self.lstm_output2 = tf.nn.dropout(self.lstm_output2, self.dropout)
                 lstm_output2 = self.lstm_output2
@@ -143,16 +151,25 @@ class NeuRuleDoubleJoint:
 
     def __add_loss_op(self):
         """Defines the loss"""
+        lstm_l2_reg = 0
+        if self.lstm_l2_src or self.lstm_l2_tar:
+            for lstm_cell in self.lstm_cells:
+                lstm_l2_reg += self.lamb * tf.nn.l2_loss(lstm_cell.trainable_variables[0])
+
         if self.use_crf:
             with tf.variable_scope("crf-src1"):
                 log_likelihood, self.trans_params_src1 = tf.contrib.crf.crf_log_likelihood(
                         self.logits_src1, self.labels_src1, self.sequence_lengths)
                 self.loss_src1 = tf.reduce_mean(-log_likelihood)
+                if self.lstm_l2_src:
+                    self.loss_src1 += lstm_l2_reg
 
             with tf.variable_scope("crf-src2"):
                 log_likelihood, self.trans_params_src2 = tf.contrib.crf.crf_log_likelihood(
                         self.logits_src2, self.labels_src2, self.sequence_lengths)
                 self.loss_src2 = tf.reduce_mean(-log_likelihood)
+                if self.lstm_l2_src:
+                    self.loss_src2 += lstm_l2_reg
 
             with tf.variable_scope("crf-tar"):
                 log_likelihood, self.trans_params_tar = tf.contrib.crf.crf_log_likelihood(
@@ -160,6 +177,8 @@ class NeuRuleDoubleJoint:
                 # self.loss_tar = tf.reduce_mean(-log_likelihood)
                 self.loss_tar = tf.reduce_mean(-log_likelihood) + 0.001 * tf.nn.l2_loss(
                     self.W_tar)  # + 0.001 * tf.nn.l2_loss(self.cell_fw1.trainable_variables[0])
+                if self.lstm_l2_tar:
+                    self.loss_tar += lstm_l2_reg
         else:
             assert False
             # losses = tf.nn.sparse_softmax_cross_entropy_with_logits(
