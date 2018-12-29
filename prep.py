@@ -386,8 +386,8 @@ rest15_train_word_cnts_file = 'd:/data/aspect/semeval15/restaurants/word_cnts.tx
 #                             config.SE14_REST_TEST_SENTS_FILE, config.SE14_REST_TEST_SENT_TEXTS_FILE)
 
 # utils.bin_word_vec_file_to_txt(
-#     'd:/data/res/yelp/yelp-w2v-sg-300-n10-i30-w5.bin',
-#     'd:/data/res/yelp/yelp-w2v-sg-300-n10-i30-w5.txt'
+#     'd:/data/res/yelp/yelp-nes-w2v-sg-100-n10-i30-w5.bin',
+#     'd:/data/res/yelp/yelp-nes-w2v-sg-100-n10-i30-w5.txt'
 # )
 # utils.bin_word_vec_file_to_txt(
 #     '/home/hldai/data/amazon/electronics-word-vecs-100-sg-n10-i20-w5.bin',
@@ -429,8 +429,8 @@ rest15_train_word_cnts_file = 'd:/data/aspect/semeval15/restaurants/word_cnts.tx
 # datautils.get_yelp_restaurant_reviews('d:/data/yelp/srcdata/yelp_academic_dataset_review.json',
 #                                       'd:/data/yelp/srcdata/yelp_academic_dataset_business.json',
 #                                       yelp_rest_sents_file)
-# __filter_non_english_sents('d:/data/res/yelp-review-tok-texts.txt',
-#                            'd:/data/res/yelp-review-eng-tok-texts.txt')
+# __filter_non_english_sents('d:/data/res/yelp/yelp-review-nes-tok-texts.txt',
+#                            'd:/data/res/yelp/yelp-review-eng-nes-tok-texts.txt')
 # __filter_non_english_sents('d:/data/res/yelp/yelp-review-tok-sents-round-9-full.txt',
 #                            yelp_tok_sents_eng_file)
 # __filter_non_english_sents(yelp_rest_sents_tok_file, yelp_rest_sents_tok_eng_file)
