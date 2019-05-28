@@ -46,9 +46,9 @@ def __label_words_with_terms(words, terms, label_val_beg, label_val_in, x):
         term_words = term.lower().split(' ')
         pbeg = __find_sub_words_seq(words, term_words)
         if pbeg == -1:
-            # print(words)
-            # print(terms)
-            # print()
+            print(words)
+            print(terms)
+            print()
             continue
         x[pbeg] = label_val_beg
         for p in range(pbeg + 1, pbeg + len(term_words)):
@@ -276,7 +276,7 @@ def gen_yelp_review_sents(yelp_review_file, dst_file, biz_id_set=None):
             sent = sent.strip()
             if not sent:
                 continue
-            sent = re.sub('\s+', ' ', sent)
+            sent = re.sub(r'\s+', ' ', sent)
             fout.write('{}\n'.format(sent))
         if i % 10000 == 0:
             print(i)

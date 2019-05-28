@@ -457,8 +457,7 @@ class NeuRuleDoubleJoint:
                 # print('iter {}, loss={:.4f}, p={:.4f}, r={:.4f}, f1={:.4f}, best_f1={:.4f}'.format(
                 #     epoch, loss_tar, p, r, f1, best_f1))
                 logging.info('Test, p={:.4f}, r={:.4f}, f1={:.4f}; p={:.4f}, r={:.4f}, f1={:.4f}'.format(
-                    aspect_p, aspect_r, aspect_f1, opinion_p, opinion_r,
-                    opinion_f1))
+                    aspect_p, aspect_r, aspect_f1, opinion_p, opinion_r, opinion_f1))
 
                 if self.saver is not None:
                     self.saver.save(self.sess, save_file)

@@ -124,12 +124,12 @@ if dataset == 'se14l':
 
 # __pre_train_nrdj(word_vecs_file, pre_tok_texts_file, pre_aspect_terms_file,
 #                  pre_opinion_terms_file, rule_model_file, 'both', load_model_file=rule_model_file)
-__pre_train_nrdj(
-    word_vecs_file, auto_labeled_data_files['sent_texts_file'],
-    dataset_files['pretrain_aspect_terms_file'], dataset_files['pretrain_opinion_terms_file'],
-    rule_model_file, 'both',
-    lamb=lamb, lstm_l2=lstm_l2_src, train_word_embeddings=train_word_embeddings
-)
-# __train_nrdj(word_vecs_file, dataset_files['train_tok_texts_file'], dataset_files['train_sents_file'],
-#              dataset_files['train_valid_split_file'], dataset_files['test_tok_texts_file'],
-#              dataset_files['test_sents_file'], rule_model_file, 'both')
+# __pre_train_nrdj(
+#     word_vecs_file, auto_labeled_data_files['sent_texts_file'],
+#     dataset_files['pretrain_aspect_terms_file'], dataset_files['pretrain_opinion_terms_file'],
+#     rule_model_file, 'both',
+#     lamb=lamb, lstm_l2=lstm_l2_src, train_word_embeddings=train_word_embeddings
+# )
+__train_nrdj(word_vecs_file, dataset_files['train_tok_texts_file'], dataset_files['train_sents_file'],
+             dataset_files['train_valid_split_file'], dataset_files['test_tok_texts_file'],
+             dataset_files['test_sents_file'], rule_model_file, 'both')

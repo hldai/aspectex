@@ -124,6 +124,63 @@ def __replace_digits_in_terms_file(src_terms_file, dst_file):
     f.close()
 
 
+def __se15_to_se14_format(se15_file, output_temp_file, output_gold_file):
+    import xml.etree.ElementTree as ET
+    from xml.dom import minidom
+
+    def prettify(elem):
+        return minidom.parseString(ET.tostring(elem, encoding='utf-8')).toprettyxml(indent="   ")
+
+    def get_sent_elem(text, sent_id):
+        sent_elem = ET.Element('sentence')
+        sent_elem.attrib['id'] = sent_id
+        text_elem = ET.Element('text')
+        text_elem.text = text
+        sent_elem.append(text_elem)
+        return sent_elem
+
+    root_temp_out = ET.Element('sentences')
+    root_gold_out = ET.Element('sentences')
+
+    dom = ET.parse(se15_file)
+    root = dom.getroot()
+    for sent in root.iter('sentence'):
+        # print(sent.find('text').text)
+        sent_temp = get_sent_elem(sent.find('text').text, sent.attrib['id'])
+        root_temp_out.append(sent_temp)
+
+        sent_gold = get_sent_elem(sent.find('text').text, sent.attrib['id'])
+        root_gold_out.append(sent_gold)
+
+        term_tups = list()
+        for opinion in sent.iter('Opinion'):
+            # print(opinion.attrib['target'])
+            if opinion.attrib['target'] != 'NULL':
+                term_tups.append((opinion.attrib['target'], opinion.attrib['from'], opinion.attrib['to']))
+        # print(sent.find('text').text)
+        # print(term_tups)
+        if len(term_tups) > 0:
+            terms_elem = ET.Element('aspectTerms')
+            for term_tup in term_tups:
+                term_elem = ET.Element('aspectTerm')
+                term_elem.attrib['term'] = term_tup[0]
+                term_elem.attrib['from'] = term_tup[1]
+                term_elem.attrib['to'] = term_tup[2]
+                terms_elem.append(term_elem)
+            sent_gold.append(terms_elem)
+
+    root_temp_out_str = prettify(root_temp_out)
+    with open(output_temp_file, 'w', encoding='utf-8') as fout:
+        fout.write(root_temp_out_str)
+
+    root_gold_out_str = prettify(root_gold_out)
+    with open(output_gold_file, 'w', encoding='utf-8') as fout:
+        fout.write(root_gold_out_str)
+    # print(root_temp_out)
+    # temp_out_tree = ET.ElementTree(root_temp_out)
+    # temp_out_tree.write(output_temp_file, encoding='utf-8', xml_declaration=True)
+
+
 se14_laptops_train_sents_file = '/home/hldai/data/aspect/semeval14/laptops/laptops_train_sents.json'
 se14_laptops_test_sents_file = '/home/hldai/data/aspect/semeval14/laptops/laptops_test_sents.json'
 se14_laptops_all_sents_file = '/home/hldai/data/aspect/semeval14/laptops/laptops_all_sents.json'
@@ -150,15 +207,15 @@ se15_rest_all_aspects_file = '/home/hldai/data/aspect/semeval15/restaurants/rest
 se15_rest_all_opinions_file = '/home/hldai/data/aspect/semeval15/restaurants/rest_all_opinions.txt'
 se15_rest_all_sent_texts_file = '/home/hldai/data/aspect/semeval15/restaurants/rest_all_sent_texts.txt'
 
-se14_rest_all_sents_file = os.path.join(config.DATA_DIR_SE14, 'restaurants/rest-sents-all.json')
-se14_rest_all_data_split_file = os.path.join(config.DATA_DIR_SE14, 'restaurants/rest-data-split-full.txt')
-se14_rest_all_aspects_file = os.path.join(config.DATA_DIR_SE14, 'restaurants/rest-all-aspects.txt')
-se14_rest_all_opinions_file = os.path.join(config.DATA_DIR_SE14, 'restaurants/rest-all-opinions.txt')
-se14_rest_train_aspects_file = os.path.join(config.DATA_DIR_SE14, 'restaurants/rest-train-aspects.txt')
-se14_rest_train_opinions_file = os.path.join(config.DATA_DIR_SE14, 'restaurants/rest-train-opinions.txt')
-se14_rest_test_aspects_file = os.path.join(config.DATA_DIR_SE14, 'restaurants/rest-test-aspects.txt')
-se14_rest_test_opinions_file = os.path.join(config.DATA_DIR_SE14, 'restaurants/rest-test-opinions.txt')
-se14_rest_all_sent_texts_file = os.path.join(config.DATA_DIR_SE14, 'restaurants/rest-all-sent-texts.txt')
+se14_rest_all_sents_file = os.path.join(config.SE14_DIR, 'restaurants/rest-sents-all.json')
+se14_rest_all_data_split_file = os.path.join(config.SE14_DIR, 'restaurants/rest-data-split-full.txt')
+se14_rest_all_aspects_file = os.path.join(config.SE14_DIR, 'restaurants/rest-all-aspects.txt')
+se14_rest_all_opinions_file = os.path.join(config.SE14_DIR, 'restaurants/rest-all-opinions.txt')
+se14_rest_train_aspects_file = os.path.join(config.SE14_DIR, 'restaurants/rest-train-aspects.txt')
+se14_rest_train_opinions_file = os.path.join(config.SE14_DIR, 'restaurants/rest-train-opinions.txt')
+se14_rest_test_aspects_file = os.path.join(config.SE14_DIR, 'restaurants/rest-test-aspects.txt')
+se14_rest_test_opinions_file = os.path.join(config.SE14_DIR, 'restaurants/rest-test-opinions.txt')
+se14_rest_all_sent_texts_file = os.path.join(config.SE14_DIR, 'restaurants/rest-all-sent-texts.txt')
 
 # __merge_train_test(config.SE14_REST_TRAIN_SENTS_FILE, config.SE14_REST_TEST_SENTS_FILE,
 #                    config.SE14_REST_TRAIN_VALID_SPLIT_FILE, se14_rest_all_sents_file,
@@ -174,10 +231,10 @@ se14_rest_all_sent_texts_file = os.path.join(config.DATA_DIR_SE14, 'restaurants/
 #                    se15_restaurants_datasplit_file)
 # __gen_aspect_opinion_file(se15_rest_all_sents_file, se15_rest_all_aspects_file, se15_rest_all_opinions_file)
 # __gen_aspect_opinion_file(se14_rest_all_sents_file, se14_rest_all_aspects_file, se14_rest_all_opinions_file)
-__gen_aspect_opinion_file(
-    config.SE14_REST_TRAIN_SENTS_FILE, se14_rest_train_aspects_file, se14_rest_train_opinions_file)
-__gen_aspect_opinion_file(
-    config.SE14_REST_TEST_SENTS_FILE, se14_rest_test_aspects_file, se14_rest_test_opinions_file)
+# __gen_aspect_opinion_file(
+#     config.SE14_REST_TRAIN_SENTS_FILE, se14_rest_train_aspects_file, se14_rest_train_opinions_file)
+# __gen_aspect_opinion_file(
+#     config.SE14_REST_TEST_SENTS_FILE, se14_rest_test_aspects_file, se14_rest_test_opinions_file)
 # __texts_file_from_sents(se15_rest_all_sents_file, se15_rest_all_sent_texts_file)
 # __texts_file_from_sents(se14_rest_all_sents_file, se14_rest_all_sent_texts_file)
 
@@ -196,3 +253,8 @@ __gen_aspect_opinion_file(
 # __replace_digits_in_terms_file(se14_laptops_train_aspect_file, se14_laptops_train_nr_aspect_file)
 # __replace_digits_in_terms_file(se14_laptops_test_aspect_file, se14_laptops_test_nr_aspect_file)
 # __replace_digits_in_terms_file(se14_laptops_all_aspect_file, se14_laptops_all_nr_aspect_file)
+
+se15_xml_file = 'd:/data/aspect/semeval15/ABSA15_Restaurants_Test.xml'
+conv_se15_xml_file = 'd:/data/aspect/semeval15/ABSA15_Restaurants_Test_conv.xml'
+conv_se15_gold_xml_file = 'd:/data/aspect/semeval15/ABSA15_Restaurants_Test_conv_gold.xml'
+__se15_to_se14_format(se15_xml_file, conv_se15_xml_file, conv_se15_gold_xml_file)
