@@ -6,8 +6,8 @@ import config
 
 
 TrainData = namedtuple("TrainData", ["labels_list", "word_idxs_list"])
-ValidData = namedtuple("ValidData", [
-    "labels_list", "word_idxs_list", "tok_texts", "aspects_true_list", "opinions_true_list"])
+ValidData = namedtuple("ValidData", ["texts", "labels_list", "word_idxs_list", "word_span_seqs", "tok_texts",
+                                     "aspects_true_list", "opinions_true_list"])
 
 
 # TODO use this function in more places
@@ -46,9 +46,9 @@ def __label_words_with_terms(words, terms, label_val_beg, label_val_in, x):
         term_words = term.lower().split(' ')
         pbeg = __find_sub_words_seq(words, term_words)
         if pbeg == -1:
-            print(words)
-            print(terms)
-            print()
+            # print(words)
+            # print(terms)
+            # print()
             continue
         x[pbeg] = label_val_beg
         for p in range(pbeg + 1, pbeg + len(term_words)):
@@ -69,13 +69,28 @@ def __label_words_with_terms_by_span(word_spans, term_spans, label_val_beg, labe
                 break
 
 
+def label_sentence(words, aspect_terms=None, opinion_terms=None):
+    label_val_beg, label_val_in = 1, 2
+
+    x = np.zeros(len(words), np.int32)
+    if aspect_terms is not None:
+        __label_words_with_terms(words, aspect_terms, label_val_beg, label_val_in, x)
+        label_val_beg, label_val_in = 3, 4
+
+    if opinion_terms is None:
+        return x
+
+    __label_words_with_terms(words, opinion_terms, label_val_beg, label_val_in, x)
+    return x
+
+
 # TODO some of the aspect_terms are not found
-def label_sentence(words, word_spans, aspect_term_spans=None, opinion_terms=None):
+def label_sentence_by_span(words, word_spans, aspect_term_spans=None, opinion_terms=None):
     label_val_beg, label_val_in = 1, 2
 
     x = np.zeros(len(words), np.int32)
     if aspect_term_spans is not None:
-        __label_words_with_terms_by_span(words, aspect_term_spans, label_val_beg, label_val_in, x)
+        __label_words_with_terms_by_span(word_spans, aspect_term_spans, label_val_beg, label_val_in, x)
         label_val_beg, label_val_in = 3, 4
 
     if opinion_terms is None:
@@ -101,15 +116,16 @@ def data_from_sents_file(sents, tok_texts, word_span_seqs, vocab, task):
 
     labels_list = list()
     for sent_idx, (sent, sent_words) in enumerate(zip(sents, words_list)):
-        aspect_terms, opinion_terms = None, None
+        aspect_term_spans, aspect_terms, opinion_terms = None, None, None
         if task != 'opinion':
-            aspect_objs = sent.get('terms', None)
-            aspect_terms = [t['term'] for t in aspect_objs] if aspect_objs is not None else list()
+            aspect_objs = sent.get('terms', list())
+            # aspect_terms = [t['term'] for t in aspect_objs]
+            aspect_term_spans = [t['span'] for t in aspect_objs]
 
         if task != 'aspect':
             opinion_terms = sent.get('opinions', list())
 
-        x = label_sentence(sent_words, word_span_seqs[sent_idx], aspect_terms, opinion_terms)
+        x = label_sentence_by_span(sent_words, word_span_seqs[sent_idx], aspect_term_spans, opinion_terms)
         labels_list.append(x)
 
     word_idxs_list = __get_word_idx_sequence(words_list, vocab)
@@ -132,14 +148,16 @@ def __get_valid_data(sents, tok_texts, word_span_seqs, vocab, task):
 
     aspect_terms_true_list = list() if task != 'opinion' else None
     opinion_terms_true_list = list() if task != 'aspect' else None
+    texts = list()
     for sent in sents:
+        texts.append(sent['text'])
         if aspect_terms_true_list is not None:
             aspect_terms_true_list.append(
                 [t['term'].lower() for t in sent['terms']] if 'terms' in sent else list())
         if opinion_terms_true_list is not None:
             opinion_terms_true_list.append([w.lower() for w in sent.get('opinions', list())])
 
-    return ValidData(labels_list_test, word_idxs_list_test, tok_texts, aspect_terms_true_list,
+    return ValidData(texts, labels_list_test, word_idxs_list_test, word_span_seqs, tok_texts, aspect_terms_true_list,
                      opinion_terms_true_list)
 
 
@@ -150,29 +168,29 @@ def get_data_semeval(train_sents_file, train_tok_text_file, train_valid_split_fi
 
     sents = utils.load_json_objs(train_sents_file)
     # texts = utils.read_lines(train_tok_text_file)
-    texts, word_span_seqs = load_token_pos_file(train_tok_text_file)
+    tok_texts, word_span_seqs = load_token_pos_file(train_tok_text_file)
 
-    sents_train, texts_train, sents_valid, texts_valid = list(), list(), list(), list()
+    sents_train, tok_texts_train, sents_valid, tok_texts_valid = list(), list(), list(), list()
     word_span_seqs_train, word_span_seqs_valid = list(), list()
-    for label, s, t, span_seq in zip(tvs_arr, sents, texts, word_span_seqs):
+    for label, s, t, span_seq in zip(tvs_arr, sents, tok_texts, word_span_seqs):
         if label == 0:
             sents_train.append(s)
-            texts_train.append(t)
+            tok_texts_train.append(t)
             word_span_seqs_train.append(span_seq)
         else:
             sents_valid.append(s)
-            texts_valid.append(t)
+            tok_texts_valid.append(t)
             word_span_seqs_valid.append(span_seq)
 
     labels_list_train, word_idxs_list_train = data_from_sents_file(
-        sents_train, texts_train, word_span_seqs_train, vocab, task)
+        sents_train, tok_texts_train, word_span_seqs_train, vocab, task)
     if n_train > -1:
         labels_list_train = labels_list_train[:n_train]
         word_idxs_list_train = word_idxs_list_train[:n_train]
 
     train_data = TrainData(labels_list_train, word_idxs_list_train)
 
-    valid_data = __get_valid_data(sents_valid, texts_valid, word_span_seqs_valid, vocab, task)
+    valid_data = __get_valid_data(sents_valid, tok_texts_valid, word_span_seqs_valid, vocab, task)
 
     sents_test = utils.load_json_objs(test_sents_file)
     texts_test, word_span_seqs_test = load_token_pos_file(test_tok_text_file)
@@ -273,7 +291,8 @@ def get_data_amazon(vocab, true_terms_file, tok_texts_file, task):
     if task != 'aspect':
         opinion_true_list = terms_true_list_valid
     valid_data = ValidData(
-        label_seq_list_valid, word_idx_seq_list_valid, tok_texts_valid, aspect_true_list, opinion_true_list)
+        None, label_seq_list_valid, word_idx_seq_list_valid, None, tok_texts_valid,
+        aspect_true_list, opinion_true_list)
 
     return train_data, valid_data
 

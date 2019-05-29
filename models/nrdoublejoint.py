@@ -312,12 +312,12 @@ class NeuRuleDoubleJoint:
 
                 if (i + 1) % 100 == 0:
                     p1, r1, f11, _, _, _ = self.evaluate(
-                        data_valid_s1.word_idxs_list, data_valid_s1.tok_texts,
-                        data_valid_s1.aspects_true_list, 'src1')
+                        data_valid_s1.texts, data_valid_s1.word_idxs_list, data_valid_s1.word_span_seqs,
+                        data_valid_s1.tok_texts, data_valid_s1.aspects_true_list, 'src1')
 
                     p2, r2, f12, _, _, _ = self.evaluate(
-                        data_valid_s2.word_idxs_list, data_valid_s2.tok_texts,
-                        data_valid_s2.opinions_true_list, 'src2')
+                        data_valid_s2.texts, data_valid_s2.word_idxs_list, data_valid_s2.word_span_seqs,
+                        data_valid_s2.tok_texts, data_valid_s2.opinions_true_list, 'src2')
 
                     logging.info('it={}, p={:.4f}, r={:.4f}, f1={:.4f}; src2, p={:.4f}, r={:.4f}, f1={:.4f}'.format(
                         epoch, p1, r1, f11, p2, r2, f12
@@ -434,8 +434,8 @@ class NeuRuleDoubleJoint:
             loss = sum(losses)
             # metrics = self.run_evaluate(dev)
             aspect_p, aspect_r, aspect_f1, opinion_p, opinion_r, opinion_f1 = self.evaluate(
-                data_valid.word_idxs_list, data_valid.tok_texts, data_valid.aspects_true_list,
-                'tar', data_valid.opinions_true_list)
+                data_valid.texts, data_valid.word_idxs_list, data_valid.word_span_seqs, data_valid.tok_texts,
+                data_valid.aspects_true_list, 'tar', data_valid.opinions_true_list)
 
             logging.info('iter {}, loss={:.4f}, p={:.4f}, r={:.4f}, f1={:.4f};'
                          ' p={:.4f}, r={:.4f}, f1={:.4f}; best_f1_sum={:.4f}'.format(
@@ -450,9 +450,9 @@ class NeuRuleDoubleJoint:
                 best_f1_sum = aspect_f1 + opinion_f1
 
                 aspect_p, aspect_r, aspect_f1, opinion_p, opinion_r, opinion_f1 = self.evaluate(
-                    data_test.word_idxs_list, data_test.tok_texts, data_test.aspects_true_list,
-                    'tar', data_test.opinions_true_list, dst_aspects_result_file=dst_aspects_file,
-                    dst_opinion_result_file=dst_opinions_file)
+                    data_test.texts, data_test.word_idxs_list, data_test.word_span_seqs, data_test.tok_texts,
+                    data_test.aspects_true_list, 'tar', data_test.opinions_true_list,
+                    dst_aspects_result_file=dst_aspects_file, dst_opinion_result_file=dst_opinions_file)
                 # print('iter {}, loss={:.4f}, p={:.4f}, r={:.4f}, f1={:.4f}, best_f1={:.4f}'.format(
                 #     epoch, loss_tar, p, r, f1, best_f1))
                 logging.info('Test, p={:.4f}, r={:.4f}, f1={:.4f}; p={:.4f}, r={:.4f}, f1={:.4f}'.format(
@@ -510,19 +510,22 @@ class NeuRuleDoubleJoint:
                 p += 1
         return terms
 
-    def evaluate(self, word_idxs_list_valid, test_texts, terms_true_list, task,
+    def evaluate(self, texts, word_idxs_list_valid, word_span_seqs, tok_texts, terms_true_list, task,
                  opinions_ture_list=None, dst_aspects_result_file=None, dst_opinion_result_file=None):
         aspect_true_cnt, aspect_sys_cnt, aspect_hit_cnt = 0, 0, 0
         opinion_true_cnt, opinion_sys_cnt, opinion_hit_cnt = 0, 0, 0
         error_sents, error_terms = list(), list()
         correct_sent_idxs = list()
         aspect_terms_sys_list, opinion_terms_sys_list = list(), list()
-        for sent_idx, (word_idxs, text, terms_true) in enumerate(zip(
-                word_idxs_list_valid, test_texts, terms_true_list)):
+        for sent_idx, (word_idxs, tok_text, terms_true) in enumerate(zip(
+                word_idxs_list_valid, tok_texts, terms_true_list)):
             labels_pred, sequence_lengths = self.predict_batch([word_idxs], task)
             labels_pred = labels_pred[0]
 
-            aspect_terms_sys = self.get_terms_from_label_list(labels_pred, text, 1, 2)
+            if word_span_seqs is None:
+                aspect_terms_sys = self.get_terms_from_label_list(labels_pred, tok_text, 1, 2)
+            else:
+                aspect_terms_sys = utils.recover_terms(texts[sent_idx], word_span_seqs[sent_idx], labels_pred, 1, 2)
             aspect_terms_sys_list.append(aspect_terms_sys)
 
             new_hit_cnt = utils.count_hit(terms_true, aspect_terms_sys)
@@ -535,7 +538,7 @@ class NeuRuleDoubleJoint:
             if opinions_ture_list is None:
                 continue
 
-            opinion_terms_sys = self.get_terms_from_label_list(labels_pred, text, 3, 4)
+            opinion_terms_sys = self.get_terms_from_label_list(labels_pred, tok_text, 3, 4)
             opinion_terms_sys_list.append(opinion_terms_sys)
             opinion_terms_true = opinions_ture_list[sent_idx]
 

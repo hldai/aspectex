@@ -16,6 +16,24 @@ def get_machine_name():
     return hostname[:dot_pos] if dot_pos > -1 else hostname[:]
 
 
+def recover_terms(text, word_spans, label_seq, label_beg, label_in):
+    p = 0
+    terms = list()
+    while p < len(label_seq):
+        if label_seq[p] == label_beg:
+            pend = p + 1
+            while pend < len(word_spans) and label_seq[pend] == label_in:
+                pend += 1
+            term_beg = word_spans[p][0]
+            term_end = word_spans[pend - 1][1]
+            # print(text[term_beg:term_end])
+            terms.append(text[term_beg:term_end])
+            p = pend
+        else:
+            p += 1
+    return terms
+
+
 def write_terms_list(terms_list, dst_file):
     fout = open(dst_file, 'w', encoding='utf-8')
     for terms in terms_list:
