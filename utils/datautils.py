@@ -55,13 +55,27 @@ def __label_words_with_terms(words, terms, label_val_beg, label_val_in, x):
             x[p] = label_val_in
 
 
+def __label_words_with_terms_by_span(word_spans, term_spans, label_val_beg, label_val_in, x):
+    for term_span in term_spans:
+        is_first = True
+        for i, wspan in enumerate(word_spans):
+            if wspan[0] >= term_span[0] and wspan[1] <= term_span[1]:
+                if is_first:
+                    is_first = False
+                    x[i] = label_val_beg
+                else:
+                    x[i] = label_val_in
+            if wspan[0] > term_span[1]:
+                break
+
+
 # TODO some of the aspect_terms are not found
-def label_sentence(words, aspect_terms=None, opinion_terms=None):
+def label_sentence(words, word_spans, aspect_term_spans=None, opinion_terms=None):
     label_val_beg, label_val_in = 1, 2
 
     x = np.zeros(len(words), np.int32)
-    if aspect_terms is not None:
-        __label_words_with_terms(words, aspect_terms, label_val_beg, label_val_in, x)
+    if aspect_term_spans is not None:
+        __label_words_with_terms_by_span(words, aspect_term_spans, label_val_beg, label_val_in, x)
         label_val_beg, label_val_in = 3, 4
 
     if opinion_terms is None:
@@ -80,7 +94,7 @@ def __get_word_idx_sequence(words_list, vocab):
     return seq_list
 
 
-def data_from_sents_file(sents, tok_texts, vocab, task):
+def data_from_sents_file(sents, tok_texts, word_span_seqs, vocab, task):
     words_list = [text.split(' ') for text in tok_texts]
     len_max = max([len(words) for words in words_list])
     print('max sentence len:', len_max)
@@ -95,7 +109,7 @@ def data_from_sents_file(sents, tok_texts, vocab, task):
         if task != 'aspect':
             opinion_terms = sent.get('opinions', list())
 
-        x = label_sentence(sent_words, aspect_terms, opinion_terms)
+        x = label_sentence(sent_words, word_span_seqs[sent_idx], aspect_terms, opinion_terms)
         labels_list.append(x)
 
     word_idxs_list = __get_word_idx_sequence(words_list, vocab)
@@ -112,8 +126,8 @@ def read_sents_to_word_idx_seqs(tok_texts_file, word_idx_dict):
     return word_idx_seq_list
 
 
-def __get_valid_data(sents, tok_texts, vocab, task):
-    labels_list_test, word_idxs_list_test = data_from_sents_file(sents, tok_texts, vocab, task)
+def __get_valid_data(sents, tok_texts, word_span_seqs, vocab, task):
+    labels_list_test, word_idxs_list_test = data_from_sents_file(sents, tok_texts, word_span_seqs, vocab, task)
     # exit()
 
     aspect_terms_true_list = list() if task != 'opinion' else None
@@ -135,29 +149,34 @@ def get_data_semeval(train_sents_file, train_tok_text_file, train_valid_split_fi
     tvs_arr = [int(v) for v in tvs_line.split()]
 
     sents = utils.load_json_objs(train_sents_file)
-    texts = utils.read_lines(train_tok_text_file)
+    # texts = utils.read_lines(train_tok_text_file)
+    texts, word_span_seqs = load_token_pos_file(train_tok_text_file)
 
     sents_train, texts_train, sents_valid, texts_valid = list(), list(), list(), list()
-    for label, s, t in zip(tvs_arr, sents, texts):
+    word_span_seqs_train, word_span_seqs_valid = list(), list()
+    for label, s, t, span_seq in zip(tvs_arr, sents, texts, word_span_seqs):
         if label == 0:
             sents_train.append(s)
             texts_train.append(t)
+            word_span_seqs_train.append(span_seq)
         else:
             sents_valid.append(s)
             texts_valid.append(t)
+            word_span_seqs_valid.append(span_seq)
 
-    labels_list_train, word_idxs_list_train = data_from_sents_file(sents_train, texts_train, vocab, task)
+    labels_list_train, word_idxs_list_train = data_from_sents_file(
+        sents_train, texts_train, word_span_seqs_train, vocab, task)
     if n_train > -1:
         labels_list_train = labels_list_train[:n_train]
         word_idxs_list_train = word_idxs_list_train[:n_train]
 
     train_data = TrainData(labels_list_train, word_idxs_list_train)
 
-    valid_data = __get_valid_data(sents_valid, texts_valid, vocab, task)
+    valid_data = __get_valid_data(sents_valid, texts_valid, word_span_seqs_valid, vocab, task)
 
     sents_test = utils.load_json_objs(test_sents_file)
-    texts_test = utils.read_lines(test_tok_text_file)
-    test_data = __get_valid_data(sents_test, texts_test, vocab, task)
+    texts_test, word_span_seqs_test = load_token_pos_file(test_tok_text_file)
+    test_data = __get_valid_data(sents_test, texts_test, word_span_seqs_test, vocab, task)
     return train_data, valid_data, test_data
 
 
@@ -314,3 +333,14 @@ def load_train_valid_idxs(train_valid_idxs_file):
         valid_idxs = next(f).strip().split(' ')
         valid_idxs = [int(idx) for idx in valid_idxs]
     return train_idxs, valid_idxs
+
+
+def load_token_pos_file(filename):
+    tok_texts, tok_span_seqs = list(), list()
+    with open(filename, encoding='utf-8') as f:
+        for line in f:
+            tok_texts.append(line.strip())
+            tok_spans_str = next(f).strip()
+            vals = [int(v) for v in tok_spans_str.split(' ')]
+            tok_span_seqs.append([(vals[2 * i], vals[2 * i + 1]) for i in range(len(vals) // 2)])
+    return tok_texts, tok_span_seqs

@@ -16,8 +16,8 @@ class NeuRuleDoubleJoint:
     def __init__(self, n_tags, word_embeddings, share_lstm, hidden_size_lstm=100, train_word_embeddings=False,
                  batch_size=20, lr_method='adam', clip=-1, lamb=0.001, lstm_l2_src=False, lstm_l2_tar=False,
                  use_crf=True, model_file=None):
-        logging.info('hidden_size_lstm={}, batch_size={}, lr_method={}'.format(
-            hidden_size_lstm, batch_size, lr_method))
+        logging.info('hidden_size_lstm={} batch_size={} lr_method={} lamb={} lstm_l2_src={} lstm_l2_tar={}'.format(
+            hidden_size_lstm, batch_size, lr_method, lamb, lstm_l2_src, lstm_l2_tar))
 
         self.n_tags_src = 3
         self.n_tags = n_tags
@@ -286,8 +286,7 @@ class NeuRuleDoubleJoint:
         return train_loss
 
     def pre_train(self, data_train_s1: TrainData, data_valid_s1: ValidData, data_train_s2: TrainData,
-                  data_valid_s2: ValidData, vocab, n_epochs,
-                  lr=0.001, dropout=0.5, save_file=None):
+                  data_valid_s2: ValidData, vocab, n_epochs, lr=0.001, dropout=0.5, save_file=None):
         logging.info('pretrain, n_epochs={}, lr={}, dropout={}'.format(n_epochs, lr, dropout))
         if save_file is not None and self.saver is None:
             self.saver = tf.train.Saver()

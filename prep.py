@@ -79,7 +79,7 @@ def __process_hl04():
     fout.close()
 
 
-def __read_opinions_file(filename):
+def __read_opinions_file(filename, has_polarity=True):
     opinions_sents = list()
     f = open(filename, encoding='utf-8')
     for line in f:
@@ -91,14 +91,44 @@ def __read_opinions_file(filename):
         vals = line.split(',')
         terms = list()
         for v in vals:
-            # v = v.strip()
-            # term = v[:-2].strip()
-            # polarity = v[-2:]
-            if v.strip():
-                terms.append(v.strip())
+            v = v.strip()
+            if not v:
+                continue
+            if has_polarity:
+                if not (v[-2:] == '-1' or v[-2:] == '+1'):
+                    print(line, v)
+                assert v[-2:] == '-1' or v[-2:] == '+1'
+                term = v[:-2].strip()
+                # polarity = v[-2:]
+                terms.append(term)
+            else:
+                terms.append(v)
         opinions_sents.append(terms)
     f.close()
     return opinions_sents
+
+
+def __get_sent_objs_se14_xml(filename, opinions_sents):
+    import xml.etree.ElementTree as ET
+    dom = ET.parse(filename)
+    root = dom.getroot()
+
+    sents = list()
+    for i, sent in enumerate(root.iter('sentence')):
+        sent_obj = {'id': sent.attrib['id'], 'text': sent.find('text').text}
+        aspect_terms = list()
+        for term_elem in sent.iter('aspectTerm'):
+            # print(term_elem.attrib['term'])
+            aspect_terms.append(
+                {'term': term_elem.attrib['term'], 'polarity': term_elem.attrib['polarity'], 'span': (
+                    int(term_elem.attrib['from']), int(term_elem.attrib['to']))})
+
+        if aspect_terms:
+            sent_obj['terms'] = aspect_terms
+        if opinions_sents[i] is not None:
+            sent_obj['opinions'] = opinions_sents[i]
+        sents.append(sent_obj)
+    return sents
 
 
 def __get_sent_objs_se14(file_text, opinions_sents):
@@ -126,7 +156,10 @@ def __get_sent_objs_se14(file_text, opinions_sents):
     return sents
 
 
-def __get_sent_objs_se15(file_text, opinions_sents):
+def __get_sent_objs_se15(filename, opinions_sents):
+    with open(filename, encoding='utf-8') as f:
+        file_text = f.read()
+
     sents = list()
     sent_pattern = '<sentence id="(.*?)">\s*<text>(.*?)</text>\s*(.*?)</sentence>'
     miter = re.finditer(sent_pattern, file_text, re.DOTALL)
@@ -156,10 +189,11 @@ def __get_sent_objs_se15(file_text, opinions_sents):
 def __process_raw_sem_eval_data(xml_file, opinions_file, dst_sents_file, dst_sents_text_file, fn_get_sent_objs):
     opinions_sents = __read_opinions_file(opinions_file)
 
-    f = open(xml_file, encoding='utf-8')
-    text_all = f.read()
-    sents = fn_get_sent_objs(text_all, opinions_sents)
-    f.close()
+    # f = open(xml_file, encoding='utf-8')
+    # text_all = f.read()
+    # sents = fn_get_sent_objs(text_all, opinions_sents)
+    # f.close()
+    sents = fn_get_sent_objs(xml_file, opinions_sents)
 
     utils.save_json_objs(sents, dst_sents_file)
     with open(dst_sents_text_file, 'w', encoding='utf-8') as fout:
@@ -374,10 +408,10 @@ rest15_train_word_cnts_file = 'd:/data/aspect/semeval15/restaurants/word_cnts.tx
 
 # __process_raw_sem_eval_data(
 #     config.SE14_LAPTOP_TRAIN_XML_FILE, config.SE14_LAPTOP_TRAIN_OPINIONS_FILE,
-#     config.SE14_LAPTOP_TRAIN_SENTS_FILE, config.SE14_LAPTOP_TRAIN_SENT_TEXTS_FILE, __get_sent_objs_se14)
-__process_raw_sem_eval_data(
-    config.SE14_LAPTOP_TEST_XML_FILE, config.SE14_LAPTOP_TEST_OPINIONS_FILE,
-    config.SE14_LAPTOP_TEST_SENTS_FILE, config.SE14_LAPTOP_TEST_SENT_TEXTS_FILE, __get_sent_objs_se14)
+#     config.SE14_LAPTOP_TRAIN_SENTS_FILE, config.SE14_LAPTOP_TRAIN_SENT_TEXTS_FILE, __get_sent_objs_se14_xml)
+# __process_raw_sem_eval_data(
+#     config.SE14_LAPTOP_TEST_XML_FILE, config.SE14_LAPTOP_TEST_OPINIONS_FILE,
+#     config.SE14_LAPTOP_TEST_SENTS_FILE, config.SE14_LAPTOP_TEST_SENT_TEXTS_FILE, __get_sent_objs_se14_xml)
 
 # __process_raw_sem_eval_data(
 #     config.SE14_REST_TRAIN_XML_FILE, config.SE14_REST_TRAIN_OPINIONS_FILE,

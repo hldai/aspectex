@@ -46,14 +46,14 @@ SEED_OPINIONS_FILE_HL04 = join(DATA_DIR_HL04, 'opinion-dict.txt')
 SE14_LAPTOP_TEST_XML_FILE = join(SE14_DIR, 'laptops/Laptops_Test_Gold.xml')
 SE14_LAPTOP_TEST_SENTS_FILE = join(SE14_DIR, 'laptops/laptops_test_sents.json')
 SE14_LAPTOP_TEST_SENT_TEXTS_FILE = join(SE14_DIR, 'laptops/laptops_test_texts.txt')
-SE14_LAPTOP_TEST_TOK_TEXTS_FILE = join(SE14_DIR, 'laptops/laptops_test_texts_tok.txt')
+SE14_LAPTOP_TEST_TOK_TEXTS_FILE = join(SE14_DIR, 'laptops/laptops_test_texts_tok_pos.txt')
 SE14_LAPTOP_TEST_DEP_PARSE_FILE = join(SE14_DIR, 'laptops/laptops_test_dep.txt')
 SE14_LAPTOP_TEST_OPINIONS_FILE = join(SE14_DIR, 'laptops/test_laptop_opinions.txt')
 SE14_LAPTOP_TRAIN_XML_FILE = join(SE14_DIR, 'laptops/Laptops_Train.xml')
 SE14_LAPTOP_TRAIN_SENTS_FILE = join(SE14_DIR, 'laptops/laptops_train_sents.json')
 SE14_LAPTOP_TRAIN_VALID_SPLIT_FILE = join(SE14_DIR, 'laptops/laptops_train_valid_split.txt')
 SE14_LAPTOP_TRAIN_SENT_TEXTS_FILE = join(SE14_DIR, 'laptops/laptops_train_texts.txt')
-SE14_LAPTOP_TRAIN_TOK_TEXTS_FILE = join(SE14_DIR, 'laptops/laptops_train_texts_tok.txt')
+SE14_LAPTOP_TRAIN_TOK_TEXTS_FILE = join(SE14_DIR, 'laptops/laptops_train_texts_tok_pos.txt')
 SE14_LAPTOP_TRAIN_OPINIONS_FILE = join(SE14_DIR, 'laptops/train_laptop_opinions.txt')
 SE14_LAPTOP_TRAIN_DEP_PARSE_FILE = join(SE14_DIR, 'laptops/laptops_train_dep.txt')
 
@@ -111,8 +111,8 @@ SE14L_FILES = {
     'train_sents_file': join(SE14_DIR, 'laptops/laptops_train_sents.json'),
     'test_sents_file': join(SE14_DIR, 'laptops/laptops_test_sents.json'),
     'train_valid_split_file': join(SE14_DIR, 'laptops/laptops_train_valid_split.txt'),
-    'train_tok_texts_file': join(SE14_DIR, 'laptops/laptops_train_texts_tok.txt'),
-    'test_tok_texts_file': join(SE14_DIR, 'laptops/laptops_test_texts_tok.txt'),
+    'train_tok_texts_file': join(SE14_DIR, 'laptops/laptops_train_texts_tok_pos.txt'),
+    'test_tok_texts_file': join(SE14_DIR, 'laptops/laptops_test_texts_tok_pos.txt'),
     'train_dep_tags_file': join(SE14_DIR, 'laptops/laptops-train-rule-dep.txt'),
     'test_dep_tags_file': join(SE14_DIR, 'laptops/laptops-test-rule-dep.txt'),
     'train_pos_tags_file': join(SE14_DIR, 'laptops/laptops-train-rule-pos.txt'),
