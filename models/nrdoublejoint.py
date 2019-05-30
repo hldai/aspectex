@@ -529,6 +529,7 @@ class NeuRuleDoubleJoint:
                 aspect_terms_sys = [t.lower() for t in aspect_terms_sys]
             aspect_terms_sys_list.append(aspect_terms_sys)
 
+            # print(terms_true, aspect_terms_sys)
             new_hit_cnt = utils.count_hit(terms_true, aspect_terms_sys)
             aspect_true_cnt += len(terms_true)
             aspect_sys_cnt += len(aspect_terms_sys)

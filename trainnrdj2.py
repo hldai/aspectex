@@ -133,4 +133,4 @@ if __name__ == '__main__':
     #     rule_model_file, 'both', lamb=lamb, lstm_l2=lstm_l2_src, train_word_embeddings=train_word_embeddings)
     __train_nrdj(word_vecs_file, dataset_files['train_tok_texts_file'], dataset_files['train_sents_file'],
                  dataset_files['train_valid_split_file'], dataset_files['test_tok_texts_file'],
-                 dataset_files['test_sents_file'], None, 'both')
+                 dataset_files['test_sents_file'], rule_model_file, 'both')
