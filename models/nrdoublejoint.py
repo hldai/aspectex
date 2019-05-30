@@ -442,13 +442,9 @@ class NeuRuleDoubleJoint:
                 epoch, loss, aspect_p, aspect_r, aspect_f1, opinion_p, opinion_r,
                 opinion_f1, best_f1_sum))
 
-            # if True:
+            if True:
             # if aspect_f1 + opinion_f1 > best_f1_sum:
-            if aspect_f1 > best_a_f1 and opinion_f1 > best_o_f1:
-                best_a_f1 = aspect_f1
-                best_o_f1 = opinion_f1
-                best_f1_sum = aspect_f1 + opinion_f1
-
+            # if aspect_f1 > best_a_f1 and opinion_f1 > best_o_f1:
                 aspect_p, aspect_r, aspect_f1, opinion_p, opinion_r, opinion_f1 = self.evaluate(
                     data_test.texts, data_test.word_idxs_list, data_test.word_span_seqs, data_test.tok_texts,
                     data_test.aspects_true_list, 'tar', data_test.opinions_true_list,
@@ -462,6 +458,12 @@ class NeuRuleDoubleJoint:
                     self.saver.save(self.sess, save_file)
                     # print('model saved to {}'.format(save_file))
                     logging.info('model saved to {}'.format(save_file))
+
+            if aspect_f1 + opinion_f1 > best_f1_sum:
+                best_f1_sum = aspect_f1 + opinion_f1
+            if aspect_f1 > best_a_f1 and opinion_f1 > best_o_f1:
+                best_a_f1 = aspect_f1
+                best_o_f1 = opinion_f1
 
     def predict_batch(self, word_idxs, task):
         fd, sequence_lengths = self.get_feed_dict(word_idxs, task, dropout=1.0)
