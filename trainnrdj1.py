@@ -49,7 +49,7 @@ def __pre_train_nrdj(word_vecs_file, tok_texts_file, aspect_terms_file, opinion_
                               lamb=lamb, lstm_l2_src=lstm_l2, model_file=load_model_file, batch_size=batch_size)
 
     nrdj.pre_train(train_data_src1, valid_data_src1, train_data_src2, valid_data_src2, vocab,
-                   n_epochs=30, lr=lr, save_file=dst_model_file)
+                   n_epochs=50, lr=lr, save_file=dst_model_file)
 
 
 def __train_nrdj(word_vecs_file, train_tok_texts_file, train_sents_file, train_valid_split_file, test_tok_texts_file,

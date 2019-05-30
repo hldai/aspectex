@@ -136,7 +136,7 @@ SE14L_FILES = {
     'bert_test_tokens_file': join(SE14_DIR, 'bert-data/se14l-test-tokens.txt'),
     'bert_init_checkpoint': join(BERT_BASE_DIR, 'amazon/model.ckpt-10000'),
     'pretrain_aspect_terms_file': join(SE14_DIR, 'laptops/amazon-laptops-aspect-rm-rule-result.txt'),
-    'pretrain_opinion_terms_file': join(SE14_DIR, 'laptops/amazon-laptops-aspect-rm-rule-result.txt'),
+    'pretrain_opinion_terms_file': join(SE14_DIR, 'laptops/amazon-laptops-opinion-rule-result.txt'),
     'pretrain_train_aspect_tfrec_file': join(SE14_DIR, 'laptops/se14l-amazonlaptops-train-aspect.tfrecord'),
     'pretrain_valid_aspect_tfrec_file': join(SE14_DIR, 'laptops/se14l-amazonlaptops-valid-aspect.tfrecord'),
     'pretrain_train_opinion_tfrec_file': join(SE14_DIR, 'laptops/se14l-amazonlaptops-train-opinion.tfrecord'),
