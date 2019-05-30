@@ -57,7 +57,6 @@ dataset = 'se14l'
 
 if dataset == 'se14l':
     # word_vecs_file = os.path.join(config.SE14_DIR, 'model-data/amazon-wv-300-sg-n10-w8-i30.pkl')
-    # word_vecs_file = os.path.join(config.SE14_DIR, 'model-data/amazon-wv-300-sg-n10-w8-i30.pkl')
     # word_vecs_file = os.path.join(config.SE14_DIR, 'model-data/amazon-wv-100-sg-n10-w8-i30.pkl')
     word_vecs_file = os.path.join(config.SE14_DIR, 'model-data/laptops-amazon-word-vecs.pkl')
 elif dataset == 'se14r':
