@@ -114,9 +114,12 @@ if __name__ == '__main__':
         rule_model_file = os.path.join(config.SE14_DIR, 'model-data/pretrain/yelpr9-rest-part0_04-reg1e3.ckpt')
         word_vecs_file = os.path.join(config.SE14_DIR, 'model-data/yelp-w2v-sg-100-n10-i30-w5.pkl')
     else:
-        rule_model_file = os.path.join(config.SE14_DIR, 'model-data/pretrain/amazon-100d-100h-twv-nl2.ckpt')
+        # rule_model_file = os.path.join(config.SE14_DIR, 'model-data/pretrain/amazon-300d-100h-twv-nl2.ckpt')
         # word_vecs_file = os.path.join(config.SE14_DIR, 'model-data/amazon-wv-300-sg-n10-w8-i30.pkl')
-        word_vecs_file = os.path.join(config.SE14_DIR, 'model-data/amazon-wv-100-sg-n10-w8-i30.pkl')
+        # rule_model_file = os.path.join(config.SE14_DIR, 'model-data/pretrain/amazon-100d-100h-twv-nl2.ckpt')
+        # word_vecs_file = os.path.join(config.SE14_DIR, 'model-data/amazon-wv-100-sg-n10-w8-i30.pkl')
+        rule_model_file = os.path.join(config.SE14_DIR, 'model-data/pretrain/laptops-amazon-word-vecs-nl2.ckpt')
+        word_vecs_file = os.path.join(config.SE14_DIR, 'model-data/laptops-amazon-word-vecs.pkl')
 
     dataset_files = config.DATA_FILES[dataset]
     auto_labeled_data_files = config.DATA_FILES['restaurants-yelp']

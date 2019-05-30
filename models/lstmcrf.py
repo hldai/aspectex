@@ -56,7 +56,7 @@ class LSTMCRF:
                 #         dtype=tf.float32)
 
             word_embeddings = tf.nn.embedding_lookup(_word_embeddings, self.word_idxs, name="word_embeddings")
-        self.word_embeddings = tf.nn.dropout(word_embeddings, self.dropout)
+        self.word_embeddings = tf.nn.dropout(word_embeddings, rate=self.dropout)
 
     def __add_logits_op(self):
         """Defines self.logits
@@ -74,7 +74,7 @@ class LSTMCRF:
             self.lstm_output = tf.concat([self.output_fw, self.output_bw], axis=-1)
             # if self.manual_feat is not None:
             #     self.lstm_output = tf.concat([self.lstm_output, self.manual_feat], axis=-1)
-            self.lstm_output = tf.nn.dropout(self.lstm_output, self.dropout)
+            self.lstm_output = tf.nn.dropout(self.lstm_output, rate=self.dropout)
 
         with tf.variable_scope("proj"):
             dim_tmp = 2 * self.hidden_size_lstm + self.manual_feat_len
@@ -149,7 +149,9 @@ class LSTMCRF:
     def __init_session(self, model_file):
         """Defines self.sess and initialize the variables"""
         # self.logger.info("Initializing tf session")
-        self.sess = tf.Session()
+        config = tf.ConfigProto(intra_op_parallelism_threads=4,
+                                inter_op_parallelism_threads=4)
+        self.sess = tf.Session(config=config)
         if model_file is None:
             self.sess.run(tf.global_variables_initializer())
         else:
@@ -305,8 +307,8 @@ class LSTMCRF:
             loss = sum(losses)
             # metrics = self.run_evaluate(dev)
             aspect_p, aspect_r, aspect_f1, opinion_p, opinion_r, opinion_f1 = self.evaluate(
-                data_valid.word_idxs_list, data_valid.tok_texts, data_valid.aspects_true_list,
-                'tar', data_valid.opinions_true_list)
+                data_valid.texts, data_valid.word_idxs_list, data_valid.word_span_seqs, data_valid.tok_texts,
+                data_valid.aspects_true_list, 'tar', data_valid.opinions_true_list)
 
             logging.info('iter {}, loss={:.4f}, p={:.4f}, r={:.4f}, f1={:.4f};'
                          ' p={:.4f}, r={:.4f}, f1={:.4f}; best_f1_sum={:.4f}'.format(
@@ -321,8 +323,9 @@ class LSTMCRF:
                 best_o_f1 = opinion_f1
 
                 aspect_p, aspect_r, aspect_f1, opinion_p, opinion_r, opinion_f1 = self.evaluate(
-                    data_test.word_idxs_list, data_test.tok_texts, data_test.aspects_true_list,
-                    'tar', data_test.opinions_true_list)
+                    data_test.texts, data_test.word_idxs_list, data_test.word_span_seqs, data_test.tok_texts,
+                    data_test.aspects_true_list, 'tar', data_test.opinions_true_list,
+                    dst_aspects_file=dst_aspects_file, dst_opinions_file=dst_opinions_file)
                 # print('iter {}, loss={:.4f}, p={:.4f}, r={:.4f}, f1={:.4f}, best_f1={:.4f}'.format(
                 #     epoch, loss_tar, p, r, f1, best_f1))
                 logging.info('Test, p={:.4f}, r={:.4f}, f1={:.4f}; p={:.4f}, r={:.4f}, f1={:.4f}'.format(
@@ -360,7 +363,7 @@ class LSTMCRF:
         return label_seq_list
 
     def predict_batch(self, word_idxs_list, feat_list):
-        fd, sequence_lengths = self.get_feed_dict(word_idxs_list, dropout=1.0, manual_feat=feat_list)
+        fd, sequence_lengths = self.get_feed_dict(word_idxs_list, dropout=0.0, manual_feat=feat_list)
 
         # get tag scores and transition params of CRF
         viterbi_sequences = []
@@ -396,19 +399,25 @@ class LSTMCRF:
                 p += 1
         return terms
 
-    def evaluate(self, word_idxs_list_valid, test_texts, terms_true_list, task,
+    def evaluate(self, texts, word_idxs_list_valid, word_span_seqs, tok_texts, terms_true_list, task,
                  opinions_ture_list=None, dst_aspects_file=None, dst_opinions_file=None):
         aspect_true_cnt, aspect_sys_cnt, aspect_hit_cnt = 0, 0, 0
         opinion_true_cnt, opinion_sys_cnt, opinion_hit_cnt = 0, 0, 0
         error_sents, error_terms = list(), list()
         correct_sent_idxs = list()
         aspect_terms_sys_list, opinion_terms_sys_list = list(), list()
-        for sent_idx, (word_idxs, text, terms_true) in enumerate(zip(
-                word_idxs_list_valid, test_texts, terms_true_list)):
+        for sent_idx, (word_idxs, tok_text, terms_true) in enumerate(zip(
+                word_idxs_list_valid, tok_texts, terms_true_list)):
             labels_pred, sequence_lengths = self.predict_batch([word_idxs], task)
             labels_pred = labels_pred[0]
 
-            aspect_terms_sys = self.get_terms_from_label_list(labels_pred, text, 1, 2)
+            if word_span_seqs is None:
+                aspect_terms_sys = self.get_terms_from_label_list(labels_pred, tok_text, 1, 2)
+            else:
+                aspect_terms_sys = utils.recover_terms(texts[sent_idx], word_span_seqs[sent_idx], labels_pred, 1, 2)
+                aspect_terms_sys = [t.lower() for t in aspect_terms_sys]
+            # aspect_terms_sys = self.get_terms_from_label_list(labels_pred, text, 1, 2)
+            aspect_terms_sys_list.append(aspect_terms_sys)
 
             new_hit_cnt = utils.count_hit(terms_true, aspect_terms_sys)
             aspect_true_cnt += len(terms_true)
@@ -420,7 +429,8 @@ class LSTMCRF:
             if opinions_ture_list is None:
                 continue
 
-            opinion_terms_sys = self.get_terms_from_label_list(labels_pred, text, 3, 4)
+            opinion_terms_sys = self.get_terms_from_label_list(labels_pred, tok_text, 3, 4)
+            opinion_terms_sys_list.append(opinion_terms_sys)
             opinion_terms_true = opinions_ture_list[sent_idx]
 
             new_hit_cnt = utils.count_hit(opinion_terms_true, opinion_terms_sys)
@@ -430,8 +440,10 @@ class LSTMCRF:
 
         if dst_aspects_file is not None:
             utils.write_terms_list(aspect_terms_sys_list, dst_aspects_file)
+            logging.info('aspects to {}'.format(dst_aspects_file))
         if dst_opinions_file is not None:
             utils.write_terms_list(opinion_terms_sys_list, dst_opinions_file)
+            logging.info('opinions to {}'.format(dst_opinions_file))
 
         aspect_p, aspect_r, aspect_f1 = utils.prf1(aspect_true_cnt, aspect_sys_cnt, aspect_hit_cnt)
         if opinions_ture_list is None:

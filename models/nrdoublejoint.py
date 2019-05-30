@@ -526,6 +526,7 @@ class NeuRuleDoubleJoint:
                 aspect_terms_sys = self.get_terms_from_label_list(labels_pred, tok_text, 1, 2)
             else:
                 aspect_terms_sys = utils.recover_terms(texts[sent_idx], word_span_seqs[sent_idx], labels_pred, 1, 2)
+                aspect_terms_sys = [t.lower() for t in aspect_terms_sys]
             aspect_terms_sys_list.append(aspect_terms_sys)
 
             new_hit_cnt = utils.count_hit(terms_true, aspect_terms_sys)
