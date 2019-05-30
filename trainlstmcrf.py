@@ -55,13 +55,13 @@ n_epochs = 200
 dataset = 'se14l'
 
 if dataset == 'se14l':
-    # word_vecs_file = os.path.join(config.DATA_DIR_SE14, 'model-data/amazon-wv-300-sg-n10-w8-i30.pkl')
-    word_vecs_file = os.path.join(config.DATA_DIR_SE14, 'model-data/amazon-wv-300-sg-n10-w8-i30.pkl')
-    # word_vecs_file = os.path.join(config.DATA_DIR_SE14, 'model-data/laptops-amazon-word-vecs.pkl')
+    # word_vecs_file = os.path.join(config.SE14_DIR, 'model-data/amazon-wv-300-sg-n10-w8-i30.pkl')
+    # word_vecs_file = os.path.join(config.SE14_DIR, 'model-data/amazon-wv-300-sg-n10-w8-i30.pkl')
+    word_vecs_file = os.path.join(config.SE14_DIR, 'model-data/laptops-amazon-word-vecs.pkl')
 elif dataset == 'se14r':
-    word_vecs_file = os.path.join(config.DATA_DIR_SE14, 'model-data/yelp-w2v-sg-100-n10-i30-w5.pkl')
+    word_vecs_file = os.path.join(config.SE14_DIR, 'model-data/yelp-w2v-sg-100-n10-i30-w5.pkl')
 else:
-    word_vecs_file = os.path.join(config.DATA_DIR_SE15, 'model-data/yelp-w2v-sg-100-n10-i30-w5.pkl')
+    word_vecs_file = os.path.join(config.SE15_DIR, 'model-data/yelp-w2v-sg-100-n10-i30-w5.pkl')
 
 dataset_files = config.DATA_FILES[dataset]
 __train_lstmcrf(word_vecs_file, dataset_files['train_tok_texts_file'], dataset_files['train_sents_file'],
