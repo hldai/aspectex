@@ -296,11 +296,49 @@ def __check_opinion_errors():
         print()
 
 
+def check_unseen_terms():
+    sents_file = 'd:/data/aspect/semeval14/laptops/laptops_test_sents.json'
+    lstmcrf_aspects_file = 'd:/data/aspect/semeval14/lstmcrf-aspects.txt'
+    lstmcrf_opinions_file = 'd:/data/aspect/semeval14/lstmcrf-opinions.txt'
+    nrdj_aspects_file = 'd:/data/aspect/semeval14/nrdj-aspects.txt'
+    nrdj_opinions_file = 'd:/data/aspect/semeval14/nrdj-opinions.txt'
+    rule_aspects_file = 'd:/data/aspect/semeval14/laptops/laptops-test-aspect-rule-result.txt'
+
+    sents = utils.load_json_objs(sents_file)
+    lc_aspects_list = utils.load_json_objs(lstmcrf_aspects_file)
+    nrdj_aspects_list = utils.load_json_objs(nrdj_aspects_file)
+    rule_aspects_list = utils.load_json_objs(rule_aspects_file)
+    terms_true_list, terms_nrdj_list = list(), list()
+    n_true, n_nrdj, n_hit = 0, 0, 0
+    for sent, lc_aspects, nrdj_aspects, rule_aspects in zip(
+            sents, lc_aspects_list, nrdj_aspects_list, rule_aspects_list):
+        terms = [t['term'].lower() for t in sent.get('terms', list())]
+        print(terms, nrdj_aspects)
+        terms_true_list.append(terms)
+        terms_nrdj_list.append(nrdj_aspects)
+        n_true += len(terms)
+        n_nrdj += len(nrdj_aspects)
+        n_hit += utils.count_hit(terms, nrdj_aspects)
+        # lc_correct = __is_correct(lc_aspects, terms)
+        # nrdj_correct = __is_correct(nrdj_aspects, terms)
+        # rule_correct = __is_correct(rule_aspects, terms)
+        # if not lc_correct and not rule_correct and nrdj_correct:
+        #     print(sent['text'])
+        #     print(terms)
+        #     print(lc_aspects)
+        #     print(rule_aspects)
+        #     print(nrdj_aspects)
+        #     print()
+
+    p, r, f1 = utils.prf1(n_true, n_nrdj, n_hit)
+    print(p, r, f1)
+
+
 # __count_adj_phrases()
 # __semeval_rule_insight()
 # __dataset_statistics()
 # __amazon_statistics()
-__check_errors()
+# __check_errors()
 # __count_rule_extracted_terms()
 # __count_words('d:/data/aspect/semeval14/laptops/laptops_train_texts_tok.txt')
 # __count_words('d:/data/aspect/semeval14/laptops/laptops_test_texts_tok.txt')
@@ -310,3 +348,4 @@ __check_errors()
 # __count_words('d:/data/aspect/semeval15/restaurants/restaurants_test_texts_tok.txt')
 # __missing_terms()
 # __check_opinion_errors()
+check_unseen_terms()

@@ -445,22 +445,25 @@ class NeuRuleDoubleJoint:
 
             loss = sum(losses)
             # metrics = self.run_evaluate(dev)
-            aspect_p, aspect_r, aspect_f1, opinion_p, opinion_r, opinion_f1 = self.evaluate(
+            aspect_p, aspect_r, dev_aspect_f1, opinion_p, opinion_r, dev_opinion_f1 = self.evaluate(
                 data_valid.texts, data_valid.word_idxs_list, data_valid.word_span_seqs, data_valid.tok_texts,
                 data_valid.aspects_true_list, 'tar', data_valid.opinions_true_list)
 
             logging.info('iter {}, loss={:.4f}, p={:.4f}, r={:.4f}, f1={:.4f};'
                          ' p={:.4f}, r={:.4f}, f1={:.4f}; best_f1_sum={:.4f}'.format(
-                epoch, loss, aspect_p, aspect_r, aspect_f1, opinion_p, opinion_r,
-                opinion_f1, best_f1_sum))
+                epoch, loss, aspect_p, aspect_r, dev_aspect_f1, opinion_p, opinion_r,
+                dev_opinion_f1, best_f1_sum))
 
             if True:
             # if aspect_f1 + opinion_f1 > best_f1_sum:
             # if aspect_f1 > best_a_f1 and opinion_f1 > best_o_f1:
+                save_result = (dev_aspect_f1 + dev_opinion_f1 > best_f1_sum)
+                # print(aspect_f1 + opinion_f1, best_f1_sum, save_result)
                 aspect_p, aspect_r, aspect_f1, opinion_p, opinion_r, opinion_f1 = self.evaluate(
                     data_test.texts, data_test.word_idxs_list, data_test.word_span_seqs, data_test.tok_texts,
                     data_test.aspects_true_list, 'tar', data_test.opinions_true_list,
-                    dst_aspects_result_file=dst_aspects_file, dst_opinion_result_file=dst_opinions_file)
+                    dst_aspects_result_file=dst_aspects_file, dst_opinion_result_file=dst_opinions_file,
+                    save_result=save_result)
                 # print('iter {}, loss={:.4f}, p={:.4f}, r={:.4f}, f1={:.4f}, best_f1={:.4f}'.format(
                 #     epoch, loss_tar, p, r, f1, best_f1))
                 logging.info('Test, p={:.4f}, r={:.4f}, f1={:.4f}; p={:.4f}, r={:.4f}, f1={:.4f}'.format(
@@ -471,11 +474,11 @@ class NeuRuleDoubleJoint:
                     # print('model saved to {}'.format(save_file))
                     logging.info('model saved to {}'.format(save_file))
 
-            if aspect_f1 + opinion_f1 > best_f1_sum:
-                best_f1_sum = aspect_f1 + opinion_f1
-            if aspect_f1 > best_a_f1 and opinion_f1 > best_o_f1:
-                best_a_f1 = aspect_f1
-                best_o_f1 = opinion_f1
+            if dev_aspect_f1 + dev_opinion_f1 > best_f1_sum:
+                best_f1_sum = dev_aspect_f1 + dev_opinion_f1
+            if dev_aspect_f1 > best_a_f1 and dev_opinion_f1 > best_o_f1:
+                best_a_f1 = dev_aspect_f1
+                best_o_f1 = dev_opinion_f1
 
     def predict_batch(self, word_idxs, task):
         fd, sequence_lengths = self.get_feed_dict(word_idxs, task, dropout=1.0)
@@ -525,7 +528,8 @@ class NeuRuleDoubleJoint:
         return terms
 
     def evaluate(self, texts, word_idxs_list_valid, word_span_seqs, tok_texts, terms_true_list, task,
-                 opinions_ture_list=None, dst_aspects_result_file=None, dst_opinion_result_file=None):
+                 opinions_ture_list=None, dst_aspects_result_file=None, dst_opinion_result_file=None,
+                 save_result=False):
         aspect_true_cnt, aspect_sys_cnt, aspect_hit_cnt = 0, 0, 0
         opinion_true_cnt, opinion_sys_cnt, opinion_hit_cnt = 0, 0, 0
         error_sents, error_terms = list(), list()
@@ -570,10 +574,12 @@ class NeuRuleDoubleJoint:
                 # fout.write('{}\n{}\n\n'.format(sent['text'], terms))
         # with open('d:/data/aspect/semeval14/lstmcrf-correct.txt', 'w', encoding='utf-8') as fout:
         #     fout.write('\n'.join([str(i) for i in correct_sent_idxs]))
-        if dst_aspects_result_file is not None:
+        if dst_aspects_result_file is not None and save_result:
             utils.write_terms_list(aspect_terms_sys_list, dst_aspects_result_file)
-        if dst_opinion_result_file is not None:
+            logging.info('write aspects to {}'.format(dst_aspects_result_file))
+        if dst_opinion_result_file is not None and save_result:
             utils.write_terms_list(opinion_terms_sys_list, dst_opinion_result_file)
+            logging.info('write opinions to {}'.format(dst_opinion_result_file))
 
         aspect_p, aspect_r, aspect_f1 = utils.prf1(aspect_true_cnt, aspect_sys_cnt, aspect_hit_cnt)
         if opinions_ture_list is None:
