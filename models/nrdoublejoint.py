@@ -425,6 +425,18 @@ class NeuRuleDoubleJoint:
         best_f1_sum = 0
         best_a_f1, best_o_f1 = 0, 0
         for epoch in range(n_epochs):
+            if (epoch + 1) % 10 == 0:
+                lr *= 0.85
+                if lr < 0.0005:
+                    lr = 0.0005
+                logging.info('lr to {}'.format(lr))
+            # if epoch == 40:
+            #     lr = 0.0005
+            #     logging.info('lr to 0.0005')
+            # if epoch == 50:
+            #     lr = 0.0001
+            #     logging.info('lr to 0.0001')
+
             losses, losses_seg = list(), list()
             for i in range(n_batches):
                 train_loss_tar = self.__train_batch(
