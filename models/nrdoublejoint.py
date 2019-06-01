@@ -254,7 +254,9 @@ class NeuRuleDoubleJoint:
             self.sess.run(tf.global_variables_initializer())
             # self.saver.restore(self.sess, rule_model_file)
         else:
-            tf.train.Saver().restore(self.sess, model_file)
+            self.sess.run(tf.global_variables_initializer())
+            tvars = [v for v in tf.trainable_variables() if 'word' not in v.name]
+            tf.train.Saver(var_list=tvars).restore(self.sess, model_file)
 
             # tvars = tf.trainable_variables()
             # name_to_variable = dict()
