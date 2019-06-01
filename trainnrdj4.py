@@ -84,7 +84,7 @@ def __train_nrdj(word_vecs_file, train_tok_texts_file, train_sents_file, train_v
     # label_opinions = False
     n_tags = 5 if label_opinions else 3
     # n_tags = 5 if task == 'train' else 3
-    batch_size = 32
+    batch_size = 20
     lr = 0.001
     share_lstm = False
 

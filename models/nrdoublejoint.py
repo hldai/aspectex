@@ -66,7 +66,9 @@ class NeuRuleDoubleJoint:
                 trainable=train_word_embeddings)
 
             word_embeddings = tf.nn.embedding_lookup(_word_embeddings, self.word_idxs, name="word_embeddings")
+        # TODO test
         self.word_embeddings = tf.nn.dropout(word_embeddings, self.dropout)
+        # self.word_embeddings = word_embeddings
 
     def __add_logits_op(self):
         self.lstm_cells = list()

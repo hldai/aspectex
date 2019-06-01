@@ -313,7 +313,7 @@ def check_unseen_terms():
     sents_file = 'd:/data/aspect/semeval14/laptops/laptops_test_sents.json'
     lstmcrf_aspects_file = 'd:/data/aspect/semeval14/lstmcrf-aspects.txt'
     lstmcrf_opinions_file = 'd:/data/aspect/semeval14/lstmcrf-opinions.txt'
-    nrdj_aspects_file = 'd:/data/aspect/semeval14/nrdj-aspects-malt.txt'
+    nrdj_aspects_file = 'd:/data/aspect/semeval14/nrdj-opinions-malt.txt'
     nrdj_opinions_file = 'd:/data/aspect/semeval14/nrdj-opinions-malt.txt'
     rule_aspects_file = 'd:/data/aspect/semeval14/laptops/laptops-test-aspect-rule-result.txt'
 
@@ -326,7 +326,8 @@ def check_unseen_terms():
     n_lc, n_lc_hit = 0, 0
     for sent, lc_aspects, nrdj_aspects, rule_aspects in zip(
             sents, lc_aspects_list, nrdj_aspects_list, rule_aspects_list):
-        terms = [t['term'].lower() for t in sent.get('terms', list())]
+        # terms = [t['term'].lower() for t in sent.get('terms', list())]
+        terms = [t.lower() for t in sent.get('opinions', list())]
         # terms = [t for t in terms if t in train_aspect_terms]
         # print(terms, nrdj_aspects)
         terms_true_list.append(terms)
