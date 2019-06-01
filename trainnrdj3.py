@@ -67,7 +67,7 @@ def __train_nrdj(word_vecs_file, train_tok_texts_file, train_sents_file, train_v
     # label_opinions = False
     n_tags = 5 if label_opinions else 3
     # n_tags = 5 if task == 'train' else 3
-    batch_size = 10
+    batch_size = 20
     lr = 0.001
     share_lstm = False
 
@@ -119,7 +119,7 @@ if __name__ == '__main__':
         # word_vecs_file = os.path.join(config.SE14_DIR, 'model-data/amazon-wv-100-sg-n10-w8-i30.pkl')
         word_vecs_file = os.path.join(config.SE14_DIR, 'model-data/laptops-amazon-word-vecs.pkl')
         # rule_model_file = os.path.join(config.SE14_DIR, 'model-data/pretrain/laptops-amazon-word-vecs-nl2.ckpt')
-        rule_model_file = os.path.join(config.SE14_DIR, 'model-data/pretrain/laptops-amazon-word-vecs-nl2-200h.ckpt')
+        rule_model_file = os.path.join(config.SE14_DIR, 'model-data/pretrain/laptops-amazon-word-vecs-nl2.ckpt')
 
     dataset_files = config.DATA_FILES[dataset]
     auto_labeled_data_files = config.DATA_FILES['restaurants-yelp']

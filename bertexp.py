@@ -220,12 +220,12 @@ if __name__ == '__main__':
     # __train_bert()
     __train_bertlstm_ol(dataset)
 
-    # __pretrain_bertnrdj(
-    #     dataset=dataset, n_labels=n_labels, seq_length=seq_length, n_steps=n_steps,
-    #     batch_size=batch_size_pretrain, dropout=pretrain_dropout, n_layers=n_layers,
-    #     l2_on_lstm=l2_on_lstm_src, load_model_file=pretrain_load_model_file, dst_model_file=model_file)
+    __pretrain_bertnrdj(
+        dataset=dataset, n_labels=n_labels, seq_length=seq_length, n_steps=n_steps,
+        batch_size=batch_size_pretrain, dropout=pretrain_dropout, n_layers=n_layers,
+        l2_on_lstm=l2_on_lstm_src, load_model_file=pretrain_load_model_file, dst_model_file=model_file)
 
-    # __train_bertnrdj(dataset=dataset, n_labels=n_labels, batch_size=batch_size_train, model_file=model_file,
-    #                  dropout=dropout, n_epochs=n_train_epochs, learning_rate=learning_rate,
-    #                  start_eval_epoch=start_eval_epoch, n_layers=n_layers, l2_on_lstm=l2_on_lstm_tar,
-    #                  opinion_terms_output_file=opinion_terms_output_file)
+    __train_bertnrdj(dataset=dataset, n_labels=n_labels, batch_size=batch_size_train, model_file=model_file,
+                     dropout=dropout, n_epochs=n_train_epochs, learning_rate=learning_rate,
+                     start_eval_epoch=start_eval_epoch, n_layers=n_layers, l2_on_lstm=l2_on_lstm_tar,
+                     opinion_terms_output_file=opinion_terms_output_file)

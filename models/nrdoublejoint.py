@@ -43,6 +43,7 @@ class NeuRuleDoubleJoint:
         self.labels_tar = tf.placeholder(tf.int32, shape=[None, None], name='labels')
         self.dropout = tf.placeholder(dtype=tf.float32, shape=[], name="dropout")
         self.lr = tf.placeholder(dtype=tf.float32, shape=[], name="lr")
+        self.is_train = tf.placeholder(tf.bool, name="is_training")
 
         self.__add_word_embedding_op(word_embeddings, train_word_embeddings)
         # self.__setup_rule_lstm_hidden()
@@ -131,6 +132,12 @@ class NeuRuleDoubleJoint:
             self.W_tar = tf.get_variable("W", dtype=tf.float32, shape=[input_size, self.n_tags])
             self.b_tar = tf.get_variable(
                 "b", shape=[self.n_tags], dtype=tf.float32, initializer=tf.zeros_initializer())
+            # self.W_tar1 = tf.get_variable("W1", dtype=tf.float32, shape=[input_size, 100])
+            # self.b_tar1 = tf.get_variable(
+            #     "b1", shape=[100], dtype=tf.float32, initializer=tf.zeros_initializer())
+            # self.W_tar2 = tf.get_variable("W2", dtype=tf.float32, shape=[100, self.n_tags])
+            # self.b_tar2 = tf.get_variable(
+            #     "b2", shape=[self.n_tags], dtype=tf.float32, initializer=tf.zeros_initializer())
 
             nsteps = tf.shape(lstm_output1)[1]
 
@@ -139,8 +146,11 @@ class NeuRuleDoubleJoint:
             else:
                 output = tf.concat([lstm_output1, lstm_output2], axis=-1)
             output = tf.reshape(output, [-1, input_size])
-            # pred = tf.matmul(output, self.W_tar) + self.b_tar
             pred = tf.matmul(output, self.W_tar) + self.b_tar
+            # hid = tf.matmul(output, self.W_tar1) + self.b_tar1
+            # hid = tf.layers.batch_normalization(hid, training=self.is_train)
+            # hid = tf.nn.dropout(hid, self.dropout)
+            # pred = tf.matmul(hid, self.W_tar2) + self.b_tar2
             self.logits_tar = tf.reshape(pred, [-1, nsteps, self.n_tags])
 
     def __add_pred_op(self):
@@ -174,9 +184,9 @@ class NeuRuleDoubleJoint:
             with tf.variable_scope("crf-tar"):
                 log_likelihood, self.trans_params_tar = tf.contrib.crf.crf_log_likelihood(
                         self.logits_tar, self.labels_tar, self.sequence_lengths)
-                # self.loss_tar = tf.reduce_mean(-log_likelihood)
                 self.loss_tar = tf.reduce_mean(-log_likelihood) + 0.001 * tf.nn.l2_loss(
-                    self.W_tar)  # + 0.001 * tf.nn.l2_loss(self.cell_fw1.trainable_variables[0])
+                    self.W_tar)
+                # self.loss_tar = tf.reduce_mean(-log_likelihood)
                 if self.lstm_l2_tar:
                     self.loss_tar += lstm_l2_reg
         else:
@@ -230,6 +240,9 @@ class NeuRuleDoubleJoint:
             else:
                 self.train_op_src1 = optimizer.minimize(self.loss_src1)
                 self.train_op_src2 = optimizer.minimize(self.loss_src2)
+                update_ops = tf.get_collection(tf.GraphKeys.UPDATE_OPS)
+                # with tf.control_dependencies(update_ops):
+                    # train_op = optimizer.minimize(loss)
                 self.train_op_tar = optimizer.minimize(self.loss_tar)
 
     def __init_session(self, model_file):
@@ -243,14 +256,31 @@ class NeuRuleDoubleJoint:
         else:
             tf.train.Saver().restore(self.sess, model_file)
 
-    def get_feed_dict(self, word_idx_seqs, task, label_seqs=None, lr=None, dropout=None):
+            # tvars = tf.trainable_variables()
+            # name_to_variable = dict()
+            # for var in tvars:
+            #     name = var.name
+            #     name_to_variable[name] = var
+            #
+            # init_vars = tf.train.list_variables(model_file)
+            # assignment_map = dict()
+            # for x in init_vars:
+            #     (name, var) = (x[0], x[1])
+            #     if name not in name_to_variable:
+            #         continue
+            #     assignment_map[name] = name
+            # tf.train.init_from_checkpoint(model_file, assignment_map)
+            # self.sess.run(tf.global_variables_initializer())
+
+    def get_feed_dict(self, word_idx_seqs, task, is_train, label_seqs=None, lr=None, dropout=None):
         word_idx_seqs = [list(word_idxs) for word_idxs in word_idx_seqs]
         word_ids, sequence_lengths = utils.pad_sequences(word_idx_seqs, 0)
 
         # build feed dictionary
         feed = {
             self.word_idxs: word_ids,
-            self.sequence_lengths: sequence_lengths
+            self.sequence_lengths: sequence_lengths,
+            self.is_train: is_train
         }
 
         if label_seqs is not None:
@@ -271,7 +301,7 @@ class NeuRuleDoubleJoint:
     def __train_batch(self, word_idxs_list_train, labels_list_train, batch_idx, lr, dropout, task):
         word_idxs_list_batch = word_idxs_list_train[batch_idx * self.batch_size: (batch_idx + 1) * self.batch_size]
         labels_list_batch = labels_list_train[batch_idx * self.batch_size: (batch_idx + 1) * self.batch_size]
-        feed_dict, _ = self.get_feed_dict(word_idxs_list_batch, task,
+        feed_dict, _ = self.get_feed_dict(word_idxs_list_batch, task, is_train=True,
                                           label_seqs=labels_list_batch, lr=lr, dropout=dropout)
 
         if task == 'src1':
@@ -436,6 +466,7 @@ class NeuRuleDoubleJoint:
             # if epoch == 50:
             #     lr = 0.0001
             #     logging.info('lr to 0.0001')
+            # print(epoch, 'ep')
 
             losses, losses_seg = list(), list()
             for i in range(n_batches):
@@ -481,7 +512,7 @@ class NeuRuleDoubleJoint:
                 best_o_f1 = dev_opinion_f1
 
     def predict_batch(self, word_idxs, task):
-        fd, sequence_lengths = self.get_feed_dict(word_idxs, task, dropout=1.0)
+        fd, sequence_lengths = self.get_feed_dict(word_idxs, task, is_train=False, dropout=1.0)
 
         if task == 'src1':
             logits = self.logits_src1

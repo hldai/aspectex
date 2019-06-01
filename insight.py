@@ -296,12 +296,25 @@ def __check_opinion_errors():
         print()
 
 
+def __get_all_terms(sents_file):
+    sents = utils.load_json_objs(sents_file)
+    aspect_terms, opinion_terms = set(), set()
+    for s in sents:
+        for t in s.get('terms', list()):
+            aspect_terms.add(t['term'].lower())
+        for t in s.get('opinions', list()):
+            opinion_terms.add(t.lower())
+    return aspect_terms, opinion_terms
+
+
 def check_unseen_terms():
+    train_sents_file = 'd:/data/aspect/semeval14/laptops/laptops_train_sents.json'
+    train_aspect_terms, train_opinion_terms = __get_all_terms(train_sents_file)
     sents_file = 'd:/data/aspect/semeval14/laptops/laptops_test_sents.json'
     lstmcrf_aspects_file = 'd:/data/aspect/semeval14/lstmcrf-aspects.txt'
     lstmcrf_opinions_file = 'd:/data/aspect/semeval14/lstmcrf-opinions.txt'
-    nrdj_aspects_file = 'd:/data/aspect/semeval14/nrdj-aspects.txt'
-    nrdj_opinions_file = 'd:/data/aspect/semeval14/nrdj-opinions.txt'
+    nrdj_aspects_file = 'd:/data/aspect/semeval14/nrdj-aspects-malt.txt'
+    nrdj_opinions_file = 'd:/data/aspect/semeval14/nrdj-opinions-malt.txt'
     rule_aspects_file = 'd:/data/aspect/semeval14/laptops/laptops-test-aspect-rule-result.txt'
 
     sents = utils.load_json_objs(sents_file)
@@ -310,15 +323,23 @@ def check_unseen_terms():
     rule_aspects_list = utils.load_json_objs(rule_aspects_file)
     terms_true_list, terms_nrdj_list = list(), list()
     n_true, n_nrdj, n_hit = 0, 0, 0
+    n_lc, n_lc_hit = 0, 0
     for sent, lc_aspects, nrdj_aspects, rule_aspects in zip(
             sents, lc_aspects_list, nrdj_aspects_list, rule_aspects_list):
         terms = [t['term'].lower() for t in sent.get('terms', list())]
-        print(terms, nrdj_aspects)
+        # terms = [t for t in terms if t in train_aspect_terms]
+        # print(terms, nrdj_aspects)
         terms_true_list.append(terms)
         terms_nrdj_list.append(nrdj_aspects)
         n_true += len(terms)
         n_nrdj += len(nrdj_aspects)
         n_hit += utils.count_hit(terms, nrdj_aspects)
+        for t in terms:
+            if t not in nrdj_aspects:
+                print(t)
+
+        n_lc += len(lc_aspects)
+        n_lc_hit += utils.count_hit(terms, lc_aspects)
         # lc_correct = __is_correct(lc_aspects, terms)
         # nrdj_correct = __is_correct(nrdj_aspects, terms)
         # rule_correct = __is_correct(rule_aspects, terms)
@@ -330,7 +351,10 @@ def check_unseen_terms():
         #     print(nrdj_aspects)
         #     print()
 
+    print(n_true, n_nrdj)
     p, r, f1 = utils.prf1(n_true, n_nrdj, n_hit)
+    print(p, r, f1)
+    p, r, f1 = utils.prf1(n_true, n_lc, n_lc_hit)
     print(p, r, f1)
 
 

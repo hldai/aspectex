@@ -52,6 +52,16 @@ def __pre_train_nrdj(word_vecs_file, tok_texts_file, aspect_terms_file, opinion_
                    n_epochs=30, lr=lr, save_file=dst_model_file)
 
 
+def __add_unk_word(word_vecs_matrix):
+    n_words = word_vecs_matrix.shape[0]
+    dim = word_vecs_matrix.shape[1]
+    word_vecs = np.zeros((n_words + 1, dim), np.float32)
+    for i in range(n_words):
+        word_vecs[i] = word_vecs_matrix[i]
+    word_vecs[n_words] = np.random.normal(0, 0.01, dim)
+    return word_vecs
+
+
 def __train_nrdj(word_vecs_file, train_tok_texts_file, train_sents_file, train_valid_split_file, test_tok_texts_file,
                  test_sents_file, load_model_file, task):
     init_logging('log/{}-train-{}-{}.log'.format(os.path.splitext(
@@ -67,7 +77,7 @@ def __train_nrdj(word_vecs_file, train_tok_texts_file, train_sents_file, train_v
     # label_opinions = False
     n_tags = 5 if label_opinions else 3
     # n_tags = 5 if task == 'train' else 3
-    batch_size = 5
+    batch_size = 20
     lr = 0.001
     share_lstm = False
 
@@ -78,6 +88,9 @@ def __train_nrdj(word_vecs_file, train_tok_texts_file, train_sents_file, train_v
     print('loading data ...')
     with open(word_vecs_file, 'rb') as f:
         vocab, word_vecs_matrix = pickle.load(f)
+    word_vecs_matrix = __add_unk_word(word_vecs_matrix)
+    vocab.append('UNK')
+
     logging.info('word vec dim: {}, n_words={}'.format(word_vecs_matrix.shape[1], word_vecs_matrix.shape[0]))
     train_data, valid_data, test_data = datautils.get_data_semeval(
         train_sents_file, train_tok_texts_file, train_valid_split_file, test_sents_file, test_tok_texts_file,

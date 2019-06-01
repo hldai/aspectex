@@ -104,8 +104,9 @@ def label_sentence_by_span(words, word_spans, aspect_term_spans=None, opinion_te
 def __get_word_idx_sequence(words_list, vocab):
     seq_list = list()
     word_idx_dict = {w: i + 1 for i, w in enumerate(vocab)}
+    unk_id = len(vocab) - 1
     for words in words_list:
-        seq_list.append([word_idx_dict.get(w, 0) for w in words])
+        seq_list.append([word_idx_dict.get(w, unk_id) for w in words])
     return seq_list
 
 
@@ -129,7 +130,6 @@ def data_from_sents_file(sents, tok_texts, word_span_seqs, vocab, task):
         labels_list.append(x)
 
     word_idxs_list = __get_word_idx_sequence(words_list, vocab)
-
     return labels_list, word_idxs_list
 
 
