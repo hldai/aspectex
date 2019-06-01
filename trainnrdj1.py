@@ -92,7 +92,7 @@ def __train_nrdj(word_vecs_file, train_tok_texts_file, train_sents_file, train_v
 if __name__ == '__main__':
     str_today = datetime.date.today().strftime('%y-%m-%d')
 
-    hidden_size_lstm = 100
+    hidden_size_lstm = 200
     n_epochs = 200
     train_word_embeddings = False
 
@@ -118,7 +118,7 @@ if __name__ == '__main__':
         # word_vecs_file = os.path.join(config.SE14_DIR, 'model-data/amazon-wv-300-sg-n10-w8-i30.pkl')
         # rule_model_file = os.path.join(config.SE14_DIR, 'model-data/pretrain/amazon-100d-100h-twv-nl2.ckpt')
         # word_vecs_file = os.path.join(config.SE14_DIR, 'model-data/amazon-wv-100-sg-n10-w8-i30.pkl')
-        rule_model_file = os.path.join(config.SE14_DIR, 'model-data/pretrain/laptops-amazon-word-vecs-nl2.ckpt')
+        rule_model_file = os.path.join(config.SE14_DIR, 'model-data/pretrain/laptops-amazon-word-vecs-nl2-200h.ckpt')
         word_vecs_file = os.path.join(config.SE14_DIR, 'model-data/laptops-amazon-word-vecs.pkl')
 
     dataset_files = config.DATA_FILES[dataset]
