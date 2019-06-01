@@ -11,6 +11,24 @@ import tensorflow as tf
 import logging
 
 
+def __add_unk_word(word_vecs_matrix):
+    n_words = word_vecs_matrix.shape[0]
+    dim = word_vecs_matrix.shape[1]
+    word_vecs = np.zeros((n_words + 1, dim), np.float32)
+    for i in range(n_words):
+        word_vecs[i] = word_vecs_matrix[i]
+    word_vecs[n_words] = np.random.normal(0, 0.01, dim)
+    return word_vecs
+
+
+def __load_word_vecs(word_vecs_file):
+    with open(word_vecs_file, 'rb') as f:
+        vocab, word_vecs_matrix = pickle.load(f)
+    word_vecs_matrix = __add_unk_word(word_vecs_matrix)
+    vocab.append('UNK')
+    return vocab, word_vecs_matrix
+
+
 def __pre_train_nrdj(word_vecs_file, tok_texts_file, aspect_terms_file, opinion_terms_file,
                      dst_model_file, task, lamb, lstm_l2, train_word_embeddings=False, load_model_file=None):
     init_logging('log/{}-pre-{}-{}.log'.format(os.path.splitext(
@@ -32,8 +50,7 @@ def __pre_train_nrdj(word_vecs_file, tok_texts_file, aspect_terms_file, opinion_
     logging.info('dst: {}'.format(dst_model_file))
 
     print('loading data ...')
-    with open(word_vecs_file, 'rb') as f:
-        vocab, word_vecs_matrix = pickle.load(f)
+    vocab, word_vecs_matrix = __load_word_vecs(word_vecs_file)
 
     # train_data_src1, valid_data_src1 = __get_data_amazon(vocab, config.AMAZON_TERMS_TRUE1_FILE)
     # train_data_src1, valid_data_src1 = __get_data_amazon(vocab, config.AMAZON_TERMS_TRUE3_FILE)
@@ -50,16 +67,6 @@ def __pre_train_nrdj(word_vecs_file, tok_texts_file, aspect_terms_file, opinion_
 
     nrdj.pre_train(train_data_src1, valid_data_src1, train_data_src2, valid_data_src2, vocab,
                    n_epochs=30, lr=lr, save_file=dst_model_file)
-
-
-def __add_unk_word(word_vecs_matrix):
-    n_words = word_vecs_matrix.shape[0]
-    dim = word_vecs_matrix.shape[1]
-    word_vecs = np.zeros((n_words + 1, dim), np.float32)
-    for i in range(n_words):
-        word_vecs[i] = word_vecs_matrix[i]
-    word_vecs[n_words] = np.random.normal(0, 0.01, dim)
-    return word_vecs
 
 
 def __train_nrdj(word_vecs_file, train_tok_texts_file, train_sents_file, train_valid_split_file, test_tok_texts_file,
@@ -86,10 +93,7 @@ def __train_nrdj(word_vecs_file, train_tok_texts_file, train_sents_file, train_v
     logging.info(test_sents_file)
 
     print('loading data ...')
-    with open(word_vecs_file, 'rb') as f:
-        vocab, word_vecs_matrix = pickle.load(f)
-    word_vecs_matrix = __add_unk_word(word_vecs_matrix)
-    vocab.append('UNK')
+    vocab, word_vecs_matrix = __load_word_vecs(word_vecs_file)
 
     logging.info('word vec dim: {}, n_words={}'.format(word_vecs_matrix.shape[1], word_vecs_matrix.shape[0]))
     train_data, valid_data, test_data = datautils.get_data_semeval(
