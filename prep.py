@@ -122,6 +122,9 @@ def __get_sent_objs_se14_xml(filename, opinions_sents):
             aspect_terms.append(
                 {'term': term_elem.attrib['term'], 'polarity': term_elem.attrib['polarity'], 'span': (
                     int(term_elem.attrib['from']), int(term_elem.attrib['to']))})
+            # aspect_terms.append(
+            #     {'term': term_elem.attrib['term'], 'span': (
+            #         int(term_elem.attrib['from']), int(term_elem.attrib['to']))})
 
         if aspect_terms:
             sent_obj['terms'] = aspect_terms
@@ -196,9 +199,10 @@ def __process_raw_sem_eval_data(xml_file, opinions_file, dst_sents_file, dst_sen
     sents = fn_get_sent_objs(xml_file, opinions_sents)
 
     utils.save_json_objs(sents, dst_sents_file)
-    with open(dst_sents_text_file, 'w', encoding='utf-8') as fout:
-        for sent in sents:
-            fout.write('{}\n'.format(sent['text']))
+    if dst_sents_text_file is not None:
+        with open(dst_sents_text_file, 'w', encoding='utf-8') as fout:
+            for sent in sents:
+                fout.write('{}\n'.format(sent['text']))
 
 
 def __rncrf_sample_to_json():
@@ -493,3 +497,7 @@ rest15_train_word_cnts_file = 'd:/data/aspect/semeval15/restaurants/word_cnts.tx
 # datautils.gen_train_valid_sample_idxs_file(
 #     config.DATA_FILES['laptops-amazon']['sent_texts_file'], 2000,
 #     config.DATA_FILES['laptops-amazon']['train_valid_idxs_file'])
+
+__process_raw_sem_eval_data(
+    'd:/data/aspect/semeval14/pred-de-cnn-lap.xml', config.SE14_LAPTOP_TEST_OPINIONS_FILE,
+    'd:/data/aspect/semeval14/pred-de-cnn-lap.json', None, __get_sent_objs_se14_xml)

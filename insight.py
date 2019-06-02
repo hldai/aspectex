@@ -197,6 +197,7 @@ def __is_correct(terms_sys, terms_true):
 def __check_errors():
     sents_file = 'd:/data/aspect/semeval14/laptops/laptops_test_sents.json'
     lstmcrf_aspects_file = 'd:/data/aspect/semeval14/lstmcrf-aspects.txt'
+    decnn_aspects_file = 'd:/data/aspect/semeval14/pred-de-cnn-lap.json'
     lstmcrf_opinions_file = 'd:/data/aspect/semeval14/lstmcrf-opinions.txt'
     nrdj_aspects_file = 'd:/data/aspect/semeval14/nrdj-aspects.txt'
     nrdj_opinions_file = 'd:/data/aspect/semeval14/nrdj-opinions.txt'
@@ -204,20 +205,27 @@ def __check_errors():
 
     sents = utils.load_json_objs(sents_file)
     lc_aspects_list = utils.load_json_objs(lstmcrf_aspects_file)
+    decnn_sents = utils.load_json_objs(decnn_aspects_file)
+    decnn_aspects_list = list()
+    for dcs in decnn_sents:
+        terms = [t['term'].lower() for t in dcs.get('terms', list())]
+        decnn_aspects_list.append(terms)
     nrdj_aspects_list = utils.load_json_objs(nrdj_aspects_file)
     rule_aspects_list = utils.load_json_objs(rule_aspects_file)
-    for sent, lc_aspects, nrdj_aspects, rule_aspects in zip(
-            sents, lc_aspects_list, nrdj_aspects_list, rule_aspects_list):
+    for sent, lc_aspects, decnn_aspects, nrdj_aspects, rule_aspects in zip(
+            sents, lc_aspects_list, decnn_aspects_list, nrdj_aspects_list, rule_aspects_list):
         terms = [t['term'].lower() for t in sent.get('terms', list())]
         lc_correct = __is_correct(lc_aspects, terms)
+        dc_correct = __is_correct(decnn_aspects, terms)
         nrdj_correct = __is_correct(nrdj_aspects, terms)
         rule_correct = __is_correct(rule_aspects, terms)
-        if not lc_correct and not rule_correct and nrdj_correct:
+        if not dc_correct and rule_correct and nrdj_correct:
             print(sent['text'])
             print(terms)
-            print(lc_aspects)
-            print(rule_aspects)
-            print(nrdj_aspects)
+            print('lstm', lc_aspects)
+            print('rule', rule_aspects)
+            print('nrdj', nrdj_aspects)
+            print('decnn', decnn_aspects)
             print()
 
 
@@ -360,6 +368,27 @@ def check_unseen_terms():
     print(p, r, f1)
 
 
+def __check_difficulty():
+    rest_sents_file = 'd:/data/aspect/semeval14/restaurants/restaurants_test_sents.json'
+    lap_sents_file = 'd:/data/aspect/semeval14/laptops/laptops_test_sents.json'
+
+    rest_sents = utils.load_json_objs(rest_sents_file)
+    lap_sents = utils.load_json_objs(lap_sents_file)
+
+    def __count_sps(sents):
+        sp_cnt, cnt = 0, 0
+        for sent in sents:
+            terms = [t['term'] for t in sent.get('terms', list())]
+            for t in terms:
+                if ' ' in t:
+                    sp_cnt += 1
+            cnt += len(terms)
+        print(sp_cnt / cnt)
+
+    __count_sps(rest_sents)
+    __count_sps(lap_sents)
+
+
 # __count_adj_phrases()
 # __semeval_rule_insight()
 # __dataset_statistics()
@@ -374,4 +403,5 @@ def check_unseen_terms():
 # __count_words('d:/data/aspect/semeval15/restaurants/restaurants_test_texts_tok.txt')
 # __missing_terms()
 # __check_opinion_errors()
-check_unseen_terms()
+# check_unseen_terms()
+__check_difficulty()
