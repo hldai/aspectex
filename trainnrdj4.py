@@ -84,7 +84,7 @@ def __train_nrdj(word_vecs_file, train_tok_texts_file, train_sents_file, train_v
     # label_opinions = False
     n_tags = 5 if label_opinions else 3
     # n_tags = 5 if task == 'train' else 3
-    batch_size = 20
+    batch_size = 10
     lr = 0.001
     share_lstm = False
 
@@ -94,6 +94,7 @@ def __train_nrdj(word_vecs_file, train_tok_texts_file, train_sents_file, train_v
 
     print('loading data ...')
     vocab, word_vecs_matrix = __load_word_vecs(word_vecs_file)
+    print(word_vecs_matrix[1][:10])
     logging.info('word vec dim: {}, n_words={}'.format(word_vecs_matrix.shape[1], word_vecs_matrix.shape[0]))
     train_data, valid_data, test_data = datautils.get_data_semeval(
         train_sents_file, train_tok_texts_file, train_valid_split_file, test_sents_file, test_tok_texts_file,
@@ -109,7 +110,7 @@ def __train_nrdj(word_vecs_file, train_tok_texts_file, train_sents_file, train_v
 if __name__ == '__main__':
     str_today = datetime.date.today().strftime('%y-%m-%d')
 
-    hidden_size_lstm = 200
+    hidden_size_lstm = 100
     n_epochs = 200
     train_word_embeddings = False
 
@@ -135,7 +136,7 @@ if __name__ == '__main__':
         # word_vecs_file = os.path.join(config.SE14_DIR, 'model-data/amazon-wv-100-sg-n10-w8-i30.pkl')
         word_vecs_file = os.path.join(config.SE14_DIR, 'model-data/laptops-amazon-word-vecs.pkl')
         # rule_model_file = os.path.join(config.SE14_DIR, 'model-data/pretrain/laptops-amazon-word-vecs-nl2.ckpt')
-        rule_model_file = os.path.join(config.SE14_DIR, 'model-data/pretrain/laptops-amazon-word-vecs-nl2-200h.ckpt')
+        rule_model_file = os.path.join(config.SE14_DIR, 'model-data/pretrain/laptops-amazon-word-vecs-unk.ckpt')
 
     dataset_files = config.DATA_FILES[dataset]
     auto_labeled_data_files = config.DATA_FILES['restaurants-yelp']

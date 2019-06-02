@@ -59,13 +59,13 @@ class NeuRuleDoubleJoint:
             #         word_embeddings_val,
             #         name="_word_embeddings",
             #         dtype=tf.float32)
-            _word_embeddings = tf.Variable(
+            self._word_embeddings_var = tf.Variable(
                 word_embeddings_val,
                 name="_word_embeddings",
                 dtype=tf.float32,
                 trainable=train_word_embeddings)
 
-            word_embeddings = tf.nn.embedding_lookup(_word_embeddings, self.word_idxs, name="word_embeddings")
+            word_embeddings = tf.nn.embedding_lookup(self._word_embeddings_var, self.word_idxs, name="word_embeddings")
         # TODO test
         self.word_embeddings = tf.nn.dropout(word_embeddings, self.dropout)
         # self.word_embeddings = word_embeddings
@@ -256,9 +256,10 @@ class NeuRuleDoubleJoint:
             self.sess.run(tf.global_variables_initializer())
             # self.saver.restore(self.sess, rule_model_file)
         else:
-            self.sess.run(tf.global_variables_initializer())
-            tvars = [v for v in tf.trainable_variables() if 'word' not in v.name]
-            tf.train.Saver(var_list=tvars).restore(self.sess, model_file)
+            # self.sess.run(tf.global_variables_initializer())
+            # tvars = [v for v in tf.trainable_variables() if 'word' not in v.name]
+            # tf.train.Saver(var_list=tvars).restore(self.sess, model_file)
+            tf.train.Saver().restore(self.sess, model_file)
 
             # tvars = tf.trainable_variables()
             # name_to_variable = dict()
@@ -449,6 +450,7 @@ class NeuRuleDoubleJoint:
 
     def train(self, data_train: TrainData, data_valid: ValidData, data_test: ValidData, vocab,
               n_epochs=10, lr=0.001, dropout=0.5, save_file=None, dst_aspects_file=None, dst_opinions_file=None):
+        embs = self.sess.run(self._word_embeddings_var)
         logging.info('n_epochs={}, lr={}, dropout={}'.format(n_epochs, lr, dropout))
         if save_file is not None and self.saver is None:
             self.saver = tf.train.Saver()

@@ -338,6 +338,7 @@ def check_unseen_terms():
         for t in terms:
             if t not in nrdj_aspects:
                 print(t)
+                print(sent['text'])
 
         n_lc += len(lc_aspects)
         n_lc_hit += utils.count_hit(terms, lc_aspects)
