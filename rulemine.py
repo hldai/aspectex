@@ -475,12 +475,12 @@ def __gen_term_hit_rate_file(mine_helper, train_sents_file, dep_tags_file, pos_t
         )
 
 
-# dataset = 'semeval14'
-dataset_name = 'semeval15'
-# sub_dataset = 'laptops'
-sub_dataset = 'restaurants'
-target = 'opinion'
-# target = 'aspect'
+dataset_name = 'semeval14'
+# dataset_name = 'semeval15'
+sub_dataset = 'laptops'
+# sub_dataset = 'restaurants'
+# target = 'opinion'
+target = 'aspect'
 
 if target == 'aspect':
     term_filter_rate = 0.1

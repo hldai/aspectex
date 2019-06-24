@@ -83,59 +83,22 @@ def recover_terms(text, word_spans, label_seq, label_beg, label_in):
     return terms
 
 
-task = 'both'
-dataset_files = config.DATA_FILES['se14l']
-# train_sents_file = dataset_files['test_sents_file']
-# train_tok_text_file = 'd:/data/aspect/semeval14/laptops/laptops_test_texts_tok_pos.txt'
-train_sents_file = dataset_files['train_sents_file']
-train_tok_text_file = dataset_files['train_tok_texts_file']
-sents = utils.load_json_objs(train_sents_file)
-# tok_texts = utils.read_lines(train_tok_text_file)
+def edit_dist(sl: str, sr: str):
+    n, m = len(sl), len(sr)
+    dists = np.zeros((n + 1, m + 1), np.int32)
+    for j in range(m + 1):
+        dists[0][j] = j
+    for i in range(n + 1):
+        dists[i][0] = i
 
-tok_texts, tok_span_seqs = list(), list()
-with open(train_tok_text_file, encoding='utf-8') as f:
-    for line in f:
-        tok_texts.append(line.strip())
-        tok_spans_str = next(f).strip()
-        vals = [int(v) for v in tok_spans_str.split(' ')]
-        tok_span_seqs.append([(vals[2 * i], vals[2 * i + 1]) for i in range(len(vals) // 2)])
-
-words_list = [text.split(' ') for text in tok_texts]
-len_max = max([len(words) for words in words_list])
-print('max sentence len:', len_max)
+    for i, cl in enumerate(sl):
+        for j, cr in enumerate(sr):
+            if cl == cr:
+                dists[i + 1][j + 1] = dists[i][j]
+                continue
+            dists[i + 1][j + 1] = min(dists[i][j] + 1, dists[i][j + 1] + 1, dists[i + 1][j] + 1)
+    return dists[n][m]
 
 
-labels_list = list()
-for sent_idx, (sent, sent_words) in enumerate(zip(sents, words_list)):
-    aspect_terms, opinion_terms = None, None
-    aspect_term_spans = None
-    if task != 'opinion':
-        aspect_objs = sent.get('terms', list())
-        aspect_terms = [t['term'] for t in aspect_objs]
-        aspect_term_spans = [t['span'] for t in aspect_objs]
-        # for x in aspect_objs:
-        #     text = sent['text'].replace(' ', ' ')
-        #     span = x['span']
-        #     # print(x)
-        #     # print(sent['text'][span[0]:span[1]])
-        #     if text[span[0]:span[1]] != x['term']:
-        #         print(x)
-        #         print(sent['text'][span[0]:span[1]])
-
-    if task != 'aspect':
-        opinion_terms = sent.get('opinions', list())
-
-    sent_text = sent['text']
-    tok_spans = tok_span_seqs[sent_idx]
-    x = label_sentence(sent['text'], sent_words, tok_spans, aspect_term_spans, opinion_terms)
-    aspect_terms_rec = recover_terms(sent['text'], tok_spans, x, 1, 2)
-    for t in aspect_terms:
-        if t not in aspect_terms_rec:
-            print('**', t, aspect_terms_rec)
-            print(sent_text)
-            print(sent_words)
-            print(tok_spans)
-            print()
-    # for i, v in enumerate(x):
-    #     if 3 > v > 0:
-    #         print(sent_words[i])
+d = edit_dist('excellent', 'excelent')
+print(d)

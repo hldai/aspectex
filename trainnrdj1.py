@@ -113,8 +113,8 @@ if __name__ == '__main__':
     train_word_embeddings = False
 
     # dataset = 'se15r'
-    # dataset = 'se14r'
-    dataset = 'se14l'
+    dataset = 'se14r'
+    # dataset = 'se14l'
 
     lamb = 0.001
     lstm_l2_src = False

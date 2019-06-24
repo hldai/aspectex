@@ -324,16 +324,20 @@ rest_filter_nouns_file = 'd:/data/aspect/semeval14/restaurants/aspect-nouns-filt
 
 # term_type = 'aspect'
 term_type = 'opinion'
+target_dataset = 'se14l'
 # target_dataset = 'se14r'
-target_dataset = 'se15r'
-res_dataset = 'restaurants-yelp'
+# target_dataset = 'se15r'
+# res_dataset = 'restaurants-yelp'
+res_dataset = 'laptops-amazon'
 target_dataset_files, res_dataset_files = config.DATA_FILES[target_dataset], config.DATA_FILES[res_dataset]
-task = 'eval'
-# task = 'apply'
+# task = 'eval'
+task = 'apply'
 if task == 'apply':
     sents_file = None
+    # result_output_file = os.path.join(
+    #     config.SE15_DIR, 'restaurants/yelpr9-rest-p0_04-rule-ot-highrecall-5.txt')
     result_output_file = os.path.join(
-        config.SE15_DIR, 'restaurants/yelpr9-rest-p0_04-rule-ot-highrecall-5.txt')
+        config.SE14_DIR, 'laptops/mr-amazon-opinion-terms.txt')
     # result_output_file = target_dataset_files['rule_opinion_result_file']
     sent_tok_texts_file = res_dataset_files['sent_texts_file']
     dep_tags_file = res_dataset_files['dep_tags_file']
@@ -369,5 +373,4 @@ if term_type == 'opinion':
         mine_helper, target_dataset_files['opinion_rule_patterns_file'],
         target_dataset_files['opinion_term_hit_rate_file'], dep_tags_file,
         pos_tags_file, sent_tok_texts_file, target_dataset_files['opinion_term_filter_vocab_file'],
-        term_hit_rate_thres=hit_rate_thres,
-        dst_result_file=result_output_file, sents_file=sents_file)
+        term_hit_rate_thres=hit_rate_thres, dst_result_file=result_output_file, sents_file=sents_file)
