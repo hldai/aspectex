@@ -83,22 +83,11 @@ def recover_terms(text, word_spans, label_seq, label_beg, label_in):
     return terms
 
 
-def edit_dist(sl: str, sr: str):
-    n, m = len(sl), len(sr)
-    dists = np.zeros((n + 1, m + 1), np.int32)
-    for j in range(m + 1):
-        dists[0][j] = j
-    for i in range(n + 1):
-        dists[i][0] = i
-
-    for i, cl in enumerate(sl):
-        for j, cr in enumerate(sr):
-            if cl == cr:
-                dists[i + 1][j + 1] = dists[i][j]
-                continue
-            dists[i + 1][j + 1] = min(dists[i][j] + 1, dists[i][j + 1] + 1, dists[i + 1][j] + 1)
-    return dists[n][m]
-
-
-d = edit_dist('excellent', 'excelent')
-print(d)
+test_sents = utils.load_json_objs(config.SE15R_FILES['test_sents_file'])
+# terms_true_list = [s.get('opinions', list()) for s in test_sents]
+terms_sys_list1 = utils.load_json_objs('d:/data/aspect/semeval15/nrdj-aspects-good.txt')
+terms_sys_list2 = utils.load_json_objs('d:/data/aspect/semeval15/nrdj-aspects-bad.txt')
+for terms1, terms2 in zip(terms_sys_list1, terms_sys_list2):
+    hit_cnt = utils.count_hit(terms1, terms2)
+    if hit_cnt < len(terms1):
+        print(terms1, terms2)

@@ -489,7 +489,7 @@ else:
     term_filter_rate = 0.1
     pattern_filter_rate = 0.6
 
-freq_thres = 5
+freq_thres = 10
 
 opinion_terms_file = 'd:/data/aspect/semeval14/opinion-terms-full.txt'
 
@@ -504,7 +504,7 @@ if target == 'aspect':
     full_train_term_filter_file = 'd:/data/aspect/{}/{}/aspect_filter_vocab_full.txt'.format(
         dataset_name, sub_dataset)
 else:
-    patterns_file = 'd:/data/aspect/{}/{}/opinion_mined_rule_patterns_{}_{}.txt'.format(
+    patterns_file = 'd:/data/aspect/{}/{}/opinion_mined_rule_patterns_{}_{}_tmp.txt'.format(
         dataset_name, sub_dataset, freq_thres, pattern_filter_rate)
     term_hit_rate_file = 'd:/data/aspect/{}/{}/opinion-term-hit-rate.txt'.format(dataset_name, sub_dataset)
     full_train_term_filter_file = 'd:/data/aspect/{}/{}/opinion_filter_vocab_full.txt'.format(

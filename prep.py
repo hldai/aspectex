@@ -311,12 +311,14 @@ def __gen_word_cnts_file(tok_texts_file, dst_file):
     print(total_word_cnt)
 
 
-def __split_training_set(train_sents_file, dst_file):
-    valid_data_percent = 0.2
+def __split_training_set(train_sents_file, dst_file, n_dev_samples=None):
     sents = utils.load_json_objs(train_sents_file)
     n_sents = len(sents)
+    if n_dev_samples is None:
+        valid_data_percent = 0.2
+        n_dev_samples = int(n_sents * valid_data_percent)
     perm = np.random.permutation(n_sents)
-    valid_idxs = set(perm[:int(n_sents * valid_data_percent)])
+    valid_idxs = set(perm[:n_dev_samples])
     with open(dst_file, 'w', encoding='utf-8', newline='\n') as fout:
         train_valid_labels = ['1' if i in valid_idxs else '0' for i in range(n_sents)]
         fout.write(' '.join(train_valid_labels))
@@ -357,6 +359,13 @@ def __get_yelp_review_texts_file():
         #     break
     f.close()
     fout.close()
+
+
+def __add_unk_to_word_vecs(src_word_vecs_file, output_file):
+    vocab, word_vecs_matrix = datautils.load_word_vecs(src_word_vecs_file, add_unknown_word=True)
+    # print(word_vecs_matrix[15])
+    with open(output_file, 'wb') as fout:
+        pickle.dump((vocab, word_vecs_matrix), fout, protocol=pickle.HIGHEST_PROTOCOL)
 
 
 env = 'Windows' if platform().startswith('Windows') else 'Linux'
@@ -484,8 +493,14 @@ rest15_train_word_cnts_file = 'd:/data/aspect/semeval15/restaurants/word_cnts.tx
 # __gen_word_cnts_file(config.SE15_REST_TRAIN_TOK_TEXTS_FILE, rest15_train_word_cnts_file)
 
 # __split_training_set(config.SE14_LAPTOP_TRAIN_SENTS_FILE, config.SE14_LAPTOP_TRAIN_VALID_SPLIT_FILE)
-# __split_training_set(config.SE14_REST_TRAIN_SENTS_FILE, config.SE14_REST_TRAIN_VALID_SPLIT_FILE)
+# __split_training_set(config.SE14_LAPTOP_TRAIN_SENTS_FILE,
+#                      os.path.join(config.SE14_DIR, 'laptops/se14l_train_valid_split-150-6.txt'), 150)
+__split_training_set(config.SE14_REST_TRAIN_SENTS_FILE, config.SE14_REST_TRAIN_VALID_SPLIT_FILE)
+# __split_training_set(config.SE14_REST_TRAIN_SENTS_FILE,
+#                      os.path.join(config.SE14_DIR, 'restaurants/se14r_train_valid_split-150.txt'), 150)
 # __split_training_set(config.SE15_REST_TRAIN_SENTS_FILE, config.SE15_REST_TRAIN_VALID_SPLIT_FILE)
+# __split_training_set(config.SE15_REST_TRAIN_SENTS_FILE,
+#                      os.path.join(config.SE15_DIR, 'restaurants/se15r_train_valid_split-150.txt'), 150)
 
 # __split_to_sents('/home/hldai/data/amazon/electronics_5_text.txt',
 #                  '/home/hldai/data/amazon/electronics_5_tok_sent_texts.txt')
@@ -498,6 +513,14 @@ rest15_train_word_cnts_file = 'd:/data/aspect/semeval15/restaurants/word_cnts.tx
 #     config.DATA_FILES['laptops-amazon']['sent_texts_file'], 2000,
 #     config.DATA_FILES['laptops-amazon']['train_valid_idxs_file'])
 
-__process_raw_sem_eval_data(
-    'd:/data/aspect/semeval14/pred-de-cnn-lap.xml', config.SE14_LAPTOP_TEST_OPINIONS_FILE,
-    'd:/data/aspect/semeval14/pred-de-cnn-lap.json', None, __get_sent_objs_se14_xml)
+# __process_raw_sem_eval_data(
+#     'd:/data/aspect/semeval14/pred-de-cnn-lap.xml', config.SE14_LAPTOP_TEST_OPINIONS_FILE,
+#     'd:/data/aspect/semeval14/pred-de-cnn-lap.json', None, __get_sent_objs_se14_xml)
+
+# __add_unk_to_word_vecs('d:/data/aspect/wordvecs/yelp-w2v-sg-100-n10-i30-w5.pkl',
+#                        'd:/data/aspect/wordvecs/yelp-w2v-sg-100-n10-i30-w5-unk.pkl')
+# __add_unk_to_word_vecs('d:/data/aspect/model-data/yelp-w2v-sg-100-n10-i20-w5.pkl',
+#                        'd:/data/aspect/model-data/yelp-w2v-sg-100-n10-i20-w5-unk-8.pkl')
+# __add_unk_to_word_vecs('d:/data/aspect/wordvecs/laptops-amazon-word-vecs.pkl',
+#                        'd:/data/aspect/wordvecs/laptops-amazon-word-vecs-unk.pkl')
+

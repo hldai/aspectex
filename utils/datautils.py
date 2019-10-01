@@ -363,3 +363,24 @@ def load_token_pos_file(filename):
             vals = [int(v) for v in tok_spans_str.split(' ')]
             tok_span_seqs.append([(vals[2 * i], vals[2 * i + 1]) for i in range(len(vals) // 2)])
     return tok_texts, tok_span_seqs
+
+
+def __add_unk_word(word_vecs_matrix):
+    n_words = word_vecs_matrix.shape[0]
+    dim = word_vecs_matrix.shape[1]
+    word_vecs = np.zeros((n_words + 1, dim), np.float32)
+    for i in range(n_words):
+        word_vecs[i] = word_vecs_matrix[i]
+    word_vecs[n_words] = np.random.normal(0, 0.1, dim)
+    print(word_vecs[n_words])
+    return word_vecs
+
+
+def load_word_vecs(word_vecs_file, add_unknown_word=False):
+    import pickle
+    with open(word_vecs_file, 'rb') as f:
+        vocab, word_vecs_matrix = pickle.load(f)
+    if add_unknown_word:
+        word_vecs_matrix = __add_unk_word(word_vecs_matrix)
+        vocab.append('<UNK>')
+    return vocab, word_vecs_matrix

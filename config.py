@@ -76,7 +76,7 @@ SE14_REST_TEST_SENT_TEXTS_FILE = join(SE14_DIR, 'restaurants/restaurants_test_te
 SE14_REST_TEST_TOK_TEXTS_FILE = join(SE14_DIR, 'restaurants/restaurants_test_texts_tok.txt')
 SE14_REST_TEST_DEP_PARSE_FILE = join(SE14_DIR, 'restaurants/restaurants_test_dep.txt')
 SE14_REST_TEST_OPINIONS_FILE = join(SE14_DIR, 'restaurants/test_restaurant_opinions.txt')
-SE14_REST_TRAIN_VALID_SPLIT_FILE = join(SE14_DIR, 'restaurants/restaurants_train_valid_split.txt')
+SE14_REST_TRAIN_VALID_SPLIT_FILE = join(SE14_DIR, 'restaurants/restaurants_train_valid_split-6.txt')
 
 SE14_REST_GLOVE_WORD_VEC_FILE = join(SE14_DIR, 'model-data/restaurants_word_vecs.pkl')
 SE14_REST_YELP_WORD_VEC_FILE = join(SE14_DIR, 'model-data/restaurants_yelp_word_vecs.pkl')
