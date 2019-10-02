@@ -125,7 +125,7 @@ SE14L_FILES = {
     'opinion_term_hit_rate_file': join(SE14_DIR, 'laptops/opinion-term-hit-rate.txt'),
     'aspect_rule_patterns_file': join(SE14_DIR, 'laptops/aspect_mined_rule_patterns.txt'),
     'opinion_rule_patterns_file': join(SE14_DIR, 'laptops/opinion_mined_rule_patterns.txt'),
-    'rule_aspect_result_file': join(SE14_DIR, 'laptops/amazon-laptops-aspect-rm-rule-result.txt'),
+    'rule_aspect_result_file': join(SE14_DIR, 'laptops/amazon-laptops-aspect-rm-rule-result-tmp.txt'),
     'rule_opinion_result_file': join(SE14_DIR, 'laptops/amazon-laptops-opinion-rule-result.txt'),
     'unlabeled_tok_sents_file': join(RES_DIR, 'amazon/laptops-reivews-sent-tok-text.txt'),
     'train_tfrecord_file': join(SE14_DIR, 'bert-data/se14l-train.tfrecord'),

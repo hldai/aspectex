@@ -5,6 +5,7 @@ import numpy as np
 # from tensorflow.contrib.crf import crf_log_likelihood, crf_log_norm
 # from models import crf
 import config
+import json
 import xml.etree.ElementTree as ET
 
 
@@ -83,11 +84,19 @@ def recover_terms(text, word_spans, label_seq, label_beg, label_in):
     return terms
 
 
-test_sents = utils.load_json_objs(config.SE15R_FILES['test_sents_file'])
-# terms_true_list = [s.get('opinions', list()) for s in test_sents]
-terms_sys_list1 = utils.load_json_objs('d:/data/aspect/semeval15/nrdj-aspects-good.txt')
-terms_sys_list2 = utils.load_json_objs('d:/data/aspect/semeval15/nrdj-aspects-bad.txt')
-for terms1, terms2 in zip(terms_sys_list1, terms_sys_list2):
-    hit_cnt = utils.count_hit(terms1, terms2)
-    if hit_cnt < len(terms1):
-        print(terms1, terms2)
+import json
+
+f1 = open('d:/data/aspect/semeval14/laptops/amazon-laptops-aspect-rm-rule-result.txt', encoding='utf-8')
+f2 = open('d:/data/aspect/semeval14/laptops/amazon-laptops-aspect-rm-rule-result-tmp.txt', encoding='utf-8')
+for l1, l2 in zip(f1, f2):
+    x1 = json.loads(l1)
+    x2 = json.loads(l2)
+    if len(x1) != len(x2):
+        print(x1, x2)
+        break
+    for v in x1:
+        if v not in x2:
+            print(x1, x2)
+            break
+f1.close()
+f2.close()
