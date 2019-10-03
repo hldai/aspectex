@@ -500,8 +500,8 @@ word_cnts_file = 'd:/data/aspect/{}/{}/word_cnts.txt'.format(dataset_name, sub_d
 
 if target == 'aspect':
     patterns_file = 'd:/data/aspect/{}/{}/aspect_mined_rule_patterns_tmp.txt'.format(dataset_name, sub_dataset)
-    term_hit_rate_file = 'd:/data/aspect/{}/{}/aspect-term-hit-rate.txt'.format(dataset_name, sub_dataset)
-    full_train_term_filter_file = 'd:/data/aspect/{}/{}/aspect_filter_vocab_full.txt'.format(
+    term_hit_rate_file = 'd:/data/aspect/{}/{}/aspect-term-hit-rate-tmp.txt'.format(dataset_name, sub_dataset)
+    full_train_term_filter_file = 'd:/data/aspect/{}/{}/aspect_filter_vocab_full_tmp.txt'.format(
         dataset_name, sub_dataset)
 else:
     patterns_file = 'd:/data/aspect/{}/{}/opinion_mined_rule_patterns_{}_{}_tmp.txt'.format(
@@ -526,8 +526,8 @@ else:
     mine_helper = OpinionMineHelper()
 
 tbeg = time()
-__gen_aspect_patterns(mine_helper, dep_tags_file, pos_tags_file, sents_file, train_valid_split_file,
-                      word_cnts_file, freq_thres, patterns_file)
-print(time() - tbeg, 'seconds')
+# __gen_aspect_patterns(mine_helper, dep_tags_file, pos_tags_file, sents_file, train_valid_split_file,
+#                       word_cnts_file, freq_thres, patterns_file)
+# print(time() - tbeg, 'seconds')
 # __gen_filter_terms_vocab_file(mine_helper, dep_tags_file, pos_tags_file, sents_file, full_train_term_filter_file)
-# __gen_term_hit_rate_file(mine_helper, sents_file, dep_tags_file, pos_tags_file, term_hit_rate_file)
+__gen_term_hit_rate_file(mine_helper, sents_file, dep_tags_file, pos_tags_file, term_hit_rate_file)
