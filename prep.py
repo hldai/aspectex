@@ -495,7 +495,7 @@ rest15_train_word_cnts_file = 'd:/data/aspect/semeval15/restaurants/word_cnts.tx
 # __split_training_set(config.SE14_LAPTOP_TRAIN_SENTS_FILE, config.SE14_LAPTOP_TRAIN_VALID_SPLIT_FILE)
 # __split_training_set(config.SE14_LAPTOP_TRAIN_SENTS_FILE,
 #                      os.path.join(config.SE14_DIR, 'laptops/se14l_train_valid_split-150-6.txt'), 150)
-__split_training_set(config.SE14_REST_TRAIN_SENTS_FILE, config.SE14_REST_TRAIN_VALID_SPLIT_FILE)
+# __split_training_set(config.SE14_REST_TRAIN_SENTS_FILE, config.SE14_REST_TRAIN_VALID_SPLIT_FILE)
 # __split_training_set(config.SE14_REST_TRAIN_SENTS_FILE,
 #                      os.path.join(config.SE14_DIR, 'restaurants/se14r_train_valid_split-150.txt'), 150)
 # __split_training_set(config.SE15_REST_TRAIN_SENTS_FILE, config.SE15_REST_TRAIN_VALID_SPLIT_FILE)

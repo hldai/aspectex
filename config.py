@@ -14,7 +14,7 @@ env = 'Windows' if platform().startswith('Windows') else 'Linux'
 if env == 'Windows':
     BERT_BASE_DIR = 'd:/data/res/bert'
     RES_DIR = 'd:/data/res/'
-    DATA_DIR = 'd:/data/aspect/'
+    DATA_DIR = 'd:/data/aote/'
     AMAZON_DATA_DIR = 'd:/data/amazon'
 else:
     BERT_BASE_DIR = '/home/hldai/data/bert'

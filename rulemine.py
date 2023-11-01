@@ -529,5 +529,5 @@ tbeg = time()
 # __gen_aspect_patterns(mine_helper, dep_tags_file, pos_tags_file, sents_file, train_valid_split_file,
 #                       word_cnts_file, freq_thres, patterns_file)
 # print(time() - tbeg, 'seconds')
-# __gen_filter_terms_vocab_file(mine_helper, dep_tags_file, pos_tags_file, sents_file, full_train_term_filter_file)
-__gen_term_hit_rate_file(mine_helper, sents_file, dep_tags_file, pos_tags_file, term_hit_rate_file)
+__gen_filter_terms_vocab_file(mine_helper, dep_tags_file, pos_tags_file, sents_file, full_train_term_filter_file)
+# __gen_term_hit_rate_file(mine_helper, sents_file, dep_tags_file, pos_tags_file, term_hit_rate_file)

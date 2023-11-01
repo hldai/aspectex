@@ -275,6 +275,7 @@ def __run_with_mined_rules(mine_helper, rule_patterns_file, term_hit_rate_file, 
                            dst_result_file=None, sents_file=None):
     l1_rules, l2_rules = rulescommon.load_rule_patterns_file(rule_patterns_file)
     term_vocab = rulescommon.get_term_vocab(term_hit_rate_file, term_hit_rate_thres)
+    print(len(term_vocab))
 
     dep_tags_list = utils.load_dep_tags_list(dep_tags_file)
     pos_tags_list = utils.load_pos_tags(pos_tags_file)
@@ -318,8 +319,8 @@ def __run_with_mined_rules(mine_helper, rule_patterns_file, term_hit_rate_file, 
 # sents = utils.load_json_objs(config.SE14_LAPTOP_TEST_SENTS_FILE)
 
 # opinion_terms_file = 'd:/data/aspect/semeval14/opinion-terms.txt'
-opinion_terms_file = 'd:/data/aspect/semeval14/opinion-terms-full.txt'
-laptops_filter_nouns_file = 'd:/data/aspect/semeval14/nouns-filter.txt'
+opinion_terms_file = 'd:/data/aote/opinion-terms-full.txt'
+laptops_filter_nouns_file = 'd:/data/aote/nouns-filter.txt'
 rest_filter_nouns_file = 'd:/data/aspect/semeval14/restaurants/aspect-nouns-filter.txt'
 
 term_type = 'aspect'
@@ -330,8 +331,8 @@ target_dataset = 'se14l'
 # res_dataset = 'restaurants-yelp'
 res_dataset = 'laptops-amazon'
 target_dataset_files, res_dataset_files = config.DATA_FILES[target_dataset], config.DATA_FILES[res_dataset]
-# task = 'eval'
-task = 'apply'
+task = 'eval'
+# task = 'apply'
 if task == 'apply':
     sents_file = None
     # result_output_file = os.path.join(
@@ -349,21 +350,30 @@ else:
     dep_tags_file = target_dataset_files['test_dep_tags_file']
     pos_tags_file = target_dataset_files['test_pos_tags_file']
 
-hit_rate_thres = 0.6
+hit_rate_thres = 0.8
 
 if term_type == 'aspect':
     # __rule_insight(opinion_terms_file, filter_nouns_file, dep_tags_file, pos_tags_file, sent_texts_file,
     #                train_sents_file, dst_result_file=aspect_result_file, sents_file=sents_file)
     mine_helper = AspectMineHelper(opinion_terms_file)
-    __run_with_mined_rules(
-        mine_helper, target_dataset_files['aspect_rule_patterns_file'],
-        target_dataset_files['aspect_term_hit_rate_file'], res_dataset_files['dep_tags_file'],
-        res_dataset_files['pos_tags_file'], res_dataset_files['sent_texts_file'],
-        target_dataset_files['aspect_term_filter_vocab_file'],
-        dst_result_file=target_dataset_files['rule_aspect_result_file'], sents_file=sents_file)
     # __run_with_mined_rules(
-    #     mine_helper, aspect_rule_patterns_file, aspect_term_hit_rate_file, dep_tags_file, pos_tags_file,
-    #     sent_texts_file, aspect_filter_terms_vocab_file, dst_result_file=aspect_result_file, sents_file=sents_file)
+    #     mine_helper, target_dataset_files['aspect_rule_patterns_file'],
+    #     target_dataset_files['aspect_term_hit_rate_file'], res_dataset_files['dep_tags_file'],
+    #     res_dataset_files['pos_tags_file'], res_dataset_files['sent_texts_file'],
+    #     target_dataset_files['aspect_term_filter_vocab_file'],
+    #     dst_result_file=target_dataset_files['rule_aspect_result_file'], sents_file=sents_file)
+    aspect_rule_patterns_file = os.path.join(config.DATA_DIR, 'se14l/aspect_mined_rule_patterns.txt')
+    aspect_term_hit_rate_file = os.path.join(config.DATA_DIR, 'se14l/aspect-term-hit-rate.txt')
+    dep_tags_file = os.path.join(config.DATA_DIR, 'se14l/laptops-test-rule-dep.txt')
+    pos_tags_file = os.path.join(config.DATA_DIR, 'se14l/laptops-test-rule-pos.txt')
+    sent_tok_texts_file = os.path.join(config.DATA_DIR, 'se14l/laptops_test_texts_tok_pos.txt')
+    aspect_term_filter_vocab_file = os.path.join(config.DATA_DIR, 'se14l/aspect_filter_vocab_full.txt')
+    sents_file = os.path.join(config.DATA_DIR, 'se14l/laptops_test_sents.json')
+    __run_with_mined_rules(
+        mine_helper, aspect_rule_patterns_file,
+        aspect_term_hit_rate_file, dep_tags_file, pos_tags_file,
+        sent_tok_texts_file, aspect_term_filter_vocab_file, term_hit_rate_thres=hit_rate_thres,
+        dst_result_file=None, sents_file=sents_file)
 if term_type == 'opinion':
     # terms_vocab = __load_opinion_terms_in_train(train_sents_file)
     # __opinion_rule_insight(dep_tags_file, pos_tags_file, sent_texts_file, terms_vocab,
